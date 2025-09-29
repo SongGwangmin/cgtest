@@ -261,36 +261,38 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 					allVertices.data(), GL_DYNAMIC_DRAW);
 		
 		// 모든 사각형을 한 번에 그리기 (각 사각형당 6개 정점)
-		glDrawArrays(GL_TRIANGLES, 0, nowdrawsize * 6);
 		
-		glBindVertexArray(0);
 	}
 
 	for (int i = 0; i < nowdrawsize; ++i) {
 		switch (showingrect[i].level) {
 		case point:
 		{
-
+			glDrawArrays(GL_POINTS, i * 6, 1);
 		}
 			break;
 		case line:
 		{
-
+			glDrawArrays(GL_LINES, i * 6, 2);
 		}
 		break;
 		case triangle:
 		{
+			glDrawArrays(GL_TRIANGLES, i * 6, 3);
 		}
 		break;
 		case rectangle:
 		{
 			// 사각형 그리기
 			// (x1, y1) -> (x1, y2) -> (x2, y2) -> (x2, y1) -> (x1, y1)
-			
+			glDrawArrays(GL_TRIANGLES, i * 6, 6);
 		}
 		break;
 		}
 	}
+	
+
+	glBindVertexArray(0);
 	
 	glutSwapBuffers(); // 화면에 출력하기
 }

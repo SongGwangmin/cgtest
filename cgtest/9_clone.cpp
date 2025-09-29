@@ -446,7 +446,7 @@ void Mouse(int button, int state, int x, int y)
 
 ret makenewtriangle(int x, int y, int quadrant) {
 	int rectwidth = triangledis(gen);
-	ret newtriangle;
+	ret newtriangle = triangledata[quadrant][quadrantsize[quadrant] - 1];
 
 	switch (quadrant) {
 	case 0: // 2»çºÐ¸é

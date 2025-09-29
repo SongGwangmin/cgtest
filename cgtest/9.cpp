@@ -335,12 +335,12 @@ void Keyboard(unsigned char key, int x, int y) {
 		break;
 	case 'a':
 	{
-		nowdrawstate = point;
+		outputmode = 0; // fill 모드
 	}
 	break;
 	case 'b':
 	{
-		nowdrawstate = line;
+		outputmode = 1; // line 모드
 	}
 	break;
 	case 'c':

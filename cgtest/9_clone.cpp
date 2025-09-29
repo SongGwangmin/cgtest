@@ -108,6 +108,8 @@ void inittriangle() {
 		triangledata[i][0].Bvalue = dis(gen) / 256.0f;
 
 		quadrantsize[i] = 1;
+
+		triangledata[i][0].movestyle = 0;
 	}
 
 

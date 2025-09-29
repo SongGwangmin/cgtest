@@ -6,7 +6,6 @@
 #include <gl/freeglut.h>
 #include <gl/freeglut_ext.h>
 #include <random>
-#include <list>
 #include <algorithm>
 #include <vector>
 
@@ -38,7 +37,6 @@ GLuint shaderProgramID; //--- 세이더 프로그램 이름
 GLuint vertexShader; //--- 버텍스 세이더 객체
 GLuint fragmentShader; //--- 프래그먼트 세이더 객체
 GLuint VAO, VBO; //--- 버텍스 배열 객체, 버텍스 버퍼 객체
-int nowdrawstate = 0; // 0: point, 1: line, 2: triangle, 3: rectangle
 //--- 메인 함수
 
 typedef struct RET {
@@ -49,9 +47,6 @@ typedef struct RET {
 	int level = 3;
 } ret;
 
-int nowdrawsize = 0;
-ret showingrect[10]; // 최대 10개까지 사각형 저장
-int whereiscursor = -1; // 현재 마우스가 위치한 사각형 인덱스 (-1이면 없음)
 
 ret morph(ret& after, ret& before) {
 	int halfwidth = width / 2;
@@ -342,106 +337,19 @@ void Keyboard(unsigned char key, int x, int y) {
 	case 'q': // 프로그램 종료
 		glutLeaveMainLoop();
 		break;
-	case 'p':
+	case 'a':
 	{
 		nowdrawstate = point;
 	}
 	break;
-	case 'l':
+	case 'b':
 	{
 		nowdrawstate = line;
 	}
 	break;
-	case 't':
+	case 'c':
 	{
 		nowdrawstate = triangle;
-	}
-	break;
-	case 'r':
-	{
-		nowdrawstate = rectangle;
-	}
-	break;
-	// WASD 키로 선택된 사각형 이동
-	case 'w': // 위로 이동
-	{
-		if (whereiscursor >= 0 && whereiscursor < nowdrawsize) {
-			int moveDistance = 10; // 이동 거리
-			showingrect[whereiscursor].y1 -= moveDistance;
-			showingrect[whereiscursor].y2 -= moveDistance;
-		}
-	}
-	break;
-	case 's': // 아래로 이동
-	{
-		if (whereiscursor >= 0 && whereiscursor < nowdrawsize) {
-			int moveDistance = 10; // 이동 거리
-			showingrect[whereiscursor].y1 += moveDistance;
-			showingrect[whereiscursor].y2 += moveDistance;
-		}
-	}
-	break;
-	case 'a': // 왼쪽으로 이동
-	{
-		if (whereiscursor >= 0 && whereiscursor < nowdrawsize) {
-			int moveDistance = 10; // 이동 거리
-			showingrect[whereiscursor].x1 -= moveDistance;
-			showingrect[whereiscursor].x2 -= moveDistance;
-		}
-	}
-	break;
-	case 'd': // 오른쪽으로 이동
-	{
-		if (whereiscursor >= 0 && whereiscursor < nowdrawsize) {
-			int moveDistance = 10; // 이동 거리
-			showingrect[whereiscursor].x1 += moveDistance;
-			showingrect[whereiscursor].x2 += moveDistance;
-		}
-	}
-	break;
-	// IJKL 키로 선택된 사각형 대각선 이동
-	case 'i': // 좌상단으로 이동 (위 + 왼쪽)
-	{
-		if (whereiscursor >= 0 && whereiscursor < nowdrawsize) {
-			int moveDistance = 10; // 이동 거리
-			showingrect[whereiscursor].x1 -= moveDistance; // 왼쪽
-			showingrect[whereiscursor].x2 -= moveDistance;
-			showingrect[whereiscursor].y1 -= moveDistance; // 위
-			showingrect[whereiscursor].y2 -= moveDistance;
-		}
-	}
-	break;
-	case 'j': // 좌하단으로 이동 (아래 + 왼쪽)
-	{
-		if (whereiscursor >= 0 && whereiscursor < nowdrawsize) {
-			int moveDistance = 10; // 이동 거리
-			showingrect[whereiscursor].x1 -= moveDistance; // 왼쪽
-			showingrect[whereiscursor].x2 -= moveDistance;
-			showingrect[whereiscursor].y1 += moveDistance; // 아래
-			showingrect[whereiscursor].y2 += moveDistance;
-		}
-	}
-	break;
-	case 'k': // 우하단으로 이동 (아래 + 오른쪽)
-	{
-		if (whereiscursor >= 0 && whereiscursor < nowdrawsize) {
-			int moveDistance = 10; // 이동 거리
-			showingrect[whereiscursor].x1 += moveDistance; // 오른쪽
-			showingrect[whereiscursor].x2 += moveDistance;
-			showingrect[whereiscursor].y1 += moveDistance; // 아래
-			showingrect[whereiscursor].y2 += moveDistance;
-		}
-	}
-	break;
-	case 'o': // 우상단으로 이동 (위 + 오른쪽) - 'l'의 원래 기능 변경됨 - change to 'o'
-	{
-		if (whereiscursor >= 0 && whereiscursor < nowdrawsize) {
-			int moveDistance = 10; // 이동 거리
-			showingrect[whereiscursor].x1 += moveDistance; // 오른쪽
-			showingrect[whereiscursor].x2 += moveDistance;
-			showingrect[whereiscursor].y1 -= moveDistance; // 위
-			showingrect[whereiscursor].y2 -= moveDistance;
-		}
 	}
 	break;
 	/*case 'r': // 리셋: 모든 것을 초기 상태로 되돌리기
@@ -462,12 +370,7 @@ void Mouse(int button, int state, int x, int y)
 	case GLUT_LEFT_BUTTON:
 	{
 		if (state == GLUT_DOWN) {// 도형선택
-			for (int i = nowdrawsize - 1; 0 <= i; --i) {
-				if (ptinrect(x, y, showingrect[i])) {
-					whereiscursor = i; // 해당 사각형 선택
-					break;
-				}
-			}
+			
 		}
 		else if (state == GLUT_UP) {
 
@@ -481,23 +384,7 @@ void Mouse(int button, int state, int x, int y)
 			// 새로운 사각형 추가 (예시)
 			if (nowdrawsize < MAXRECT) {
 
-				showingrect[nowdrawsize].x1 = x - 50;
-				showingrect[nowdrawsize].y1 = y - 50;
-				showingrect[nowdrawsize].x2 = x + 50;
-				showingrect[nowdrawsize].y2 = y + 50;
-				if (nowdrawstate == point) {
-					showingrect[nowdrawsize].x1 = x - 5;
-					showingrect[nowdrawsize].y1 = y - 5;
-					showingrect[nowdrawsize].x2 = x + 5;
-					showingrect[nowdrawsize].y2 = y + 5;
-				}
-				showingrect[nowdrawsize].Rvalue = dis(gen) / 256.0f;
-				showingrect[nowdrawsize].Gvalue = dis(gen) / 256.0f;
-				showingrect[nowdrawsize].Bvalue = dis(gen) / 256.0f;
-				showingrect[nowdrawsize].level = nowdrawstate; // 사각형으로 설정
-				nowdrawsize++;
-
-				whereiscursor = nowdrawsize - 1; // 새로 추가된 사각형 선택
+				
 
 				glutPostRedisplay();
 			}

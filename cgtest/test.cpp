@@ -238,11 +238,20 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 		// 각 정점마다 위치(3) + 색상(3) = 6개 값
 		
 		// 첫 번째 삼각형: (x1,y1), (x1,y2), (x2,y2)
-		allVertices.insert(allVertices.end(), {
-			x2, y2, 0.0f, r, g, b,  // (x1, y1)
-			x1, y1, 0.0f, r, g, b,  // (x1, y2)
-			x1, y2, 0.0f, r, g, b   // (x2, y2)
-		});
+		if (showingrect[i].level != triangle) {
+			allVertices.insert(allVertices.end(), {
+				x2, y2, 0.0f, r, g, b,  // (x1, y1)
+				x1, y1, 0.0f, r, g, b,  // (x1, y2)
+				x1, y2, 0.0f, r, g, b   // (x2, y2)
+				});
+		}
+		else {
+			allVertices.insert(allVertices.end(), {
+				x2, y2, 0.0f, r, g, b,  // (x1, y1)
+				(x2 + x1) / 2, y1, 0.0f, r, g, b,  // (x1, y2)
+				x1, y2, 0.0f, r, g, b   // (x2, y2)
+				});
+		}
 		
 		// 두 번째 삼각형: (x1,y1), (x2,y2), (x2,y1)
 		allVertices.insert(allVertices.end(), {

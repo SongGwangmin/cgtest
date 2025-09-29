@@ -22,6 +22,7 @@ std::random_device rd;
 std::mt19937 gen(rd());
 
 std::uniform_int_distribution<int> dis(0, 256);
+std::uniform_int_distribution<int> triangledis(30, 100);
 //std::uniform_int_distribution<int> numdis(0, windowWidth - rectspace);
 
 //--- 아래 5개 함수는 사용자 정의 함수 임
@@ -56,6 +57,8 @@ int whereiscursor = -1; // 현재 마우스가 위치한 사각형 인덱스 (-1이면 없음)
 int quadrantsize[4] = { 1,1,1,1 };
 
 ret triangledata[4][4];
+
+ret makenewtriangle(int x, int y, int quadrant);
 
 ret morph(ret& after, ret& before) {
 	int halfwidth = width / 2;
@@ -252,33 +255,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 	// 각 사각형을 6개 정점으로 변환한 전체 데이터
 	std::vector<float> allVertices;
 
-	/*for (int i = 0; i < nowdrawsize; i++) {
-		ret after;
-		morph(after, showingrect[i]); // morph 변환 적용
-
-		// level은 그대로 사용 (사각형 그리기용)
-		float x1 = (float)after.x1;
-		float y1 = (float)after.y1;
-		float x2 = (float)after.x2;
-		float y2 = (float)after.y2;
-		float r = (float)after.Rvalue;
-		float g = (float)after.Gvalue;
-		float b = (float)after.Bvalue;
-
-		// 사각형을 위한 6개 정점: (x1,y1), (x1,y2), (x2,y2), (x1,y2), (x2,y2), (x2,y1)
-		// 각 정점마다 위치(3) + 색상(3) = 6개 값
-
-		// 첫 번째 삼각형: (x1,y1), (x1,y2), (x2,y2)
-		
-		
-		allVertices.insert(allVertices.end(), {
-			x2, y2, 0.0f, r, g, b,  // (x1, y1)
-			(x2 + x1) / 2, y1, 0.0f, r, g, b,  // (x1, y2)
-			x1, y2, 0.0f, r, g, b   // (x2, y2)
-			});
-		
-
-	}*/
+	
 
 	for (int i = 0; i < 4; ++i) { //사분면 초기화
 		for (int j = 0; j < quadrantsize[i]; ++j) {
@@ -317,59 +294,16 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 			allVertices.data(), GL_DYNAMIC_DRAW);
 
 		// 모든 사각형을 한 번에 그리기 (각 사각형당 6개 정점)
-		glDrawArrays(GL_TRIANGLES, 0, 4 * 6);
+		
+		int totalTriangles = 0;
+		for (int i = 0; i < 4; ++i) {
+			totalTriangles += quadrantsize[i];
+		}
+
+		glDrawArrays(GL_TRIANGLES, 0, totalTriangles * 3);
 	}
 
-	/*for (int i = 0; i < nowdrawsize; ++i) {
-		switch (showingrect[i].level) {
-		case point:
-		{
-			glDrawArrays(GL_TRIANGLES, i * 6, 6);
-
-
-		}
-		break;
-		case line:
-		{
-			glLineWidth(2.0f);
-			glDrawArrays(GL_LINES, i * 6, 2);
-		}
-		break;
-		case triangle:
-		{
-			glDrawArrays(GL_TRIANGLES, i * 6, 3);
-		}
-		break;
-		case rectangle:
-		{
-			// 사각형 그리기
-			// (x1, y1) -> (x1, y2) -> (x2, y2) -> (x2, y1) -> (x1, y1)
-			glDrawArrays(GL_TRIANGLES, i * 6, 6);
-		}
-		break;
-		}
-
-		if (whereiscursor >= 0 && whereiscursor == i) { // 선택된 도형만 윤곽선 그리기
-			glColor3f(0.0f, 0.0f, 0.0f);
-			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-			glLineWidth(3.0f);
-
-			switch (showingrect[i].level) { // i 사용해야 함!
-			case point:
-				glDrawArrays(GL_TRIANGLES, i * 6, 6);
-				break;
-			case triangle:
-				glDrawArrays(GL_TRIANGLES, i * 6, 3);
-				break;
-			case rectangle:
-				glDrawArrays(GL_TRIANGLES, i * 6, 6);
-				break;
-			}
-
-			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		}
-	}*/
-
+	
 
 
 	glBindVertexArray(0);
@@ -423,6 +357,9 @@ void Mouse(int button, int state, int x, int y)
 		if (state == GLUT_DOWN) {// 도형선택
 			int quadrant = (x >= width / 2 ? 1 : 0) + (y >= height / 2 ? 2 : 0);
 			//변경
+			ret newtriangle = makenewtriangle(x, y, quadrant);
+
+			triangledata[quadrant][quadrantsize[quadrant] - 1] = newtriangle;
 		}
 		else if (state == GLUT_UP) {
 
@@ -435,7 +372,10 @@ void Mouse(int button, int state, int x, int y)
 		if (state == GLUT_DOWN) {
 			int quadrant = (x >= width / 2 ? 1 : 0) + (y >= height / 2 ? 2 : 0);
 			if (quadrantsize[quadrant] < 4) { // 사분면에 도형이 4개 미만일 때만 추가
+				ret newtriangle = makenewtriangle(x, y, quadrant);
 
+				triangledata[quadrant][quadrantsize[quadrant]] = newtriangle;
+				quadrantsize[quadrant]++;
 			}
 		}
 	}
@@ -443,4 +383,43 @@ void Mouse(int button, int state, int x, int y)
 	default:
 		break;
 	}
+}
+
+ret makenewtriangle(int x, int y, int quadrant) {
+	int rectwidth = triangledis(gen);
+	ret newtriangle;
+
+	switch (quadrant) {
+		case 0: // 2사분면
+			
+			newtriangle.x2 = x;
+			newtriangle.y2 = y;
+			newtriangle.x1 = x - rectwidth;
+			newtriangle.y1 = y - rectwidth;
+			break;
+		case 1: // 1사분면
+			newtriangle.x1 = x;
+			newtriangle.y1 = y - rectwidth;
+			newtriangle.x2 = x + rectwidth;
+			newtriangle.y2 = y;
+			break;
+		case 2: // 3사분면
+			newtriangle.x1 = x - rectwidth;
+			newtriangle.y1 = y;
+			newtriangle.x2 = x;
+			newtriangle.y2 = y + rectwidth;
+			break;
+		case 3: // 4사분면
+			newtriangle.x1 = x;
+			newtriangle.y1 = y;
+			newtriangle.x2 = x + rectwidth;
+			newtriangle.y2 = y + rectwidth;
+			break;
+
+	}
+	newtriangle.Rvalue = dis(gen) / 256.0f;
+	newtriangle.Gvalue = dis(gen) / 256.0f;
+	newtriangle.Bvalue = dis(gen) / 256.0f;
+
+	return newtriangle;
 }

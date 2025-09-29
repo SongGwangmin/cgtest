@@ -55,7 +55,7 @@ typedef struct RET {
 	int xdir = 0; // x 방향 이동 (1 or -1) / 원 스파이럴 시에는 x중앙값
 	int ydir = 0; // y 방향 이동 (1 or -1) / 원 스파이럴 시에는 y중앙값
 	int movinglimit = 0; // 움직임 제한 거리 (원 스파이럴 시에는 이게 반지름)
-
+	int gap = 0; // 원 스파이럴 시에는 차이를 저장함
 } ret;
 
 int nowdrawsize = 0;
@@ -87,22 +87,23 @@ ret morph(ret& after, ret& before) {
 
 void inittriangle() {
 
-
+	int halfwidth = width / 2;
+	int halfheight = height / 2;
 
 	for (int i = 0; i < 4; ++i) { //사분면 초기화
-		triangledata[i][0].x1 = 125 - 25;
-		triangledata[i][0].y1 = 125 - 25;
-		triangledata[i][0].x2 = 125 + 25;
-		triangledata[i][0].y2 = 125 + 25;
+		triangledata[i][0].x1 = halfwidth/2 - 25;
+		triangledata[i][0].y1 = halfheight /2 - 25;
+		triangledata[i][0].x2 = halfwidth/2 + 25;
+		triangledata[i][0].y2 = halfheight /2 + 25;
 
 		if (i % 2) {
-			triangledata[i][0].x1 += 250;
-			triangledata[i][0].x2 += 250;
+			triangledata[i][0].x1 += halfwidth;
+			triangledata[i][0].x2 += halfwidth;
 		}
 
 		if (i / 2) {
-			triangledata[i][0].y1 += 250;
-			triangledata[i][0].y2 += 250;
+			triangledata[i][0].y1 += halfheight;
+			triangledata[i][0].y2 += halfheight;
 		}
 
 		triangledata[i][0].Rvalue = dis(gen) / 256.0f;

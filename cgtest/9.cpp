@@ -40,6 +40,9 @@ GLuint vertexShader; //--- 버텍스 세이더 객체
 GLuint fragmentShader; //--- 프래그먼트 세이더 객체
 GLuint VAO, VBO; //--- 버텍스 배열 객체, 버텍스 버퍼 객체
 int nowdrawstate = 0; // 0: point, 1: line, 2: triangle, 3: rectangle
+
+int outputmode = 0; // 0: fill, 1: line
+
 //--- 메인 함수
 
 typedef struct RET {
@@ -283,6 +286,14 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 				x1, y2, 0.0f, r, g, b   // (x2, y2)
 				});
 		}
+	}
+
+	if (outputmode == 0) {
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	}
+	else {
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		glLineWidth(3.0f);
 	}
 
 	if (!allVertices.empty()) {

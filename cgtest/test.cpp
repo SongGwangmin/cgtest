@@ -279,11 +279,13 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 		case point:
 		{
 			glDrawArrays(GL_TRIANGLES, i * 6, 6);
+
+
 		}
 			break;
 		case line:
 		{
-			glPointSize(5.0);
+			glLineWidth(2.0f);
 			glDrawArrays(GL_LINES, i * 6, 2);
 		}
 		break;
@@ -300,7 +302,28 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 		}
 		break;
 		}
+
+		if (whereiscursor >= 0 && whereiscursor == i) { // 선택된 도형만 윤곽선 그리기
+			glColor3f(0.0f, 0.0f, 0.0f);
+			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+			glLineWidth(3.0f);
+
+			switch (showingrect[i].level) { // i 사용해야 함!
+			case point:
+				glDrawArrays(GL_TRIANGLES, i * 6, 6);
+				break;
+			case triangle:
+				glDrawArrays(GL_TRIANGLES, i * 6, 3);
+				break;
+			case rectangle:
+				glDrawArrays(GL_TRIANGLES, i * 6, 6);
+				break;
+			}
+
+			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		}
 	}
+	
 	
 
 	glBindVertexArray(0);

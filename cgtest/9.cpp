@@ -353,7 +353,7 @@ void Keyboard(unsigned char key, int x, int y) {
 	break;
 	case 'c':
 	{
-		nowdrawstate = triangle;
+		inittriangle(); // 사분면 초기화
 	}
 	break;
 	/*case 'r': // 리셋: 모든 것을 초기 상태로 되돌리기

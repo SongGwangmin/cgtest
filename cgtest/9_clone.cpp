@@ -504,6 +504,9 @@ ret makenewtriangle(int x, int y, int quadrant) {
 	newtriangle.Gvalue = dis(gen) / 256.0f;
 	newtriangle.Bvalue = dis(gen) / 256.0f;
 	newtriangle.movinglimit = 0;
+	newtriangle.angle = 0.0;
+	newtriangle.xdir = (newtriangle.x2 + newtriangle.x1) / 2;
+	newtriangle.ydir = (newtriangle.y2 + newtriangle.y1) / 2;
 
 	return newtriangle;
 }

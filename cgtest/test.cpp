@@ -51,6 +51,7 @@ typedef struct RET {
 
 int nowdrawsize = 0;
 ret showingrect[10]; // 최대 10개까지 사각형 저장
+int whereiscursor = -1; // 현재 마우스가 위치한 사각형 인덱스 (-1이면 없음)
 
 ret morph(ret& after, ret& before) {
 	int halfwidth = width / 2;
@@ -326,25 +327,60 @@ void Keyboard(unsigned char key, int x, int y) {
 	case 'l':
 	{
 		nowdrawstate = line;
-
 	}
 	break;
 	case 't':
 	{
 		nowdrawstate = triangle;
-
 	}
 	break;
-	case 's':
+	case 'r':
 	{
 		nowdrawstate = rectangle;
 	}
 	break;
-    case 'r': // 리셋: 모든 것을 초기 상태로 되돌리기
+	// WASD 키로 선택된 사각형 이동
+	case 'w': // 위로 이동
+	{
+		if (whereiscursor >= 0 && whereiscursor < nowdrawsize) {
+			int moveDistance = 10; // 이동 거리
+			showingrect[whereiscursor].y1 -= moveDistance;
+			showingrect[whereiscursor].y2 -= moveDistance;
+		}
+	}
+	break;
+	case 's': // 아래로 이동
+	{
+		if (whereiscursor >= 0 && whereiscursor < nowdrawsize) {
+			int moveDistance = 10; // 이동 거리
+			showingrect[whereiscursor].y1 += moveDistance;
+			showingrect[whereiscursor].y2 += moveDistance;
+		}
+	}
+	break;
+	case 'a': // 왼쪽으로 이동
+	{
+		if (whereiscursor >= 0 && whereiscursor < nowdrawsize) {
+			int moveDistance = 10; // 이동 거리
+			showingrect[whereiscursor].x1 -= moveDistance;
+			showingrect[whereiscursor].x2 -= moveDistance;
+		}
+	}
+	break;
+	case 'd': // 오른쪽으로 이동
+	{
+		if (whereiscursor >= 0 && whereiscursor < nowdrawsize) {
+			int moveDistance = 10; // 이동 거리
+			showingrect[whereiscursor].x1 += moveDistance;
+			showingrect[whereiscursor].x2 += moveDistance;
+		}
+	}
+	break;
+    /*case 'r': // 리셋: 모든 것을 초기 상태로 되돌리기
     {
        nowdrawsize = 0; // 모든 사각형 제거
     }
-		break;
+		break;*/
     default:
         break;
     }
@@ -387,49 +423,9 @@ void Mouse(int button, int state, int x, int y)
 				showingrect[nowdrawsize].Bvalue = dis(gen) / 256.0f;
 				showingrect[nowdrawsize].level = nowdrawstate; // 사각형으로 설정
 				nowdrawsize++;
-				/*
-				if (nowdrawstate == rectangle) {
-					showingrect[nowdrawsize].x1 = x - 50;
-					showingrect[nowdrawsize].y1 = y - 50;
-					showingrect[nowdrawsize].x2 = x + 50;
-					showingrect[nowdrawsize].y2 = y + 50;
-					showingrect[nowdrawsize].Rvalue = dis(gen) / 256.0f;
-					showingrect[nowdrawsize].Gvalue = dis(gen) / 256.0f;
-					showingrect[nowdrawsize].Bvalue = dis(gen) / 256.0f;
-					showingrect[nowdrawsize].level = rectangle; // 사각형으로 설정
-					nowdrawsize++;
-				}
-				else if (nowdrawstate == point) {
-					showingrect[nowdrawsize].x1 = x - 5;
-					showingrect[nowdrawsize].y1 = y - 5;
-					showingrect[nowdrawsize].x2 = x + 5;
-					showingrect[nowdrawsize].y2 = y + 5;
-					showingrect[nowdrawsize].Rvalue = dis(gen) / 256.0f;
-					showingrect[nowdrawsize].Gvalue = dis(gen) / 256.0f;
-					showingrect[nowdrawsize].Bvalue = dis(gen) / 256.0f;
-					showingrect[nowdrawsize].level = point; // 사각형으로 설정
-					nowdrawsize++;
-				}
-				else if (nowdrawstate == line) {
-					showingrect[nowdrawsize].x1 = x - 50;
-					showingrect[nowdrawsize].y1 = y - 50;
-					showingrect[nowdrawsize].x2 = x + 50;
-					showingrect[nowdrawsize].y2 = y + 50;
-					showingrect[nowdrawsize].Rvalue = dis(gen) / 256.0f;
-					showingrect[nowdrawsize].Gvalue = dis(gen) / 256.0f;
-					showingrect[nowdrawsize].Bvalue = dis(gen) / 256.0f;
-					showingrect[nowdrawsize].level = line;
-				}
-				else if (nowdrawstate == triangle) {
-					showingrect[nowdrawsize].x1 = x - 50;
-					showingrect[nowdrawsize].y1 = y - 50;
-					showingrect[nowdrawsize].x2 = x + 50;
-					showingrect[nowdrawsize].y2 = y + 50;
-					showingrect[nowdrawsize].Rvalue = dis(gen) / 256.0f;
-					showingrect[nowdrawsize].Gvalue = dis(gen) / 256.0f;
-					showingrect[nowdrawsize].Bvalue = dis(gen) / 256.0f;
-					showingrect[nowdrawsize].level = triangle; // 사각형으로 설정
-				}*/
+
+				whereiscursor = nowdrawsize - 1; // 새로 추가된 사각형 선택
+				
                 glutPostRedisplay();
             }
         }

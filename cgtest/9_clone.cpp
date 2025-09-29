@@ -50,7 +50,11 @@ typedef struct RET {
 	GLdouble Rvalue = 0.0;
 	GLdouble Gvalue = 0.0;
 	GLdouble Bvalue = 0.0;
-	int level = 3;
+	int movestyle = 0; // 0: 고정, 1: 튕기기, 2: 좌우 지그재구, 3: 사각 스파이럴 4: 원 스파이럴
+	GLdouble angle = 0.0;
+	int xdir = 0; // x 방향 이동 (1 or -1)
+	int ydir = 0; // y 방향 이동 (1 or -1)
+	int movinglimit = 0; // 움직임 제한 거리 (0이면 무한)
 } ret;
 
 int nowdrawsize = 0;
@@ -75,7 +79,7 @@ ret morph(ret& after, ret& before) {
 	after.Rvalue = before.Rvalue;
 	after.Gvalue = before.Gvalue;
 	after.Bvalue = before.Bvalue;
-	after.level = before.level;
+	//after.level = before.level;
 
 	return after;
 }

@@ -87,6 +87,8 @@ ret morph(ret& after, ret& before) {
 
 void inittriangle() {
 
+
+
 	for (int i = 0; i < 4; ++i) { //사분면 초기화
 		triangledata[i][0].x1 = 125 - 25;
 		triangledata[i][0].y1 = 125 - 25;
@@ -161,8 +163,8 @@ void setupBuffers() {
 
 void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 {
-	width = 500;
-	height = 500;
+	width = 800;
+	height = 800;
 
 	//--- 윈도우 생성하기
 	glutInit(&argc, argv);
@@ -411,6 +413,11 @@ void Keyboard(unsigned char key, int x, int y) {
 		for (int i = 0; i < 4; ++i) { //movingstyle 변경
 			for (int j = 0; j < quadrantsize[i]; ++j) {
 				triangledata[i][j].movestyle = key - '0';
+
+				triangledata[i][j].xdir = (triangledata[i][j].x1 + triangledata[i][j].x2) / 2;
+				triangledata[i][j].ydir = (triangledata[i][j].y1 + triangledata[i][j].y2) / 2;
+				triangledata[i][j].movinglimit = 0;
+				triangledata[i][j].angle = 0.0;
 			}
 		}
 	}
@@ -597,7 +604,13 @@ void TimerFunction(int value)
 			break;
 			case 4: // 원 스파이럴
 			{
-
+				int gap = triangledata[i][j].x2 - triangledata[i][j].x1;
+				triangledata[i][j].angle += 0.1;
+				triangledata[i][j].movinglimit += 1;
+				triangledata[i][j].x1 = triangledata[i][j].xdir + triangledata[i][j].movinglimit * cos(triangledata[i][j].angle) - gap / 2;
+				triangledata[i][j].x2 = triangledata[i][j].xdir + triangledata[i][j].movinglimit * cos(triangledata[i][j].angle) + gap / 2;	
+				triangledata[i][j].y1 = triangledata[i][j].ydir + triangledata[i][j].movinglimit * sin(triangledata[i][j].angle) - gap / 2;
+				triangledata[i][j].y2 = triangledata[i][j].ydir + triangledata[i][j].movinglimit * sin(triangledata[i][j].angle) + gap / 2;
 			}
 			break;
 			default:

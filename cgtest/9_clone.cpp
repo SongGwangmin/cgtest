@@ -419,6 +419,7 @@ void Keyboard(unsigned char key, int x, int y) {
 				triangledata[i][j].ydir = (triangledata[i][j].y1 + triangledata[i][j].y2) / 2;
 				triangledata[i][j].movinglimit = 0;
 				triangledata[i][j].angle = 0.0;
+				triangledata[i][j].gap = triangledata[i][j].x2 - triangledata[i][j].x1;
 			}
 		}
 	}
@@ -606,12 +607,12 @@ void TimerFunction(int value)
 			case 4: // ¿ø ½ºÆÄÀÌ·²
 			{
 				int gap = triangledata[i][j].x2 - triangledata[i][j].x1;
-				triangledata[i][j].angle += 0.1;
+				triangledata[i][j].angle += 0.2;
 				triangledata[i][j].movinglimit += 1;
-				triangledata[i][j].x1 = triangledata[i][j].xdir + triangledata[i][j].movinglimit * cos(triangledata[i][j].angle) - gap / 2;
-				triangledata[i][j].x2 = triangledata[i][j].xdir + triangledata[i][j].movinglimit * cos(triangledata[i][j].angle) + gap / 2;	
-				triangledata[i][j].y1 = triangledata[i][j].ydir + triangledata[i][j].movinglimit * sin(triangledata[i][j].angle) - gap / 2;
-				triangledata[i][j].y2 = triangledata[i][j].ydir + triangledata[i][j].movinglimit * sin(triangledata[i][j].angle) + gap / 2;
+				triangledata[i][j].x1 = triangledata[i][j].xdir + triangledata[i][j].movinglimit * cos(triangledata[i][j].angle) - triangledata[i][j].gap / 2;
+				triangledata[i][j].x2 = triangledata[i][j].xdir + triangledata[i][j].movinglimit * cos(triangledata[i][j].angle) + triangledata[i][j].gap / 2;
+				triangledata[i][j].y1 = triangledata[i][j].ydir + triangledata[i][j].movinglimit * sin(triangledata[i][j].angle) - triangledata[i][j].gap / 2;
+				triangledata[i][j].y2 = triangledata[i][j].ydir + triangledata[i][j].movinglimit * sin(triangledata[i][j].angle) + triangledata[i][j].gap / 2;
 			}
 			break;
 			default:

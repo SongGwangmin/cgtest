@@ -119,6 +119,7 @@ bool ptinrect(int x, int y, ret& rect) {
 
 void Keyboard(unsigned char key, int x, int y);
 void Mouse(int button, int state, int x, int y);
+void TimerFunction(int value);
 
 char* filetobuf(const char* file)
 {
@@ -362,11 +363,44 @@ void Keyboard(unsigned char key, int x, int y) {
 		inittriangle(); // 사분면 초기화
 	}
 	break;
-	/*case 'r': // 리셋: 모든 것을 초기 상태로 되돌리기
+	case '1': 
 	{
-	   nowdrawsize = 0; // 모든 사각형 제거
+		for (int i = 0; i < 4; ++i) { //movingstyle 변경
+			for (int j = 0; j < quadrantsize[i]; ++j) {
+				triangledata[i][j].movestyle = key - '0';
+				triangledata[i][j].xdir = 1;
+				triangledata[i][j].ydir = 1;
+			}
+		}
 	}
-		break;*/
+	break;
+	case '2': 
+	{
+		for (int i = 0; i < 4; ++i) { //movingstyle 변경
+			for (int j = 0; j < quadrantsize[i]; ++j) {
+				triangledata[i][j].movestyle = key - '0';
+			}
+		}
+	}
+	break;
+	case '3': 
+	{
+		for (int i = 0; i < 4; ++i) { //movingstyle 변경
+			for (int j = 0; j < quadrantsize[i]; ++j) {
+				triangledata[i][j].movestyle = key - '0';
+			}
+		}
+	}
+	break;
+	case '4': {
+		for (int i = 0; i < 4; ++i) { //movingstyle 변경
+			for (int j = 0; j < quadrantsize[i]; ++j) {
+				triangledata[i][j].movestyle = key - '0';
+			}
+		}
+	}
+		break;
+
 	default:
 		break;
 	}
@@ -453,9 +487,56 @@ ret makenewtriangle(int x, int y, int quadrant) {
 
 void TimerFunction(int value)
 {
-	for (int i = 0; i < 4; ++i) { //사분면 초기화
+	
+
+
+
+	for (int i = 0; i < 4; ++i) { //움직임 적용
 		for (int j = 0; j < quadrantsize[i]; ++j) {
-			//triangledata[i][j].angle += 0.1;
+
+			int xmovement = 0;
+			int ymovement = 0;
+			switch (triangledata[i][j].movestyle) {
+			case 1: // 튕기기
+			{
+				if (triangledata[i][j].x2 >= width) {
+					triangledata[i][j].xdir = -1;
+				}
+				else if (triangledata[i][j].x1 <= 0) {
+					triangledata[i][j].xdir = 1;
+				}
+
+				if (triangledata[i][j].y2 >= height) {
+					triangledata[i][j].ydir = -1;
+				}
+				else if (triangledata[i][j].y1 <= 0) {
+					triangledata[i][j].ydir = 1;
+				}
+
+				triangledata[i][j].x1 += triangledata[i][j].xdir * 10;
+				triangledata[i][j].x2 += triangledata[i][j].xdir * 10;
+				triangledata[i][j].y1 += triangledata[i][j].ydir * 10;
+				triangledata[i][j].y2 += triangledata[i][j].ydir * 10;
+			}
+			break;
+			case 2: // 좌우 지그재구
+			{
+
+			}
+			break;
+			case 3: // 사각 스파이럴
+			{
+
+			}
+			break;
+			case 4: // 원 스파이럴
+			{
+
+			}
+			break;
+			default:
+				break;
+			}
 		}
 	}
 

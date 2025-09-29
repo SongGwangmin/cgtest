@@ -6,6 +6,7 @@
 #include <gl/freeglut.h>
 #include <gl/freeglut_ext.h>
 #include <random>
+#include <list>
 #include <algorithm>
 #include <vector>
 
@@ -37,6 +38,7 @@ GLuint shaderProgramID; //--- 세이더 프로그램 이름
 GLuint vertexShader; //--- 버텍스 세이더 객체
 GLuint fragmentShader; //--- 프래그먼트 세이더 객체
 GLuint VAO, VBO; //--- 버텍스 배열 객체, 버텍스 버퍼 객체
+int nowdrawstate = 0; // 0: point, 1: line, 2: triangle, 3: rectangle
 //--- 메인 함수
 
 typedef struct RET {
@@ -47,6 +49,13 @@ typedef struct RET {
 	int level = 3;
 } ret;
 
+int nowdrawsize = 0;
+ret showingrect[10]; // 최대 10개까지 사각형 저장
+int whereiscursor = -1; // 현재 마우스가 위치한 사각형 인덱스 (-1이면 없음)
+
+int quadrantsize[4] = { 1,1,1,1 };
+
+ret triangledata[4][4];
 
 ret morph(ret& after, ret& before) {
 	int halfwidth = width / 2;
@@ -126,6 +135,15 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	make_fragmentShaders(); //--- 프래그먼트 세이더 만들기
 	shaderProgramID = make_shaderProgram();
 
+
+
+
+	for (int i = 0; i < 4; ++i) { //사분면 초기화
+
+	}
+
+	
+	
 	// 버퍼 설정
 	setupBuffers();
 
@@ -234,27 +252,15 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 		// 각 정점마다 위치(3) + 색상(3) = 6개 값
 
 		// 첫 번째 삼각형: (x1,y1), (x1,y2), (x2,y2)
-		if (showingrect[i].level != triangle) {
-			allVertices.insert(allVertices.end(), {
-				x2, y2, 0.0f, r, g, b,  // (x1, y1)
-				x1, y1, 0.0f, r, g, b,  // (x1, y2)
-				x1, y2, 0.0f, r, g, b   // (x2, y2)
-				});
-		}
-		else {
-			allVertices.insert(allVertices.end(), {
-				x2, y2, 0.0f, r, g, b,  // (x1, y1)
-				(x2 + x1) / 2, y1, 0.0f, r, g, b,  // (x1, y2)
-				x1, y2, 0.0f, r, g, b   // (x2, y2)
-				});
-		}
-
-		// 두 번째 삼각형: (x1,y1), (x2,y2), (x2,y1)
+		
+		
 		allVertices.insert(allVertices.end(), {
-			x1, y1, 0.0f, r, g, b,  // (x1, y1)
-			x2, y2, 0.0f, r, g, b,  // (x2, y2)
-			x2, y1, 0.0f, r, g, b   // (x2, y1)
+			x2, y2, 0.0f, r, g, b,  // (x1, y1)
+			(x2 + x1) / 2, y1, 0.0f, r, g, b,  // (x1, y2)
+			x1, y2, 0.0f, r, g, b   // (x2, y2)
 			});
+		
+
 	}
 
 	if (!allVertices.empty()) {
@@ -269,7 +275,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 
 	}
 
-	for (int i = 0; i < nowdrawsize; ++i) {
+	/*for (int i = 0; i < nowdrawsize; ++i) {
 		switch (showingrect[i].level) {
 		case point:
 		{
@@ -317,7 +323,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		}
-	}
+	}*/
 
 
 
@@ -370,7 +376,8 @@ void Mouse(int button, int state, int x, int y)
 	case GLUT_LEFT_BUTTON:
 	{
 		if (state == GLUT_DOWN) {// 도형선택
-			
+			int quadrant = (x >= width / 2 ? 1 : 0) + (y >= height / 2 ? 2 : 0);
+			//변경
 		}
 		else if (state == GLUT_UP) {
 
@@ -381,12 +388,9 @@ void Mouse(int button, int state, int x, int y)
 	case GLUT_RIGHT_BUTTON:
 	{
 		if (state == GLUT_DOWN) {
-			// 새로운 사각형 추가 (예시)
-			if (nowdrawsize < MAXRECT) {
+			int quadrant = (x >= width / 2 ? 1 : 0) + (y >= height / 2 ? 2 : 0);
+			if (quadrantsize[quadrant] < 4) { // 사분면에 도형이 4개 미만일 때만 추가
 
-				
-
-				glutPostRedisplay();
 			}
 		}
 	}

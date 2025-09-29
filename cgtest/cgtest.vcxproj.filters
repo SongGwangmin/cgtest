@@ -21,6 +21,9 @@
     <ClCompile Include="9.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="9_clone.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="vertex.glsl">

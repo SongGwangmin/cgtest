@@ -370,8 +370,10 @@ void Keyboard(unsigned char key, int x, int y) {
 		for (int i = 0; i < 4; ++i) { //movingstyle 변경
 			for (int j = 0; j < quadrantsize[i]; ++j) {
 				triangledata[i][j].movestyle = key - '0';
-				triangledata[i][j].xdir = 1;
-				triangledata[i][j].ydir = 1;
+				if(triangledata[i][j].xdir == 0)
+					triangledata[i][j].xdir = 1;
+				if (triangledata[i][j].ydir == 0)
+					triangledata[i][j].ydir = 1;
 			}
 		}
 	}
@@ -381,6 +383,10 @@ void Keyboard(unsigned char key, int x, int y) {
 		for (int i = 0; i < 4; ++i) { //movingstyle 변경
 			for (int j = 0; j < quadrantsize[i]; ++j) {
 				triangledata[i][j].movestyle = key - '0';
+				if (triangledata[i][j].xdir == 0)
+					triangledata[i][j].xdir = 1;
+				if (triangledata[i][j].ydir == 0)
+					triangledata[i][j].ydir = 1;
 			}
 		}
 	}
@@ -523,7 +529,26 @@ void TimerFunction(int value)
 			break;
 			case 2: // 좌우 지그재구
 			{
+				if (triangledata[i][j].x2 >= width) {
+					triangledata[i][j].xdir = -1;
+					triangledata[i][j].y1 += triangledata[i][j].ydir * 10;
+					triangledata[i][j].y2 += triangledata[i][j].ydir * 10;
+				}
+				else if (triangledata[i][j].x1 <= 0) {
+					triangledata[i][j].xdir = 1;
+					triangledata[i][j].y1 += triangledata[i][j].ydir * 10;
+					triangledata[i][j].y2 += triangledata[i][j].ydir * 10;
+				}
 
+				if (triangledata[i][j].y2 >= height) {
+					triangledata[i][j].ydir = -1;
+				}
+				else if (triangledata[i][j].y1 <= 0) {
+					triangledata[i][j].ydir = 1;
+				}
+
+				triangledata[i][j].x1 += triangledata[i][j].xdir * 10;
+				triangledata[i][j].x2 += triangledata[i][j].xdir * 10;
 			}
 			break;
 			case 3: // 사각 스파이럴

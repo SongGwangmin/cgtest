@@ -376,6 +376,51 @@ void Keyboard(unsigned char key, int x, int y) {
 		}
 	}
 	break;
+	// IJKL 키로 선택된 사각형 대각선 이동
+	case 'i': // 좌상단으로 이동 (위 + 왼쪽)
+	{
+		if (whereiscursor >= 0 && whereiscursor < nowdrawsize) {
+			int moveDistance = 10; // 이동 거리
+			showingrect[whereiscursor].x1 -= moveDistance; // 왼쪽
+			showingrect[whereiscursor].x2 -= moveDistance;
+			showingrect[whereiscursor].y1 -= moveDistance; // 위
+			showingrect[whereiscursor].y2 -= moveDistance;
+		}
+	}
+	break;
+	case 'j': // 좌하단으로 이동 (아래 + 왼쪽)
+	{
+		if (whereiscursor >= 0 && whereiscursor < nowdrawsize) {
+			int moveDistance = 10; // 이동 거리
+			showingrect[whereiscursor].x1 -= moveDistance; // 왼쪽
+			showingrect[whereiscursor].x2 -= moveDistance;
+			showingrect[whereiscursor].y1 += moveDistance; // 아래
+			showingrect[whereiscursor].y2 += moveDistance;
+		}
+	}
+	break;
+	case 'k': // 우하단으로 이동 (아래 + 오른쪽)
+	{
+		if (whereiscursor >= 0 && whereiscursor < nowdrawsize) {
+			int moveDistance = 10; // 이동 거리
+			showingrect[whereiscursor].x1 += moveDistance; // 오른쪽
+			showingrect[whereiscursor].x2 += moveDistance;
+			showingrect[whereiscursor].y1 += moveDistance; // 아래
+			showingrect[whereiscursor].y2 += moveDistance;
+		}
+	}
+	break;
+	case 'o': // 우상단으로 이동 (위 + 오른쪽) - 'l'의 원래 기능 변경됨 - change to 'o'
+	{
+		if (whereiscursor >= 0 && whereiscursor < nowdrawsize) {
+			int moveDistance = 10; // 이동 거리
+			showingrect[whereiscursor].x1 += moveDistance; // 오른쪽
+			showingrect[whereiscursor].x2 += moveDistance;
+			showingrect[whereiscursor].y1 -= moveDistance; // 위
+			showingrect[whereiscursor].y2 -= moveDistance;
+		}
+	}
+	break;
     /*case 'r': // 리셋: 모든 것을 초기 상태로 되돌리기
     {
        nowdrawsize = 0; // 모든 사각형 제거
@@ -393,8 +438,13 @@ void Mouse(int button, int state, int x, int y)
     switch (button) {
     case GLUT_LEFT_BUTTON:
     {
-        if (state == GLUT_DOWN) {
-            
+        if (state == GLUT_DOWN) {// 도형선택
+			for (int i = nowdrawsize - 1; 0 <= i; --i) {
+				if (ptinrect(x, y, showingrect[i])) {
+					whereiscursor = i; // 해당 사각형 선택
+					break;
+				}
+			}
         }
         else if (state == GLUT_UP) {
             

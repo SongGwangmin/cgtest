@@ -52,9 +52,10 @@ typedef struct RET {
 	GLdouble Bvalue = 0.0;
 	int movestyle = 0; // 0: 고정, 1: 튕기기, 2: 좌우 지그재구, 3: 사각 스파이럴 4: 원 스파이럴
 	GLdouble angle = 0.0;
-	int xdir = 0; // x 방향 이동 (1 or -1)
-	int ydir = 0; // y 방향 이동 (1 or -1)
-	int movinglimit = 0; // 움직임 제한 거리 (0이면 무한)
+	int xdir = 0; // x 방향 이동 (1 or -1) / 원 스파이럴 시에는 x중앙값
+	int ydir = 0; // y 방향 이동 (1 or -1) / 원 스파이럴 시에는 y중앙값
+	int movinglimit = 0; // 움직임 제한 거리 (원 스파이럴 시에는 이게 반지름)
+
 } ret;
 
 int nowdrawsize = 0;
@@ -154,6 +155,7 @@ void setupBuffers() {
 	glBindVertexArray(0);
 }
 
+
 void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 {
 	width = 500;
@@ -194,7 +196,7 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 
 	glutKeyboardFunc(Keyboard);
 	glutMouseFunc(Mouse);
-
+	glutTimerFunc(25, TimerFunction, 1);
 	glutMainLoop();
 }
 
@@ -445,4 +447,18 @@ ret makenewtriangle(int x, int y, int quadrant) {
 	newtriangle.Bvalue = dis(gen) / 256.0f;
 
 	return newtriangle;
+}
+
+
+
+void TimerFunction(int value)
+{
+	for (int i = 0; i < 4; ++i) { //사분면 초기화
+		for (int j = 0; j < quadrantsize[i]; ++j) {
+			//triangledata[i][j].angle += 0.1;
+		}
+	}
+
+	glutPostRedisplay();
+	glutTimerFunc(25, TimerFunction, 1);
 }

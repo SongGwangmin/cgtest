@@ -281,29 +281,31 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 	}*/
 
 	for (int i = 0; i < 4; ++i) { //사분면 초기화
-		ret after;
-		morph(after, triangledata[i][0]); // morph 변환 적용
+		for (int j = 0; j < quadrantsize[i]; ++j) {
+			ret after;
+			morph(after, triangledata[i][j]); // morph 변환 적용
 
-		// level은 그대로 사용 (사각형 그리기용)
-		float x1 = (float)after.x1;
-		float y1 = (float)after.y1;
-		float x2 = (float)after.x2;
-		float y2 = (float)after.y2;
-		float r = (float)after.Rvalue;
-		float g = (float)after.Gvalue;
-		float b = (float)after.Bvalue;
+			// level은 그대로 사용 (사각형 그리기용)
+			float x1 = (float)after.x1;
+			float y1 = (float)after.y1;
+			float x2 = (float)after.x2;
+			float y2 = (float)after.y2;
+			float r = (float)after.Rvalue;
+			float g = (float)after.Gvalue;
+			float b = (float)after.Bvalue;
 
-		// 사각형을 위한 6개 정점: (x1,y1), (x1,y2), (x2,y2), (x1,y2), (x2,y2), (x2,y1)
-		// 각 정점마다 위치(3) + 색상(3) = 6개 값
+			// 사각형을 위한 6개 정점: (x1,y1), (x1,y2), (x2,y2), (x1,y2), (x2,y2), (x2,y1)
+			// 각 정점마다 위치(3) + 색상(3) = 6개 값
 
-		// 첫 번째 삼각형: (x1,y1), (x1,y2), (x2,y2)
+			// 첫 번째 삼각형: (x1,y1), (x1,y2), (x2,y2)
 
 
-		allVertices.insert(allVertices.end(), {
-			x2, y2, 0.0f, r, g, b,  // (x1, y1)
-			(x2 + x1) / 2, y1, 0.0f, r, g, b,  // (x1, y2)
-			x1, y2, 0.0f, r, g, b   // (x2, y2)
-			});
+			allVertices.insert(allVertices.end(), {
+				x2, y2, 0.0f, r, g, b,  // (x1, y1)
+				(x2 + x1) / 2, y1, 0.0f, r, g, b,  // (x1, y2)
+				x1, y2, 0.0f, r, g, b   // (x2, y2)
+				});
+		}
 	}
 
 	if (!allVertices.empty()) {

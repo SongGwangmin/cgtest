@@ -139,7 +139,24 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 
 
 	for (int i = 0; i < 4; ++i) { //사분면 초기화
+		triangledata[i][0].x1 = 125 - 25;
+		triangledata[i][0].y1 = 125 - 25;
+		triangledata[i][0].x2 = 125 + 25;
+		triangledata[i][0].y2 = 125 + 25;
 
+		if (i % 2) {
+			triangledata[i][0].x1 += 250;
+			triangledata[i][0].x2 += 250;
+		}
+
+		if (i / 2) {
+			triangledata[i][0].y1 += 250;
+			triangledata[i][0].y2 += 250;
+		}
+
+		triangledata[i][0].Rvalue = dis(gen) / 256.0f;
+		triangledata[i][0].Gvalue = dis(gen) / 256.0f;
+		triangledata[i][0].Bvalue = dis(gen) / 256.0f;
 	}
 
 	
@@ -235,7 +252,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 	// 각 사각형을 6개 정점으로 변환한 전체 데이터
 	std::vector<float> allVertices;
 
-	for (int i = 0; i < nowdrawsize; i++) {
+	/*for (int i = 0; i < nowdrawsize; i++) {
 		ret after;
 		morph(after, showingrect[i]); // morph 변환 적용
 
@@ -261,6 +278,32 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 			});
 		
 
+	}*/
+
+	for (int i = 0; i < 4; ++i) { //사분면 초기화
+		ret after;
+		morph(after, triangledata[i][0]); // morph 변환 적용
+
+		// level은 그대로 사용 (사각형 그리기용)
+		float x1 = (float)after.x1;
+		float y1 = (float)after.y1;
+		float x2 = (float)after.x2;
+		float y2 = (float)after.y2;
+		float r = (float)after.Rvalue;
+		float g = (float)after.Gvalue;
+		float b = (float)after.Bvalue;
+
+		// 사각형을 위한 6개 정점: (x1,y1), (x1,y2), (x2,y2), (x1,y2), (x2,y2), (x2,y1)
+		// 각 정점마다 위치(3) + 색상(3) = 6개 값
+
+		// 첫 번째 삼각형: (x1,y1), (x1,y2), (x2,y2)
+
+
+		allVertices.insert(allVertices.end(), {
+			x2, y2, 0.0f, r, g, b,  // (x1, y1)
+			(x2 + x1) / 2, y1, 0.0f, r, g, b,  // (x1, y2)
+			x1, y2, 0.0f, r, g, b   // (x2, y2)
+			});
 	}
 
 	if (!allVertices.empty()) {
@@ -272,7 +315,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 			allVertices.data(), GL_DYNAMIC_DRAW);
 
 		// 모든 사각형을 한 번에 그리기 (각 사각형당 6개 정점)
-
+		glDrawArrays(GL_TRIANGLES, 0, 4 * 6);
 	}
 
 	/*for (int i = 0; i < nowdrawsize; ++i) {

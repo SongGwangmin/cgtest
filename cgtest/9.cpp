@@ -80,6 +80,34 @@ ret morph(ret& after, ret& before) {
 	return after;
 }
 
+void inittriangle() {
+
+	for (int i = 0; i < 4; ++i) { //사분면 초기화
+		triangledata[i][0].x1 = 125 - 25;
+		triangledata[i][0].y1 = 125 - 25;
+		triangledata[i][0].x2 = 125 + 25;
+		triangledata[i][0].y2 = 125 + 25;
+
+		if (i % 2) {
+			triangledata[i][0].x1 += 250;
+			triangledata[i][0].x2 += 250;
+		}
+
+		if (i / 2) {
+			triangledata[i][0].y1 += 250;
+			triangledata[i][0].y2 += 250;
+		}
+
+		triangledata[i][0].Rvalue = dis(gen) / 256.0f;
+		triangledata[i][0].Gvalue = dis(gen) / 256.0f;
+		triangledata[i][0].Bvalue = dis(gen) / 256.0f;
+
+		quadrantsize[i] = 1;
+	}
+
+
+}
+
 bool ptinrect(int x, int y, ret& rect) {
 	return (x >= rect.x1 && x <= rect.x2 && y >= rect.y1 && y <= rect.y2);
 }
@@ -143,27 +171,7 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 
 
 
-
-	for (int i = 0; i < 4; ++i) { //사분면 초기화
-		triangledata[i][0].x1 = 125 - 25;
-		triangledata[i][0].y1 = 125 - 25;
-		triangledata[i][0].x2 = 125 + 25;
-		triangledata[i][0].y2 = 125 + 25;
-
-		if (i % 2) {
-			triangledata[i][0].x1 += 250;
-			triangledata[i][0].x2 += 250;
-		}
-
-		if (i / 2) {
-			triangledata[i][0].y1 += 250;
-			triangledata[i][0].y2 += 250;
-		}
-
-		triangledata[i][0].Rvalue = dis(gen) / 256.0f;
-		triangledata[i][0].Gvalue = dis(gen) / 256.0f;
-		triangledata[i][0].Bvalue = dis(gen) / 256.0f;
-	}
+	inittriangle();
 
 	
 	

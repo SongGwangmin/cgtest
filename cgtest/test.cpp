@@ -268,11 +268,12 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 		switch (showingrect[i].level) {
 		case point:
 		{
-			glDrawArrays(GL_POINTS, i * 6, 1);
+			glDrawArrays(GL_TRIANGLES, i * 6, 6);
 		}
 			break;
 		case line:
 		{
+			glPointSize(5.0);
 			glDrawArrays(GL_LINES, i * 6, 2);
 		}
 		break;
@@ -308,6 +309,28 @@ void Keyboard(unsigned char key, int x, int y) {
     case 'q': // 프로그램 종료
         glutLeaveMainLoop();
         break;
+	case 'p':
+	{
+		nowdrawstate = point;
+	}
+	break;
+	case 'l':
+	{
+		nowdrawstate = line;
+
+	}
+	break;
+	case 't':
+	{
+		nowdrawstate = triangle;
+
+	}
+	break;
+	case 's':
+	{
+		nowdrawstate = rectangle;
+	}
+	break;
     case 'r': // 리셋: 모든 것을 초기 상태로 되돌리기
     {
        nowdrawsize = 0; // 모든 사각형 제거
@@ -339,6 +362,23 @@ void Mouse(int button, int state, int x, int y)
         if (state == GLUT_DOWN) {
             // 새로운 사각형 추가 (예시)
             if (nowdrawsize < MAXRECT) {
+
+				showingrect[nowdrawsize].x1 = x - 50;
+				showingrect[nowdrawsize].y1 = y - 50;
+				showingrect[nowdrawsize].x2 = x + 50;
+				showingrect[nowdrawsize].y2 = y + 50;
+				if (nowdrawstate == point) {
+					showingrect[nowdrawsize].x1 = x - 5;
+					showingrect[nowdrawsize].y1 = y - 5;
+					showingrect[nowdrawsize].x2 = x + 5;
+					showingrect[nowdrawsize].y2 = y + 5;
+				}
+				showingrect[nowdrawsize].Rvalue = dis(gen) / 256.0f;
+				showingrect[nowdrawsize].Gvalue = dis(gen) / 256.0f;
+				showingrect[nowdrawsize].Bvalue = dis(gen) / 256.0f;
+				showingrect[nowdrawsize].level = nowdrawstate; // 사각형으로 설정
+				nowdrawsize++;
+				/*
 				if (nowdrawstate == rectangle) {
 					showingrect[nowdrawsize].x1 = x - 50;
 					showingrect[nowdrawsize].y1 = y - 50;
@@ -369,7 +409,7 @@ void Mouse(int button, int state, int x, int y)
 					showingrect[nowdrawsize].Rvalue = dis(gen) / 256.0f;
 					showingrect[nowdrawsize].Gvalue = dis(gen) / 256.0f;
 					showingrect[nowdrawsize].Bvalue = dis(gen) / 256.0f;
-					showingrect[nowdrawsize].level = rectangle; // 사각형으로 설정
+					showingrect[nowdrawsize].level = line;
 				}
 				else if (nowdrawstate == triangle) {
 					showingrect[nowdrawsize].x1 = x - 50;
@@ -380,7 +420,7 @@ void Mouse(int button, int state, int x, int y)
 					showingrect[nowdrawsize].Gvalue = dis(gen) / 256.0f;
 					showingrect[nowdrawsize].Bvalue = dis(gen) / 256.0f;
 					showingrect[nowdrawsize].level = triangle; // 사각형으로 설정
-				}
+				}*/
                 glutPostRedisplay();
             }
         }

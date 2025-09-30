@@ -23,6 +23,7 @@ std::mt19937 gen(rd());
 
 std::uniform_int_distribution<int> dis(0, 256);
 std::uniform_int_distribution<int> degreedis(0, 628);
+std::uniform_int_distribution<int> posdis(20, 780);
 //std::uniform_int_distribution<int> numdis(0, windowWidth - rectspace);
 
 //--- 아래 5개 함수는 사용자 정의 함수 임
@@ -242,50 +243,52 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 	// 각 사각형을 6개 정점으로 변환한 전체 데이터
 	std::vector<float> allVertices;
 
-	float angle = 2.0f;
+	for (int j = 0; j < spiralnum; ++j) {
+		float angle = 2.0f;
 
-	float x = width / 2;
-	float y = height / 2;
-	float radius = 0;
+		float x = spiraldata[j].x1;
+		float y = spiraldata[j].y1;
+		float radius = 0;
 
-	float newx;
-	float newy;
+		float newx;
+		float newy;
 
-	for (int i = 0; angle < 3.14 * 2 * 3; ++i) { // 한개당 168개의 점
-		float nextx = x + (radius / 2) * cos(angle);
-		float nexty = y + (radius / 2) * sin(angle);
+		for (int i = 0; angle < 3.14 * 2 * 3; ++i) { // 한개당 168개의 점
+			float nextx = x + (radius / 2) * cos(angle + spiraldata[j].angle);
+			float nexty = y + (radius / 2) * sin(angle + spiraldata[j].angle);
 
-		newx = nextx;
-		newy = nexty;
+			newx = nextx;
+			newy = nexty;
 
-		nextx = (nextx - (width / 2)) / (width / 2);
-		nexty = (nexty - (height / 2)) / -(height / 2);
+			nextx = (nextx - (width / 2)) / (width / 2);
+			nexty = (nexty - (height / 2)) / -(height / 2);
 
-		allVertices.insert(allVertices.end(), {
-					nextx, nexty, 0.0f, 1.0f, 1.0f, 1.0f
-			});
+			allVertices.insert(allVertices.end(), {
+						nextx, nexty, 0.0f, 1.0f, 1.0f, 1.0f
+				});
 
-		angle += 0.1f;
-		radius += 1;
-	}
+			angle += 0.1f;
+			radius += 1;
+		}
 
 
-	x += 2 * (newx - x);
-	y += 2 * (newy - y);
-	
-	for (int i = 0; angle >  0; ++i) {
-		float nextx = x - (radius / 2)*cos(angle);
-		float nexty = y - (radius / 2)*sin(angle);
+		x += 2 * (newx - x);
+		y += 2 * (newy - y);
 
-		nextx = (nextx - (width / 2)) / (width / 2);
-		nexty = (nexty - (height / 2)) / -(height / 2);
+		for (int i = 0; angle > 0; ++i) {
+			float nextx = x - (radius / 2) * cos(angle + spiraldata[j].angle);
+			float nexty = y - (radius / 2) * sin(angle + spiraldata[j].angle);
 
-		allVertices.insert(allVertices.end(), {
-					nextx, nexty, 0.0f, 1.0f, 1.0f, 1.0f
-			});
+			nextx = (nextx - (width / 2)) / (width / 2);
+			nexty = (nexty - (height / 2)) / -(height / 2);
 
-		angle -= 0.1f;
-		radius -= 1;
+			allVertices.insert(allVertices.end(), {
+						nextx, nexty, 0.0f, 1.0f, 1.0f, 1.0f
+				});
+
+			angle -= 0.1f;
+			radius -= 1;
+		}
 	}
 
 	/*for (int i = 0; i < 4; ++i) { //사분면 초기화
@@ -339,7 +342,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 			//totalTriangles += quadrantsize[i];
 		}
 		glPointSize(3.0f);
-		glDrawArrays(GL_POINTS, 0, 168 * 2);
+		glDrawArrays(GL_POINTS, 0, 178 * 2 * spiralnum);
 	}
 
 
@@ -379,14 +382,37 @@ void Keyboard(unsigned char key, int x, int y) {
 	break;
 	case '1':
 	{
+
 		spiralnum = 1;
 		bgcolorchange();
+		for (int i = 0; i < 5; ++i) {
+			spiraldata[i].x1 = posdis(gen);
+			spiraldata[i].y1 = posdis(gen);
+			spiraldata[i].angle = degreedis(gen) / 100.0f;
+			if (dis(gen) / 2) {
+				spiraldata[i].movestyle = 1;
+			}
+			else {
+				spiraldata[i].movestyle = -1;
+			}
+		}
 	}
 	break;
 	case '2':
 	{
 		spiralnum = 2;
 		bgcolorchange();
+		for (int i = 0; i < 5; ++i) {
+			spiraldata[i].x1 = posdis(gen);
+			spiraldata[i].y1 = posdis(gen);
+			spiraldata[i].angle = degreedis(gen) / 100.0f;
+			if (dis(gen) / 2) {
+				spiraldata[i].movestyle = 1;
+			}
+			else {
+				spiraldata[i].movestyle = -1;
+			}
+		}
 	}
 	break;
 	case '3':
@@ -394,18 +420,51 @@ void Keyboard(unsigned char key, int x, int y) {
 		spiralnum = 3;
 
 		bgcolorchange();
+		for (int i = 0; i < 5; ++i) {
+			spiraldata[i].x1 = posdis(gen);
+			spiraldata[i].y1 = posdis(gen);
+			spiraldata[i].angle = degreedis(gen) / 100.0f;
+			if (dis(gen) / 2) {
+				spiraldata[i].movestyle = 1;
+			}
+			else {
+				spiraldata[i].movestyle = -1;
+			}
+		}
 	}
 	break;
 	case '4':
 	{
 		spiralnum = 4;
 		bgcolorchange();
+		for (int i = 0; i < 5; ++i) {
+			spiraldata[i].x1 = posdis(gen);
+			spiraldata[i].y1 = posdis(gen);
+			spiraldata[i].angle = degreedis(gen) / 100.0f;
+			if (dis(gen) / 2) {
+				spiraldata[i].movestyle = 1;
+			}
+			else {
+				spiraldata[i].movestyle = -1;
+			}
+		}
 	}
 	break;
 	case '5':
 	{
 		spiralnum = 5;
 		bgcolorchange();
+		for (int i = 0; i < 5; ++i) {
+			spiraldata[i].x1 = posdis(gen);
+			spiraldata[i].y1 = posdis(gen);
+			spiraldata[i].angle = degreedis(gen) / 100.0f;
+			if (dis(gen) / 2) {
+				spiraldata[i].movestyle = 1;
+			}
+			else {
+				spiraldata[i].movestyle = -1;
+			}
+		}
 	}
 	break;
 

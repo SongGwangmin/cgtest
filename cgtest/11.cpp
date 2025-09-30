@@ -44,6 +44,7 @@ GLfloat rColor, gColor, bColor;
 
 int outputmode = 0; // 0: fill, 1: line
 
+int spiralnum = 1;
 //--- 메인 함수
 
 typedef struct RET {
@@ -52,13 +53,14 @@ typedef struct RET {
 	GLdouble Gvalue = 0.0;
 	GLdouble Bvalue = 0.0;
 	int movestyle = 0; // 0: 고정, 1: 튕기기, 2: 좌우 지그재구, 3: 사각 스파이럴 4: 원 스파이럴
-	GLdouble angle = 0.0;
+	GLdouble angle = 0.0; // 시작 각도
 	int xdir = 0; // x 방향 이동 (1 or -1) / 원 스파이럴 시에는 x중앙값
 	int ydir = 0; // y 방향 이동 (1 or -1) / 원 스파이럴 시에는 y중앙값
 	int movinglimit = 0; // 움직임 제한 거리 (원 스파이럴 시에는 이게 반지름)
 	int gap = 0; // 원 스파이럴 시에는 차이를 저장함
 } ret;
 
+ret spiraldata[5];
 
 ret morph(ret& after, ret& before) {
 	int halfwidth = width / 2;
@@ -336,7 +338,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 		for (int i = 0; i < 4; ++i) {
 			//totalTriangles += quadrantsize[i];
 		}
-		glPointSize(5.0f);
+		glPointSize(3.0f);
 		glDrawArrays(GL_POINTS, 0, 168 * 2);
 	}
 
@@ -371,10 +373,41 @@ void Keyboard(unsigned char key, int x, int y) {
 	break;
 	case 'c':
 	{
+		spiralnum = 0;
 		bgcolorchange();
 	}
 	break;
-	
+	case '1':
+	{
+		spiralnum = 1;
+		bgcolorchange();
+	}
+	break;
+	case '2':
+	{
+		spiralnum = 2;
+		bgcolorchange();
+	}
+	break;
+	case '3':
+	{	
+		spiralnum = 3;
+
+		bgcolorchange();
+	}
+	break;
+	case '4':
+	{
+		spiralnum = 4;
+		bgcolorchange();
+	}
+	break;
+	case '5':
+	{
+		spiralnum = 5;
+		bgcolorchange();
+	}
+	break;
 
 	default:
 		break;

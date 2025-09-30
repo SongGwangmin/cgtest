@@ -242,19 +242,49 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 
 	float angle = 2.0f;
 
-	int x = width / 2;
-	int y = height / 2;
-	int radius = 0;
+	float x = width / 2;
+	float y = height / 2;
+	float radius = 0;
 
-	float nextx = (float)x + radius * cos(angle);
-	float nexty = (float)y + radius * sin(angle);
+	float newx;
+	float newy;
 
-	nextx = (nextx - x) / x;
-	nexty = (nexty - y) / y;
+	for (int i = 0; angle < 3.14 * 2 * 3; ++i) { // 한개당 168개의 점
+		float nextx = x + (radius / 2) * cos(angle);
+		float nexty = y + (radius / 2) * sin(angle);
 
-	allVertices.insert(allVertices.end(), {
-				nextx, nexty, 0.0f, 1.0f, 1.0f, 1.0f
-		});
+		newx = nextx;
+		newy = nexty;
+
+		nextx = (nextx - (width / 2)) / (width / 2);
+		nexty = (nexty - (height / 2)) / -(height / 2);
+
+		allVertices.insert(allVertices.end(), {
+					nextx, nexty, 0.0f, 1.0f, 1.0f, 1.0f
+			});
+
+		angle += 0.1f;
+		radius += 1;
+	}
+
+
+	x += 2 * (newx - x);
+	y += 2 * (newy - y);
+	
+	for (int i = 0; angle >  0; ++i) {
+		float nextx = x - (radius / 2)*cos(angle);
+		float nexty = y - (radius / 2)*sin(angle);
+
+		nextx = (nextx - (width / 2)) / (width / 2);
+		nexty = (nexty - (height / 2)) / -(height / 2);
+
+		allVertices.insert(allVertices.end(), {
+					nextx, nexty, 0.0f, 1.0f, 1.0f, 1.0f
+			});
+
+		angle -= 0.1f;
+		radius -= 1;
+	}
 
 	/*for (int i = 0; i < 4; ++i) { //사분면 초기화
 		for (int j = 0; j < quadrantsize[i]; ++j) {
@@ -306,8 +336,8 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 		for (int i = 0; i < 4; ++i) {
 			//totalTriangles += quadrantsize[i];
 		}
-
-		glDrawArrays(GL_POINTS, 0, 1);
+		glPointSize(5.0f);
+		glDrawArrays(GL_POINTS, 0, 168 * 2);
 	}
 
 

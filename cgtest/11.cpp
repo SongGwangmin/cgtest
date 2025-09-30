@@ -34,7 +34,7 @@ GLvoid drawScene();
 GLvoid Reshape(int w, int h);
 void setupBuffers();
 
-int sizing = 180;
+int sizing = 190;
 
 //--- 필요한 변수 선언
 GLint width, height;
@@ -273,12 +273,11 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 						nextx, nexty, 0.0f, 1.0f, 1.0f, 1.0f
 				});
 
-			angle += 0.1f;
-			
+			angle += 0.1f * kkk;
 			radius += 1;
 		}
 
-		//kkk *= -1;
+		kkk *= -1;
 		x += 2 * (newx - x);
 		y += 2 * (newy - y);
 
@@ -293,7 +292,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 						nextx, nexty, 0.0f, 1.0f, 1.0f, 1.0f
 				});
 
-			angle -= 0.1f;
+			angle -= 0.1f * kkk;
 			radius -= 1;
 		}
 	}
@@ -349,8 +348,16 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 			//totalTriangles += quadrantsize[i];
 		}
 		glPointSize(3.0f);
-		for (int j = 0; j < spiralnum; ++j) {
+
+		if (!outputmode) {
+			for (int j = 0; j < spiralnum; ++j) {
 				glDrawArrays(GL_POINTS, sizing * 2 * j, pointcount);
+			}
+		}
+		else {			
+			for (int j = 0; j < spiralnum; ++j) {
+				glDrawArrays(GL_LINE_STRIP, sizing * 2 * j, pointcount);
+			}
 		}
 	}
 
@@ -375,7 +382,7 @@ void Keyboard(unsigned char key, int x, int y) {
 		break;
 	case 'p':
 	{
-		outputmode = 0; // fill 모드
+		outputmode = 0; // point 모드
 	}
 	break;
 	case 'l':
@@ -494,6 +501,7 @@ void Mouse(int button, int state, int x, int y)
 	case GLUT_LEFT_BUTTON:
 	{
 		if (state == GLUT_DOWN) {// 도형선택
+			pointcount = 0;
 			spiralnum = 1;
 			bgcolorchange();
 			for (int i = 0; i < 5; ++i) {

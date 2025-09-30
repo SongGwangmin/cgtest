@@ -39,7 +39,8 @@ GLuint shaderProgramID; //--- 세이더 프로그램 이름
 GLuint vertexShader; //--- 버텍스 세이더 객체
 GLuint fragmentShader; //--- 프래그먼트 세이더 객체
 GLuint VAO, VBO; //--- 버텍스 배열 객체, 버텍스 버퍼 객체
-int nowdrawstate = 0; // 0: point, 1: line, 2: triangle, 3: rectangle
+
+GLfloat rColor, gColor, bColor;
 
 int outputmode = 0; // 0: fill, 1: line
 
@@ -76,6 +77,11 @@ ret morph(ret& after, ret& before) {
 	return after;
 }
 
+void bgcolorchange() {
+	rColor = dis(gen) / 256.0f;
+	gColor = dis(gen) / 256.0f;
+	bColor = dis(gen) / 256.0f;
+}
 
 bool ptinrect(int x, int y, ret& rect) {
 	return (x >= rect.x1 && x <= rect.x2 && y >= rect.y1 && y <= rect.y2);
@@ -225,9 +231,8 @@ GLuint make_shaderProgram()
 
 GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 {
-	GLfloat rColor, gColor, bColor;
-	rColor = gColor = 0.0;
-	bColor = 1.0; //--- 배경색을 파랑색으로 설정
+	
+	
 	glClearColor(rColor, gColor, bColor, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 	glUseProgram(shaderProgramID);
@@ -235,7 +240,21 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 	// 각 사각형을 6개 정점으로 변환한 전체 데이터
 	std::vector<float> allVertices;
 
+	float angle = 2.0f;
 
+	int x = width / 2;
+	int y = height / 2;
+	int radius = 0;
+
+	float nextx = (float)x + radius * cos(angle);
+	float nexty = (float)y + radius * sin(angle);
+
+	nextx = (nextx - x) / x;
+	nexty = (nexty - y) / y;
+
+	allVertices.insert(allVertices.end(), {
+				nextx, nexty, 0.0f, 1.0f, 1.0f, 1.0f
+		});
 
 	/*for (int i = 0; i < 4; ++i) { //사분면 초기화
 		for (int j = 0; j < quadrantsize[i]; ++j) {
@@ -285,10 +304,10 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 
 		int totalTriangles = 0;
 		for (int i = 0; i < 4; ++i) {
-			totalTriangles += quadrantsize[i];
+			//totalTriangles += quadrantsize[i];
 		}
 
-		glDrawArrays(GL_TRIANGLES, 0, totalTriangles * 3);
+		glDrawArrays(GL_POINTS, 0, 1);
 	}
 
 
@@ -322,7 +341,7 @@ void Keyboard(unsigned char key, int x, int y) {
 	break;
 	case 'c':
 	{
-		inittriangle(); // 사분면 초기화
+		bgcolorchange();
 	}
 	break;
 	

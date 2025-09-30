@@ -34,6 +34,8 @@ GLvoid drawScene();
 GLvoid Reshape(int w, int h);
 void setupBuffers();
 
+int sizing = 180;
+
 //--- 필요한 변수 선언
 GLint width, height;
 GLuint shaderProgramID; //--- 세이더 프로그램 이름
@@ -45,6 +47,8 @@ GLfloat rColor, gColor, bColor;
 
 int outputmode = 0; // 0: fill, 1: line
 
+int pointcount = 0;
+
 int spiralnum = 1;
 //--- 메인 함수
 
@@ -53,7 +57,7 @@ typedef struct RET {
 	GLdouble Rvalue = 0.0;
 	GLdouble Gvalue = 0.0;
 	GLdouble Bvalue = 0.0;
-	int movestyle = 0; // 0: 고정, 1: 튕기기, 2: 좌우 지그재구, 3: 사각 스파이럴 4: 원 스파이럴
+	int movestyle = 1; // 0: 고정, 1: 튕기기, 2: 좌우 지그재구, 3: 사각 스파이럴 4: 원 스파이럴
 	GLdouble angle = 0.0; // 시작 각도
 	int xdir = 0; // x 방향 이동 (1 or -1) / 원 스파이럴 시에는 x중앙값
 	int ydir = 0; // y 방향 이동 (1 or -1) / 원 스파이럴 시에는 y중앙값
@@ -253,6 +257,8 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 		float newx;
 		float newy;
 
+		int kkk = spiraldata[j].movestyle;
+
 		for (int i = 0; angle < 3.14 * 2 * 3; ++i) { // 한개당 168개의 점
 			float nextx = x + (radius / 2) * cos(angle + spiraldata[j].angle);
 			float nexty = y + (radius / 2) * sin(angle + spiraldata[j].angle);
@@ -268,10 +274,11 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 				});
 
 			angle += 0.1f;
+			
 			radius += 1;
 		}
 
-
+		//kkk *= -1;
 		x += 2 * (newx - x);
 		y += 2 * (newy - y);
 
@@ -342,7 +349,9 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 			//totalTriangles += quadrantsize[i];
 		}
 		glPointSize(3.0f);
-		glDrawArrays(GL_POINTS, 0, 178 * 2 * spiralnum);
+		for (int j = 0; j < spiralnum; ++j) {
+				glDrawArrays(GL_POINTS, sizing * 2 * j, pointcount);
+		}
 	}
 
 
@@ -382,14 +391,14 @@ void Keyboard(unsigned char key, int x, int y) {
 	break;
 	case '1':
 	{
-
+		pointcount = 0;
 		spiralnum = 1;
 		bgcolorchange();
 		for (int i = 0; i < 5; ++i) {
 			spiraldata[i].x1 = posdis(gen);
 			spiraldata[i].y1 = posdis(gen);
 			spiraldata[i].angle = degreedis(gen) / 100.0f;
-			if (dis(gen) / 2) {
+			if (dis(gen) % 2) {
 				spiraldata[i].movestyle = 1;
 			}
 			else {
@@ -400,13 +409,14 @@ void Keyboard(unsigned char key, int x, int y) {
 	break;
 	case '2':
 	{
+		pointcount = 0;
 		spiralnum = 2;
 		bgcolorchange();
 		for (int i = 0; i < 5; ++i) {
 			spiraldata[i].x1 = posdis(gen);
 			spiraldata[i].y1 = posdis(gen);
 			spiraldata[i].angle = degreedis(gen) / 100.0f;
-			if (dis(gen) / 2) {
+			if (dis(gen) % 2) {
 				spiraldata[i].movestyle = 1;
 			}
 			else {
@@ -417,6 +427,7 @@ void Keyboard(unsigned char key, int x, int y) {
 	break;
 	case '3':
 	{	
+		pointcount = 0;
 		spiralnum = 3;
 
 		bgcolorchange();
@@ -424,7 +435,7 @@ void Keyboard(unsigned char key, int x, int y) {
 			spiraldata[i].x1 = posdis(gen);
 			spiraldata[i].y1 = posdis(gen);
 			spiraldata[i].angle = degreedis(gen) / 100.0f;
-			if (dis(gen) / 2) {
+			if (dis(gen) % 2) {
 				spiraldata[i].movestyle = 1;
 			}
 			else {
@@ -435,13 +446,14 @@ void Keyboard(unsigned char key, int x, int y) {
 	break;
 	case '4':
 	{
+		pointcount = 0;
 		spiralnum = 4;
 		bgcolorchange();
 		for (int i = 0; i < 5; ++i) {
 			spiraldata[i].x1 = posdis(gen);
 			spiraldata[i].y1 = posdis(gen);
 			spiraldata[i].angle = degreedis(gen) / 100.0f;
-			if (dis(gen) / 2) {
+			if (dis(gen) % 2) {
 				spiraldata[i].movestyle = 1;
 			}
 			else {
@@ -452,13 +464,14 @@ void Keyboard(unsigned char key, int x, int y) {
 	break;
 	case '5':
 	{
+		pointcount = 0;
 		spiralnum = 5;
 		bgcolorchange();
 		for (int i = 0; i < 5; ++i) {
 			spiraldata[i].x1 = posdis(gen);
 			spiraldata[i].y1 = posdis(gen);
 			spiraldata[i].angle = degreedis(gen) / 100.0f;
-			if (dis(gen) / 2) {
+			if (dis(gen) % 2) {
 				spiraldata[i].movestyle = 1;
 			}
 			else {
@@ -481,7 +494,19 @@ void Mouse(int button, int state, int x, int y)
 	case GLUT_LEFT_BUTTON:
 	{
 		if (state == GLUT_DOWN) {// 도형선택
-			
+			spiralnum = 1;
+			bgcolorchange();
+			for (int i = 0; i < 5; ++i) {
+				spiraldata[i].x1 = x;
+				spiraldata[i].y1 = y;
+				spiraldata[i].angle = degreedis(gen) / 100.0f;
+				if (dis(gen) % 2) {
+					spiraldata[i].movestyle = 1;
+				}
+				else {
+					spiraldata[i].movestyle = -1;
+				}
+			}
 		}
 		else if (state == GLUT_UP) {
 
@@ -506,7 +531,12 @@ void Mouse(int button, int state, int x, int y)
 
 void TimerFunction(int value)
 {
-
+	if (pointcount < sizing * 2) {
+		pointcount += 2;
+	}
+	else {
+		pointcount = sizing * 2;
+	}
 
 	glutPostRedisplay();
 	glutTimerFunc(25, TimerFunction, 1);

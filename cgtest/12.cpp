@@ -183,8 +183,8 @@ void setupBuffers() {
 
 void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 {
-	width = 500;
-	height = 500;
+	width = 800;
+	height = 800;
 
 	//--- 윈도우 생성하기
 	glutInit(&argc, argv);

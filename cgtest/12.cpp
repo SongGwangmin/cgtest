@@ -114,6 +114,46 @@ public:
 	int changeShape(int targetshape) {
 		if ((membershape + 1) % 4 == targetshape) {
 			printf("activate\n");
+
+			bool chaging = false;
+
+			for(int poly = 0; poly < 3; ++poly) {
+				for (int vert = 0; vert < 3; ++vert) {
+					for (int pos = 0; pos < 2; ++pos) {
+						if (vertexpos[poly][vert][pos] == GuideFrame[targetshape][poly][vert][pos]) {
+
+						}
+						else {
+							chaging = true; // 하나라도 변경 중이면 membershape를 변경하지 않는다
+
+							if (vertexpos[poly][vert][pos] < GuideFrame[targetshape][poly][vert][pos]) { 
+								// GuideFrame이 더 클 때엔 증가하고 넘어가면 같은 값을 준다
+
+								vertexpos[poly][vert][pos] += 5;
+								if (vertexpos[poly][vert][pos] > GuideFrame[targetshape][poly][vert][pos]) {
+									vertexpos[poly][vert][pos] = GuideFrame[targetshape][poly][vert][pos];
+								}
+
+							}
+							else {
+								vertexpos[poly][vert][pos] -= 5;
+								if (vertexpos[poly][vert][pos] < GuideFrame[targetshape][poly][vert][pos]) {
+									vertexpos[poly][vert][pos] = GuideFrame[targetshape][poly][vert][pos];
+								}
+							}
+
+						}
+					}
+				}
+			}
+
+			if (chaging) {
+
+			}
+			else {
+				membershape = targetshape;
+			}
+
 			return 1;
 		}
 		else {

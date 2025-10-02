@@ -515,23 +515,26 @@ void Keyboard(unsigned char key, int x, int y) {
 		break;
 	case 'p': // 오각형 -> 선
 	{
-		selectedshape = line;
+		if(selectedshape == -1)
+			selectedshape = line;
 	}
 	break;
 	case 'l': // 선 -> 삼각형
 	{
-		
-		selectedshape = triangle;
+		if (selectedshape == -1)
+			selectedshape = triangle;
 	}
 	break;
 	case 't': // 삼각형 -> 사각형
 	{
-		selectedshape = rectangle;
+		if (selectedshape == -1)
+			selectedshape = rectangle;
 	}
 	break;
 	case 'r': // 사각형 -> 오각형
 	{
-		selectedshape = pentagon;
+		if (selectedshape == -1)
+			selectedshape = pentagon;
 	}
 	break;
 	

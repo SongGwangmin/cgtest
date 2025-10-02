@@ -131,16 +131,16 @@ public:
 
 polygon activePolygon[4] = {
 	polygon(0, 0, width / 2, height / 2, 
-		dis(gen) / 100, dis(gen) / 100, dis(gen) / 256, line), // (0,0) ~ (400, 400)
+		dis(gen) / 256.0f, dis(gen) / 256.0f, dis(gen) / 256.0f, line), // (0,0) ~ (400, 400)
 
 	polygon(width / 2, 0, width, height / 2, 
-		dis(gen) / 100, dis(gen) / 100, dis(gen) / 256, triangle), // (400, 0) ~ (800, 400)
+		dis(gen) / 256.0f, dis(gen) / 256.0f, dis(gen) / 256.0f, triangle), // (400, 0) ~ (800, 400)
 
 	polygon(0, height / 2, width / 2, height, 
-		dis(gen) / 100, dis(gen) / 100, dis(gen) / 256, rectangle), // (0, 400) ~ (400, 800)
+		dis(gen) / 256.0f, dis(gen) / 256.0f, dis(gen) / 256.0f, rectangle), // (0, 400) ~ (400, 800)
 
 	polygon(width / 2, height / 2, width, height, 
-		dis(gen) / 100, dis(gen) / 100, dis(gen) / 256, pentagon) // (400, 400) ~ (800, 800)
+		dis(gen) / 256.0f, dis(gen) / 256.0f, dis(gen) / 256.0f, pentagon) // (400, 400) ~ (800, 800)
 
 };
 

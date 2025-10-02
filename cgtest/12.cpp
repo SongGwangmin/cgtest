@@ -15,6 +15,7 @@
 #define triangle 1
 #define rectangle 2
 #define pentagon 3
+#define polygonwidth 100
 
 std::random_device rd;
 
@@ -125,7 +126,34 @@ public:
 	}
 
 	void sendvertexdata(std::vector<float>& vbo) {
+		GLdouble centerx = (x1 + x2) / 2;
+		GLdouble centery = (y1 + y2) / 2;
 
+		centerx -= polygonwidth / 2;
+		centery -= polygonwidth / 2;
+
+		for (int poly = 0; poly < 3; ++poly) {
+			for (int vert = 0; vert < 3; ++vert) {
+				float virtualx = vertexpos[poly][vert][0] + centerx;
+				float virtualy = vertexpos[poly][vert][1] + centery;
+
+				float finalx = (virtualx - (width / 2)) / (width / 2);
+				float finaly = (virtualy - (height / 2)) / -(height / 2);
+
+				vbo.insert(vbo.end(), {
+					finalx, finaly, 0.0f, (float)Rvalue, (float)Gvalue, (float)Bvalue
+					});
+			}
+		}
+
+		/*
+		allVertices.insert(allVertices.end(), {
+				x2, y2, 0.0f, r, g, b,  // (x1, y1)
+				x1, y1, 0.0f, r, g, b,  // (x1, y2)
+				x1, y2, 0.0f, r, g, b   // (x2, y2)
+				});
+		
+		*/
 	}
 };
 
@@ -309,6 +337,11 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 	// 각 사각형을 6개 정점으로 변환한 전체 데이터
 	std::vector<float> allVertices;
 
+	for (polygon& poly : activePolygon) {
+		poly.sendvertexdata(allVertices);
+	}
+
+	
 	/*for (int i = 0; i < nowdrawsize; i++) {
 		ret after;
 		morph(after, showingrect[i]); // morph 변환 적용
@@ -358,6 +391,13 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 			allVertices.data(), GL_DYNAMIC_DRAW);
 
 		// 모든 사각형을 한 번에 그리기 (각 사각형당 6개 정점)
+
+	}
+
+	for (int i = 0; i < 4; ++i) {
+		glLineWidth(5.0f);
+		glDrawArrays(GL_LINES, i * 9, 9);
+		glDrawArrays(GL_TRIANGLES, i * 9, 9);
 
 	}
 

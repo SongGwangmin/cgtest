@@ -110,7 +110,14 @@ public:
 	}
 	
 	int changeShape(int targetshape) {
-		
+		if ((membershape + 1) % 4 == targetshape) {
+			printf("activate\n");
+			return 1;
+		}
+		else {
+			printf("incorrect input, you need to send %d\n", (membershape + 1) % 4);
+			return 0;
+		}
 	}
 
 	void resetShape(int targetshape) {
@@ -531,6 +538,21 @@ void TimerFunction(int value)
 	else {
 		pointcount = sizing * 2;
 	}*/
+	int animationcheck = 0;
+
+	for (polygon& poly : activePolygon) {
+		if (poly.changeShape(5)) {
+			animationcheck = 1;
+		}
+	}
+
+	if (animationcheck) {
+		printf("someone change position. so, you can't move these\n");
+	}
+	else {
+		printf("no one change position. you can move these\n");
+	}
+
 	printf("timer is playing now\nq");
 	glutPostRedisplay();
 	glutTimerFunc(25, TimerFunction, 1);

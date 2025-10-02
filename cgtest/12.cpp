@@ -11,10 +11,10 @@
 #include <vector>
 
 #define MAXRECT 10 // 최대 사각형 개수
-#define point 0
-#define line 1
-#define triangle 2
-#define rectangle 3
+#define line 0
+#define triangle 1
+#define rectangle 2
+#define pentagon 3
 
 std::random_device rd;
 
@@ -33,7 +33,7 @@ GLvoid Reshape(int w, int h);
 void setupBuffers();
 
 //--- 필요한 변수 선언
-GLint width, height;
+GLint width = 800, height = 800;
 GLuint shaderProgramID; //--- 세이더 프로그램 이름
 GLuint vertexShader; //--- 버텍스 세이더 객체
 GLuint fragmentShader; //--- 프래그먼트 세이더 객체
@@ -109,7 +109,7 @@ public:
 	}
 	
 	int changeShape(int targetshape) {
-
+		
 	}
 
 	void resetShape(int targetshape) {
@@ -121,6 +121,20 @@ public:
 	}
 };
 
+polygon activePolygon[4] = {
+	polygon(0, 0, width / 2, height / 2, 
+		dis(gen) / 100, dis(gen) / 100, dis(gen) / 256, line), // (0,0) ~ (400, 400)
+
+	polygon(width / 2, 0, width, height / 2, 
+		dis(gen) / 100, dis(gen) / 100, dis(gen) / 256, triangle), // (400, 0) ~ (800, 400)
+
+	polygon(0, height / 2, width / 2, height, 
+		dis(gen) / 100, dis(gen) / 100, dis(gen) / 256, rectangle), // (0, 400) ~ (400, 800)
+
+	polygon(width / 2, height / 2, width, height, 
+		dis(gen) / 100, dis(gen) / 100, dis(gen) / 256, pentagon) // (400, 400) ~ (800, 800)
+
+};
 
 ret morph(ret& after, ret& before) {
 	int halfwidth = width / 2;
@@ -183,8 +197,8 @@ void setupBuffers() {
 
 void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 {
-	width = 800;
-	height = 800;
+	//width = 800;
+	//height = 800;
 
 	//--- 윈도우 생성하기
 	glutInit(&argc, argv);
@@ -409,7 +423,7 @@ void Keyboard(unsigned char key, int x, int y) {
 		break;
 	case 'p':
 	{
-		nowdrawstate = point;
+		//nowdrawstate = point;
 	}
 	break;
 	case 'l':

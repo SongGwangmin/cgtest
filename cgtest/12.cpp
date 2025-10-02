@@ -166,10 +166,12 @@ public:
 		for (int poly = 0; poly < 3; ++poly) {
 			for (int vert = 0; vert < 3; ++vert) {
 				for (int pos = 0; pos < 2; ++pos) {
-					vertexpos[poly][vert][pos] = GuideFrame[membershape][poly][vert][pos];
+					vertexpos[poly][vert][pos] = GuideFrame[targetshape][poly][vert][pos];
 				}
 			}
 		}
+
+		membershape = targetshape;
 
 		Rvalue = dis(gen) / 256.0f;
 		Gvalue = dis(gen) / 256.0f;

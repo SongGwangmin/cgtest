@@ -31,6 +31,7 @@ GLuint make_shaderProgram();
 GLvoid drawScene();
 GLvoid Reshape(int w, int h);
 void setupBuffers();
+void TimerFunction(int value);
 
 //--- 필요한 변수 선언
 GLint width = 800, height = 800;
@@ -221,7 +222,7 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	glutDisplayFunc(drawScene); //--- 출력 콜백 함수
 	glutReshapeFunc(Reshape);
 
-	
+	glutTimerFunc(25, TimerFunction, 1);
 
 	glutKeyboardFunc(Keyboard);
 	glutMouseFunc(Mouse);
@@ -520,4 +521,17 @@ void Mouse(int button, int state, int x, int y)
 	default:
 		break;
 	}
+}
+
+void TimerFunction(int value)
+{
+	/*if (pointcount < sizing * 2) {
+		pointcount += 2;
+	}
+	else {
+		pointcount = sizing * 2;
+	}*/
+	printf("timer is playing now\nq");
+	glutPostRedisplay();
+	glutTimerFunc(25, TimerFunction, 1);
 }

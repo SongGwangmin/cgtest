@@ -121,11 +121,21 @@ public:
 		}
 	}
 
-	void resetShape(int targetshape) {
+	void resetShape(int targetshape) {	//	강제로 모양변경
+		for (int poly = 0; poly < 3; ++poly) {
+			for (int vert = 0; vert < 3; ++vert) {
+				for (int pos = 0; pos < 2; ++pos) {
+					vertexpos[poly][vert][pos] = GuideFrame[membershape][poly][vert][pos];
+				}
+			}
+		}
 
+		Rvalue = dis(gen) / 256.0f;
+		Gvalue = dis(gen) / 256.0f;
+		Bvalue = dis(gen) / 256.0f;
 	}
 
-	void sendvertexdata(std::vector<float>& vbo) {
+	void sendvertexdata(std::vector<float>& vbo) { // vbo에 정점 데이터 추가
 		GLdouble centerx = (x1 + x2) / 2;
 		GLdouble centery = (y1 + y2) / 2;
 
@@ -146,14 +156,7 @@ public:
 			}
 		}
 
-		/*
-		allVertices.insert(allVertices.end(), {
-				x2, y2, 0.0f, r, g, b,  // (x1, y1)
-				x1, y1, 0.0f, r, g, b,  // (x1, y2)
-				x1, y2, 0.0f, r, g, b   // (x2, y2)
-				});
 		
-		*/
 	}
 };
 
@@ -469,73 +472,36 @@ void Keyboard(unsigned char key, int x, int y) {
 	case 'q': // 프로그램 종료
 		glutLeaveMainLoop();
 		break;
-	case 'p':
+	case 'p': // 오각형 -> 선
 	{
 		//nowdrawstate = point;
 	}
 	break;
-	case 'l':
+	case 'l': // 선 -> 삼각형
 	{
 		nowdrawstate = line;
 	}
 	break;
-	case 't':
+	case 't': // 삼각형 -> 사각형
 	{
 		nowdrawstate = triangle;
 	}
 	break;
-	case 'r':
+	case 'r': // 사각형 -> 오각형
 	{
 		nowdrawstate = rectangle;
 	}
 	break;
-	// WASD 키로 선택된 사각형 이동
-	case 'w': // 위로 이동
+	
+	case 'a': // 강제로 기본으로 변경
 	{
-		
+		activePolygon[0].resetShape(line);
+		activePolygon[1].resetShape(triangle);
+		activePolygon[2].resetShape(rectangle);
+		activePolygon[3].resetShape(pentagon);
 	}
 	break;
-	case 's': // 아래로 이동
-	{
-		
-	}
-	break;
-	case 'a': // 왼쪽으로 이동
-	{
-
-	}
-	break;
-	case 'd': // 오른쪽으로 이동
-	{
-		
-	}
-	break;
-	// IJKL 키로 선택된 사각형 대각선 이동
-	case 'i': // 좌상단으로 이동 (위 + 왼쪽)
-	{
-		
-	}
-	break;
-	case 'j': // 좌하단으로 이동 (아래 + 왼쪽)
-	{
-		
-	}
-	break;
-	case 'k': // 우하단으로 이동 (아래 + 오른쪽)
-	{
-		
-	}
-	break;
-	case 'o': // 우상단으로 이동 (위 + 오른쪽) - 'l'의 원래 기능 변경됨 - change to 'o'
-	{
-		
-	}
-	break;
-	/*case 'r': // 리셋: 모든 것을 초기 상태로 되돌리기
-	{
-	   nowdrawsize = 0; // 모든 사각형 제거
-	}
-		break;*/
+	
 	default:
 		break;
 	}

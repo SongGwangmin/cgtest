@@ -41,6 +41,7 @@ GLuint vertexShader; //--- 버텍스 세이더 객체
 GLuint fragmentShader; //--- 프래그먼트 세이더 객체
 GLuint VAO, VBO; //--- 버텍스 배열 객체, 버텍스 버퍼 객체
 int nowdrawstate = 0; // 0: point, 1: line, 2: triangle, 3: rectangle
+int selectedshape = -1; // 선택된 도형 인덱스
 //--- 메인 함수
 
 float GuideFrame[4][3][3][2] = {
@@ -331,7 +332,7 @@ GLuint make_shaderProgram()
 GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 {
 	GLfloat rColor, gColor, bColor;
-	rColor = gColor = 0.0;
+	rColor = gColor = 1.0;
 	bColor = 1.0; //--- 배경색을 파랑색으로 설정
 	glClearColor(rColor, gColor, bColor, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
@@ -474,22 +475,23 @@ void Keyboard(unsigned char key, int x, int y) {
 		break;
 	case 'p': // 오각형 -> 선
 	{
-		//nowdrawstate = point;
+		selectedshape = line;
 	}
 	break;
 	case 'l': // 선 -> 삼각형
 	{
-		nowdrawstate = line;
+		
+		selectedshape = triangle;
 	}
 	break;
 	case 't': // 삼각형 -> 사각형
 	{
-		nowdrawstate = triangle;
+		selectedshape = rectangle;
 	}
 	break;
 	case 'r': // 사각형 -> 오각형
 	{
-		nowdrawstate = rectangle;
+		selectedshape = pentagon;
 	}
 	break;
 	
@@ -499,6 +501,7 @@ void Keyboard(unsigned char key, int x, int y) {
 		activePolygon[1].resetShape(triangle);
 		activePolygon[2].resetShape(rectangle);
 		activePolygon[3].resetShape(pentagon);
+		selectedshape = -1;
 	}
 	break;
 	
@@ -547,16 +550,17 @@ void TimerFunction(int value)
 	int animationcheck = 0;
 
 	for (polygon& poly : activePolygon) {
-		if (poly.changeShape(-1)) {
+		if (poly.changeShape(selectedshape)) {
 			animationcheck = 1;
 		}
 	}
 
 	if (animationcheck) {
-		printf("someone change position. so, you can't move these\n");
+		printf("someone change position. %d\n", selectedshape);
 	}
 	else {
 		printf("no one change position. you can move these\n");
+		selectedshape = -1;
 	}
 
 	printf("timer is playing now\nq");

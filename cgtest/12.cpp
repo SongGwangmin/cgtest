@@ -41,6 +41,36 @@ GLuint VAO, VBO; //--- 버텍스 배열 객체, 버텍스 버퍼 객체
 int nowdrawstate = 0; // 0: point, 1: line, 2: triangle, 3: rectangle
 //--- 메인 함수
 
+float GuideFrame[4][3][3][2] = {
+	// [0] 선 (3개, 각 3점)
+	{
+		{ {0,0}, {100,100}, {50,50} },
+		{ {0,0}, {100,100}, {50,50} },
+		{ {0,0}, {100,100}, {50,50} }
+	},
+
+	// [1] 삼각형 (3개)
+	{
+		{ {100,100}, {50,0}, {0,100} },
+		{ {100,100}, {50,0}, {0,100} },
+		{ {100,100}, {50,0}, {0,100} }
+	},
+
+	// [2] 사각형 → 삼각형 분해 3개
+	{
+		{ {100,100}, {0,0}, {0,100} },
+		{ {100,100}, {0,100}, {100,0} },
+		{ {100,100}, {100,0}, {0,0} }
+	},
+
+	// [3] 오각형 → 삼각형 분해 3개
+	{
+		{ {50,0}, {0,40}, {100,40} },
+		{ {0,40}, {20,100}, {100,40} },
+		{ {20,100}, {80,100}, {100,40} }
+	}
+};
+
 typedef struct RET {
 	GLdouble x1, y1, x2, y2;
 	GLdouble Rvalue = 0.0;
@@ -49,6 +79,47 @@ typedef struct RET {
 	int level = 3;
 } ret;
 
+
+// 도형 저장하는 클래스
+class polygon {
+private:
+	float vertexpos[3][3][2];
+	bool needchange;
+	GLdouble Rvalue = 0.0;
+	GLdouble Gvalue = 0.0;
+	GLdouble Bvalue = 0.0;
+	GLdouble x1, y1, x2, y2;
+	int membershape; //  0: line, 1: triangle, 2: rectangle, 3: pentagon
+
+public:
+	//std::vector<ret> rects;
+	polygon(GLdouble x1, GLdouble y1, GLdouble x2, GLdouble y2, 
+		GLdouble rvalue, GLdouble gvalue, GLdouble bvalue, int membershape) 
+		: x1(x1), y1(y1), x2(x2), y2(y2), Rvalue(rvalue), Gvalue(gvalue), Bvalue(bvalue), membershape(membershape){
+		
+		needchange = false;
+
+		for (int poly = 0; poly < 3; ++poly) {
+			for (int vert = 0; vert < 3; ++vert) {
+				for (int pos = 0; pos < 2; ++pos) {
+					vertexpos[poly][vert][pos] = GuideFrame[membershape][poly][vert][pos];
+				}
+			}
+		}
+	}
+	
+	int changeShape(int targetshape) {
+
+	}
+
+	void resetShape(int targetshape) {
+
+	}
+
+	void sendvertexdata(std::vector<float>& vbo) {
+
+	}
+};
 
 
 ret morph(ret& after, ret& before) {

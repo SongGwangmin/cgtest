@@ -60,7 +60,7 @@ float GuideFrame[4][3][3][2] = {
 	// [2] 사각형 → 삼각형 분해 3개
 	{
 		{ {100,100}, {0,0}, {0,100} },
-		{ {100,100}, {0,100}, {100,0} },
+		{ {100,100}, {0, 0}, {0,100} },
 		{ {100,100}, {100,0}, {0,0} }
 	},
 
@@ -541,7 +541,7 @@ void TimerFunction(int value)
 	int animationcheck = 0;
 
 	for (polygon& poly : activePolygon) {
-		if (poly.changeShape(5)) {
+		if (poly.changeShape(-1)) {
 			animationcheck = 1;
 		}
 	}

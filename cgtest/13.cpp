@@ -44,7 +44,12 @@ GLuint fragmentShader; //--- 프래그먼트 세이더 객체
 GLuint VAO, VBO; //--- 버텍스 배열 객체, 버텍스 버퍼 객체
 int nowdrawstate = 0; // 0: point, 1: line, 2: triangle, 3: rectangle
 int selectedshape = -1; // 선택된 도형 인덱스
-//--- 메인 함수
+
+// Forward declaration
+class polygon; 
+std::list<polygon> polygonmap;
+std::list<polygon>::iterator mouse_dest; // 마우스로 선택된 polygon 저장
+bool has_selected = false; // mouse_dest가 유효한지 확인
 
 float GuideFrame[5][3][3][2] = {
 	{
@@ -212,6 +217,28 @@ public:
 		needmove = 1;
 	}
 
+	void dragmove(int movex, int movey) {
+		x1 += movex;
+		x2 += movex;
+		y1 += movey;
+		y2 += movey;
+		if (x1 < 0) {
+			x1 = 0;
+			x2 = polygonwidth;
+		}
+		if (x2 > width) {
+			x2 = width;
+			x1 = width - polygonwidth;
+		}
+		if (y1 < 0) {
+			y1 = 0;
+			y2 = polygonwidth;
+		}
+		if (y2 > height) {
+			y2 = height;
+			y1 = height - polygonwidth;
+		}
+	}
 
 	void resetShape(int targetshape) {	//	강제로 모양변경
 		for (int poly = 0; poly < 3; ++poly) {
@@ -252,6 +279,10 @@ public:
 
 
 	}
+
+	bool ptinrect(int x, int y) {
+		return (x >= x1 && x <= x2 && y >= y1 && y <= y2);
+	}
 };
 
 polygon activePolygon[4] = {
@@ -268,8 +299,6 @@ polygon activePolygon[4] = {
 		dis(gen) / 256.0f, dis(gen) / 256.0f, dis(gen) / 256.0f, pentagon) // (400, 400) ~ (800, 800)
 
 };
-
-
 
 bool ptinrect(int x, int y, ret& rect) {
 	return (x >= rect.x1 && x <= rect.x2 && y >= rect.y1 && y <= rect.y2);
@@ -334,6 +363,26 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 
 	// 버퍼 설정
 	setupBuffers();
+
+	// polygonmap에 5종류 도형을 각각 3개씩 추가
+	for (int shape = point; shape <= pentagon; ++shape) {
+		for (int i = 0; i < 3; ++i) {
+			GLdouble x1 = posdis(gen);
+			GLdouble y1 = posdis(gen);
+			GLdouble x2, y2;
+			
+			if (shape == point) {
+				x2 = x1 + 20;
+				y2 = y1 + 20;
+			} else {
+				x2 = x1 + 100;
+				y2 = y1 + 100;
+			}
+			
+			polygonmap.emplace_back(x1, y1, x2, y2,
+				dis(gen) / 256.0f, dis(gen) / 256.0f, dis(gen) / 256.0f, shape);
+		}
+	}
 
 	//--- 세이더 프로그램 만들기
 	glutDisplayFunc(drawScene); //--- 출력 콜백 함수
@@ -419,10 +468,10 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 	// 각 사각형을 6개 정점으로 변환한 전체 데이터
 	std::vector<float> allVertices;
 
-	for (polygon& poly : activePolygon) {
-		poly.sendvertexdata(allVertices);
+	
+	for (auto poly = polygonmap.begin(); poly != polygonmap.end(); ++poly) {
+		poly->sendvertexdata(allVertices);
 	}
-
 
 	/*for (int i = 0; i < nowdrawsize; i++) {
 		ret after;
@@ -476,9 +525,9 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 
 	}
 
-	for (int i = 0; i < 4; ++i) {
-		//glLineWidth(5.0f);
-		//glDrawArrays(GL_LINES, i * 9, 9);
+	for (int i = 0; i < 20; ++i) {
+		glLineWidth(2.0f);
+		glDrawArrays(GL_LINES, i * 9, 9);
 		glDrawArrays(GL_TRIANGLES, i * 9, 9);
 
 	}
@@ -551,7 +600,19 @@ void Mouse(int button, int state, int x, int y)
 	case GLUT_LEFT_BUTTON:
 	{
 		if (state == GLUT_DOWN) {// 도형선택
-
+			// polygonmap에서 클릭된 위치에 있는 polygon 찾기
+			has_selected = false; // 초기화
+			for (auto it = polygonmap.begin(); it != polygonmap.end(); ++it) {
+				if (it->ptinrect(x, y)) {
+					mouse_dest = it;
+					has_selected = true;
+					printf("polygon selected at (%d, %d)\n", x, y);
+					break;
+				}
+			}
+			if (!has_selected) {
+				printf("no polygon selected at (%d, %d)\n", x, y);
+			}
 		}
 		else if (state == GLUT_UP) {
 
@@ -582,21 +643,12 @@ void TimerFunction(int value)
 	}*/
 	int animationcheck = 0;
 
-	for (polygon& poly : activePolygon) {
-		if (poly.changeShape(selectedshape)) {
-			animationcheck = 1;
-		}
+	for (auto poly = polygonmap.begin(); poly != polygonmap.end(); ++poly) {
+		poly->update();
 	}
 
-	if (animationcheck) {
-		printf("someone change position. %d\n", selectedshape);
-	}
-	else {
-		printf("no one change position. you can move these\n");
-		selectedshape = -1;
-	}
 
-	printf("timer is playing now\nq");
+	//printf("timer is playing now\nq");
 	glutPostRedisplay();
 	glutTimerFunc(25, TimerFunction, 1);
 }

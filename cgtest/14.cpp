@@ -17,7 +17,7 @@
 #define rectangle 3
 #define pentagon 4
 #define polygonwidth 100
-#define pi 3.141592
+#define pi 3.14
 
 std::random_device rd;
 
@@ -115,34 +115,91 @@ private:
 	float angle = 0.0;
 	float radius = 0.0;
 	int membershape; //  0: line, 1: triangle, 2: rectangle, 3: pentagon
-	int xdir = width / 2; // 중점
-	int ydir = height / 2;
+	int xdir = 400; // 중점
+	int ydir = 400;
 	int needmove = 0;
 	int selected = 0; // mouse 선택되었는지 여부
 
 public:
 	//std::vector<ret> rects;
-	polygon(GLdouble x1, GLdouble y1, GLdouble x2, GLdouble y2,
-		GLdouble rvalue, GLdouble gvalue, GLdouble bvalue, int membershape)
-		: x1(x1), y1(y1), x2(x2), y2(y2), Rvalue(rvalue), Gvalue(gvalue), Bvalue(bvalue), membershape(membershape) {
+	polygon(GLdouble x1, GLdouble y1, GLdouble x2, GLdouble y2, int style)
+		: x1(x1), y1(y1), x2(x2), y2(y2){
 
 		needchange = false;
 
-		/*for (int poly = 0; poly < 3; ++poly) {
-			for (int vert = 0; vert < 3; ++vert) {
-				for (int pos = 0; pos < 2; ++pos) {
-					vertexpos[poly][vert][pos] = GuideFrame[membershape][poly][vert][pos];
-				}
-			}
-		}*/
+		xdir = 400;
+		ydir = 400;
+
+
+
+		GLdouble xhalf = (x1 + x2) / 2;
+		GLdouble yhalf = (y1 + y2) / 2;
+
+		switch (style) {
+		case 1:
+		{
+			vertexpos[0][0] = xhalf;
+			vertexpos[0][1] = y1;
+
+			vertexpos[1][0] = x1;
+			vertexpos[1][1] = y2;
+
+			vertexpos[2][0] = x2;
+			vertexpos[2][1] = y2;
+		}
+			break;
+		case 2:
+		{
+			vertexpos[0][0] = x1;
+			vertexpos[0][1] = yhalf;
+
+			vertexpos[1][0] = x2;
+			vertexpos[1][1] = y2;
+
+			vertexpos[2][0] = x2;
+			vertexpos[2][1] = y1;
+		}
+			break;
+		case 3:
+		{
+			vertexpos[0][0] = xhalf;
+			vertexpos[0][1] = y2;
+
+			vertexpos[1][0] = x1;
+			vertexpos[1][1] = y1;
+
+			vertexpos[2][0] = x2;
+			vertexpos[2][1] = y1;
+		}
+			break;
+		case 4:
+		{
+			vertexpos[0][0] = x2;
+			vertexpos[0][1] = yhalf;
+
+			vertexpos[1][0] = x1;
+			vertexpos[1][1] = y2;
+
+			vertexpos[2][0] = x1;
+			vertexpos[2][1] = y1;
+		}
+			break;
+		}
 	}
 
-	polygon(float radian1, float radian2, float radian3, float length) { // 직각인 꼭짓점부터 반시계로 123
-		angle = radian1;
-		length = radius;
+	/*polygon(float radian, float length) { // 직각인 꼭짓점 각도 나머지는 1/4 * pi씩 증감
+		angle = radian;
+		radius = length;
 
+		vertexpos[0][0] = radius * cos(angle) + xdir;
+		vertexpos[0][1] = radius * sin(angle) + ydir;
 
-	}
+		vertexpos[1][0] = (radius - 100) * cos(angle - pi / 4) + xdir;
+		vertexpos[1][1] = (radius - 100) * sin(angle - pi / 4) + ydir;
+
+		vertexpos[2][0] = (radius - 100) * cos(angle + pi / 4) + xdir;
+		vertexpos[2][1] = (radius - 100) * sin(angle + pi / 4) + ydir;
+	}*/
 
 	int changeShape(int targetshape) {
 		if ((membershape + 1) % 4 == targetshape) {
@@ -150,7 +207,7 @@ public:
 
 			bool chaging = false;
 
-			for (int poly = 0; poly < 3; ++poly) {
+			/*for (int poly = 0; poly < 3; ++poly) {
 				for (int vert = 0; vert < 3; ++vert) {
 					for (int pos = 0; pos < 2; ++pos) {
 						if (vertexpos[poly][vert][pos] == GuideFrame[targetshape][poly][vert][pos]) {
@@ -178,7 +235,7 @@ public:
 						}
 					}
 				}
-			}
+			}*/
 
 			if (chaging) {
 
@@ -248,7 +305,7 @@ public:
 		for (int poly = 0; poly < 3; ++poly) {
 			for (int vert = 0; vert < 3; ++vert) {
 				for (int pos = 0; pos < 2; ++pos) {
-					vertexpos[poly][vert][pos] = GuideFrame[targetshape][poly][vert][pos];
+					//vertexpos[poly][vert][pos] = GuideFrame[targetshape][poly][vert][pos];
 				}
 			}
 		}
@@ -282,13 +339,13 @@ public:
 
 		for (int vert = 0; vert < 3; ++vert) {
 
-			float virtualx = vertexpos[vert][0] + centerx;
-			float virtualy = vertexpos[vert][1] + centery;
+			float virtualx = vertexpos[vert][0];
+			float virtualy = vertexpos[vert][1];
 
-			if (!membershape) {
+			/*if (!membershape) {
 				virtualx = vertexpos[vert][0] + x1;
 				virtualy = vertexpos[vert][1] + y1;
-			}
+			}*/
 
 			float finalx = (virtualx - (width / 2)) / (width / 2);
 			float finaly = (virtualy - (height / 2)) / -(height / 2);
@@ -314,20 +371,7 @@ public:
 	
 };
 
-polygon activePolygon[4] = {
-	polygon(0, 0, width / 2, height / 2,
-		dis(gen) / 256.0f, dis(gen) / 256.0f, dis(gen) / 256.0f, line), // (0,0) ~ (400, 400)
 
-	polygon(width / 2, 0, width, height / 2,
-		dis(gen) / 256.0f, dis(gen) / 256.0f, dis(gen) / 256.0f, triangle), // (400, 0) ~ (800, 400)
-
-	polygon(0, height / 2, width / 2, height,
-		dis(gen) / 256.0f, dis(gen) / 256.0f, dis(gen) / 256.0f, rectangle), // (0, 400) ~ (400, 800)
-
-	polygon(width / 2, height / 2, width, height,
-		dis(gen) / 256.0f, dis(gen) / 256.0f, dis(gen) / 256.0f, pentagon) // (400, 400) ~ (800, 800)
-
-};
 
 bool ptinrect(int x, int y, ret& rect) {
 	return (x >= rect.x1 && x <= rect.x2 && y >= rect.y1 && y <= rect.y2);
@@ -393,6 +437,17 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설�
 
 	// 버퍼 설정
 	setupBuffers();
+
+	polygonmap.emplace_back(polygon(400 - 150, 400 - 300, 400 + 150, 400 - 150, 1));
+	
+	polygonmap.emplace_back(polygon(400 - 150, 400 + 150, 400 + 150, 400 + 300, 3));
+	
+	polygonmap.emplace_back(polygon(400 - 300, 400 - 150, 400 - 150, 400 + 150, 2));
+
+	polygonmap.emplace_back(polygon(400 + 150, 400 - 150, 400 + 300, 400 + 150, 4));
+
+	//polygonmap.emplace_back(polygon(400 - 150, 400 + 150, 400 + 150, 400 + 300, 3));
+
 
 
 	//--- 세이더 프로그램 만들기

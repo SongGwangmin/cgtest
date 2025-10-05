@@ -202,7 +202,6 @@ public:
 	}
 
 	
-
 	int changeShape(int targetshape) {
 		if ((membershape + 1) % 4 == targetshape) {
 			printf("activate\n");

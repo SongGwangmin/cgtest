@@ -109,6 +109,7 @@ typedef struct RET {
 class polygon {
 private:
 	float vertexpos[3][2];
+	float innervertexpos[3][2];
 	bool needchange;
 	GLdouble Rvalue = 0.0;
 	GLdouble Gvalue = 0.0;
@@ -120,7 +121,7 @@ private:
 	int xdir = 400; // 중점
 	int ydir = 400;
 	int needmove = 0;
-	int selected = 0; // mouse 선택되었는지 여부
+	int inner = 0; // mouse 선택되었는지 여부
 
 public:
 	//std::vector<ret> rects;
@@ -148,6 +149,8 @@ public:
 
 			vertexpos[2][0] = x2;
 			vertexpos[2][1] = y2;
+
+
 		}
 			break;
 		case 2:
@@ -199,19 +202,7 @@ public:
 
 	}
 
-	/*polygon(float radian, float length) { // 직각인 꼭짓점 각도 나머지는 1/4 * pi씩 증감
-		angle = radian;
-		radius = length;
-
-		vertexpos[0][0] = radius * cos(angle) + xdir;
-		vertexpos[0][1] = radius * sin(angle) + ydir;
-
-		vertexpos[1][0] = (radius - 100) * cos(angle - pi / 4) + xdir;
-		vertexpos[1][1] = (radius - 100) * sin(angle - pi / 4) + ydir;
-
-		vertexpos[2][0] = (radius - 100) * cos(angle + pi / 4) + xdir;
-		vertexpos[2][1] = (radius - 100) * sin(angle + pi / 4) + ydir;
-	}*/
+	
 
 	int changeShape(int targetshape) {
 		if ((membershape + 1) % 4 == targetshape) {
@@ -274,7 +265,7 @@ public:
 	}
 
 	void setselect(int select) {
-		selected = select;
+		//selected = select;
 	}
 
 	void setmove() {
@@ -292,6 +283,18 @@ public:
 			ydir = 1;
 		}
 		needmove = 1;
+	}
+
+	void innerouterchange() {
+		if (inner) {
+			radius[0] += 250;
+			inner = 0;
+		}
+		else {
+			radius[0] -= 250;
+			inner = 1;
+
+		}
 	}
 
 	void dragmove(int movex, int movey) {
@@ -663,7 +666,9 @@ void Mouse(int button, int state, int x, int y)
 	case GLUT_LEFT_BUTTON:
 	{
 		if (state == GLUT_DOWN) {// 도형선택
-			
+			for (auto poly = polygonmap.begin(); poly != polygonmap.end(); ++poly) {
+				poly->innerouterchange();
+			}
 		}
 		else if (state == GLUT_UP) {
 			

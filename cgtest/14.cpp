@@ -8,7 +8,7 @@
 #include <random>
 #include <list>
 #include <algorithm>
-#include <vector>
+#include <cmath>
 
 #define MAXRECT 10 // 최대 사각형 개수
 #define point 0
@@ -112,8 +112,8 @@ private:
 	GLdouble Gvalue = 0.0;
 	GLdouble Bvalue = 0.0;
 	GLdouble x1, y1, x2, y2;
-	float angle = 0.0;
-	float radius = 0.0;
+	float angle[3];
+	float radius[3];
 	int membershape; //  0: line, 1: triangle, 2: rectangle, 3: pentagon
 	int xdir = 400; // 중점
 	int ydir = 400;
@@ -185,6 +185,16 @@ public:
 		}
 			break;
 		}
+
+
+
+
+
+		for (int i = 0; i < 3; ++i) {
+			radius[i] = std::hypot(vertexpos[i][0] - xdir, vertexpos[i][1] - ydir);
+			angle[i] = atan2(vertexpos[i][1] - ydir, vertexpos[i][0] - xdir);
+		}
+
 	}
 
 	/*polygon(float radian, float length) { // 직각인 꼭짓점 각도 나머지는 1/4 * pi씩 증감
@@ -252,9 +262,13 @@ public:
 		}
 	}
 
-	void update() {
-		
+	void update(float theta) {
 
+		for (int i = 0; i < 3; ++i) {
+			vertexpos[i][0] = xdir + radius[i] * cos(angle[i] + theta);
+			vertexpos[i][1] = ydir + radius[i] * sin(angle[i] + theta);
+			angle[i] += theta;
+		}
 	}
 
 	void setselect(int select) {
@@ -670,7 +684,10 @@ void Mouse(int button, int state, int x, int y)
 
 void TimerFunction(int value)
 {
-	
+	//printf("motion\n");
+	for (auto poly = polygonmap.begin(); poly != polygonmap.end(); ++poly) {
+		poly->update(pi / 30);
+	}
 
 
 	//printf("timer is playing now\nq");

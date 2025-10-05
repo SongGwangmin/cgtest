@@ -55,6 +55,7 @@ bool has_selected = false; // mouse_dest가 유효한지 확인
 bool is_dragging = false;
 int last_mouse_x = 0;
 int last_mouse_y = 0;
+int stopanimation = 0; // 0: 움직임, 1: 멈춤
 
 float GuideFrame[5][3][3][2] = {
 	{
@@ -587,41 +588,17 @@ void Keyboard(unsigned char key, int x, int y) {
 	case 'q': // 프로그램 종료
 		glutLeaveMainLoop();
 		break;
-	case 'p': // 오각형 -> 선
+	case 'c': // 오각형 -> 선
 	{
 		if (selectedshape == -1)
 			selectedshape = line;
 	}
 	break;
-	case 'l': // 선 -> 삼각형
+	case 's': // 오각형 -> 선
 	{
-		if (selectedshape == -1)
-			selectedshape = triangle;
+		stopanimation = !stopanimation;
 	}
 	break;
-	case 't': // 삼각형 -> 사각형
-	{
-		if (selectedshape == -1)
-			selectedshape = rectangle;
-	}
-	break;
-	case 'r': // 사각형 -> 오각형
-	{
-		if (selectedshape == -1)
-			selectedshape = pentagon;
-	}
-	break;
-
-	case 'a': // 강제로 기본으로 변경
-	{
-		activePolygon[0].resetShape(line);
-		activePolygon[1].resetShape(triangle);
-		activePolygon[2].resetShape(rectangle);
-		activePolygon[3].resetShape(pentagon);
-		selectedshape = -1;
-	}
-	break;
-
 	default:
 		break;
 	}
@@ -714,9 +691,10 @@ void TimerFunction(int value)
 		pointcount = sizing * 2;
 	}*/
 	int animationcheck = 0;
-
-	for (auto poly = polygonmap.begin(); poly != polygonmap.end(); ++poly) {
-		poly->update();
+	if (!stopanimation) {
+		for (auto poly = polygonmap.begin(); poly != polygonmap.end(); ++poly) {
+			poly->update();
+		}
 	}
 
 

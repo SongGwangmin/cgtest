@@ -11,10 +11,11 @@
 #include <vector>
 
 #define MAXRECT 10 // 최대 사각형 개수
-#define line 0
-#define triangle 1
-#define rectangle 2
-#define pentagon 3
+#define point 0
+#define line 1
+#define triangle 2
+#define rectangle 3
+#define pentagon 4
 #define polygonwidth 100
 
 std::random_device rd;
@@ -100,6 +101,10 @@ private:
 	GLdouble Bvalue = 0.0;
 	GLdouble x1, y1, x2, y2;
 	int membershape; //  0: line, 1: triangle, 2: rectangle, 3: pentagon
+	int xdir = 0;
+	int ydir = 0;
+	int needmove = 0;
+	int selected = 0; // mouse 선택되었는지 여부
 
 public:
 	//std::vector<ret> rects;
@@ -168,6 +173,45 @@ public:
 			return 0;
 		}
 	}
+
+	void update() {
+		if (needmove && !selected) {
+			x1 += xdir * 5;
+			x2 += xdir * 5;
+			y1 += ydir * 5;
+			y2 += ydir * 5;
+			if (x1 <= 0 || x2 >= width) {
+				xdir = -xdir;
+			}
+			if (y1 <= 0 || y2 >= height) {
+				ydir = -ydir;
+			}
+
+		}
+
+	}
+
+	void setselect(int select) {
+		selected = select;
+	}
+
+	void setmove() {
+		if (dis(gen) % 2) {
+			xdir = -1;
+		}
+		else {
+			xdir = 1;
+		}
+		
+		if (dis(gen) % 2) {
+			ydir = -1;
+		}
+		else {
+			ydir = 1;
+		}
+		needmove = 1;
+	}
+
 
 	void resetShape(int targetshape) {	//	강제로 모양변경
 		for (int poly = 0; poly < 3; ++poly) {
@@ -433,61 +477,13 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 	}
 
 	for (int i = 0; i < 4; ++i) {
-		glLineWidth(5.0f);
-		glDrawArrays(GL_LINES, i * 9, 9);
+		//glLineWidth(5.0f);
+		//glDrawArrays(GL_LINES, i * 9, 9);
 		glDrawArrays(GL_TRIANGLES, i * 9, 9);
 
 	}
 
-	/*for (int i = 0; i < nowdrawsize; ++i) {
-		switch (showingrect[i].level) {
-		case point:
-		{
-			glDrawArrays(GL_TRIANGLES, i * 6, 6);
-
-
-		}
-		break;
-		case line:
-		{
-			glLineWidth(2.0f);
-			glDrawArrays(GL_LINES, i * 6, 2);
-		}
-		break;
-		case triangle:
-		{
-			glDrawArrays(GL_TRIANGLES, i * 6, 3);
-		}
-		break;
-		case rectangle:
-		{
-			// 사각형 그리기
-			// (x1, y1) -> (x1, y2) -> (x2, y2) -> (x2, y1) -> (x1, y1)
-			glDrawArrays(GL_TRIANGLES, i * 6, 6);
-		}
-		break;
-		}
-
-		if (whereiscursor >= 0 && whereiscursor == i) { // 선택된 도형만 윤곽선 그리기
-			glColor3f(0.0f, 0.0f, 0.0f);
-			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-			glLineWidth(3.0f);
-
-			switch (showingrect[i].level) { // i 사용해야 함!
-			case point:
-				glDrawArrays(GL_TRIANGLES, i * 6, 6);
-				break;
-			case triangle:
-				glDrawArrays(GL_TRIANGLES, i * 6, 3);
-				break;
-			case rectangle:
-				glDrawArrays(GL_TRIANGLES, i * 6, 6);
-				break;
-			}
-
-			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		}
-	}*/
+	
 
 
 

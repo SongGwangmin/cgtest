@@ -109,7 +109,6 @@ typedef struct RET {
 class polygon {
 private:
 	float vertexpos[3][2];
-	float innervertexpos[3][2];
 	bool needchange;
 	GLdouble Rvalue = 0.0;
 	GLdouble Gvalue = 0.0;
@@ -381,13 +380,24 @@ public:
 		return (x >= x1 && x <= x2 && y >= y1 && y <= y2);
 	}
 
+	void setmid(int xpos, int ypos) {
+		xdir = xpos;
+		ydir = ypos;
+
+		for (int i = 0; i < 3; ++i) {
+			radius[i] = std::hypot(vertexpos[i][0] - xdir, vertexpos[i][1] - ydir);
+			angle[i] = atan2(vertexpos[i][1] - ydir, vertexpos[i][0] - xdir);
+		}
+	}
+
 	// 좌표 접근을 위한 getter 메서드들
 	GLdouble getX1() const { return x1; }
 	GLdouble getY1() const { return y1; }
 	GLdouble getX2() const { return x2; }
 	GLdouble getY2() const { return y2; }
 
-	
+	float getmainx() const { return vertexpos[0][0]; }
+	float getmainy() const { return vertexpos[0][1]; }
 };
 
 
@@ -628,7 +638,9 @@ void Mouse(int button, int state, int x, int y)
 	case GLUT_LEFT_BUTTON:
 	{
 		if (state == GLUT_DOWN) {// 도형선택
-			
+			for (auto poly = polygonmap.begin(); poly != polygonmap.end(); ++poly) {
+				poly->setmid(x, y);
+			}
 		}
 		else if (state == GLUT_UP) {
 			

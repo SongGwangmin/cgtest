@@ -225,22 +225,7 @@ polygon activePolygon[4] = {
 
 };
 
-ret morph(ret& after, ret& before) {
-	int halfwidth = width / 2;
-	int halfheight = height / 2;
-	after.x1 = (before.x1 - halfwidth) / halfwidth;
-	after.y1 = (before.y1 - halfheight) / -halfheight;
-	after.x2 = (before.x2 - halfwidth) / halfwidth;
-	after.y2 = (before.y2 - halfheight) / -halfheight;
 
-	// 색상은 그대로 복사
-	after.Rvalue = before.Rvalue;
-	after.Gvalue = before.Gvalue;
-	after.Bvalue = before.Bvalue;
-	after.level = before.level;
-
-	return after;
-}
 
 bool ptinrect(int x, int y, ret& rect) {
 	return (x >= rect.x1 && x <= rect.x2 && y >= rect.y1 && y <= rect.y2);

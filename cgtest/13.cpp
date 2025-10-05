@@ -254,7 +254,19 @@ public:
 			}
 		}
 
+
+
 		membershape = targetshape;
+
+		if (!membershape) {
+			x2 = x1 + 20;
+			y2 = y1 + 20;
+		}
+		else {
+
+		x2 = x1 + polygonwidth;
+		y2 = y1 + polygonwidth;
+		}
 
 		Rvalue = dis(gen) / 256.0f;
 		Gvalue = dis(gen) / 256.0f;
@@ -301,6 +313,9 @@ public:
 	GLdouble getY1() const { return y1; }
 	GLdouble getX2() const { return x2; }
 	GLdouble getY2() const { return y2; }
+	
+	// membershape 접근을 위한 getter 메서드
+	int getMemberShape() const { return membershape; }
 };
 
 polygon activePolygon[4] = {
@@ -649,11 +664,18 @@ void Mouse(int button, int state, int x, int y)
 						if (!(mouse_dest->getX2() < it->getX1() || mouse_dest->getX1() > it->getX2() || 
 							  mouse_dest->getY2() < it->getY1() || mouse_dest->getY1() > it->getY2())) {
 							collision_detected = true;
+							
+							// 충돌한 polygon의 다음 도형으로 mouse_dest 변환
+							int colliding_shape = it->getMemberShape();
+							int next_shape = (colliding_shape + 1) % 5;
+							mouse_dest->resetShape(next_shape);
+							
 							printf("💥 Collision detected with another polygon!\n");
 							printf("Selected polygon: (%.1f,%.1f) to (%.1f,%.1f)\n", 
 								mouse_dest->getX1(), mouse_dest->getY1(), mouse_dest->getX2(), mouse_dest->getY2());
 							printf("Colliding polygon: (%.1f,%.1f) to (%.1f,%.1f)\n", 
 								it->getX1(), it->getY1(), it->getX2(), it->getY2());
+							printf("🔄 Mouse_dest shape changed to: %d\n", next_shape);
 							break;
 						}
 					}

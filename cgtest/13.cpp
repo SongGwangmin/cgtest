@@ -645,11 +645,9 @@ void Mouse(int button, int state, int x, int y)
 					last_mouse_x = x;   // 마지막 마우스 위치 저장
 					last_mouse_y = y;
 					printf("polygon selected at (%d, %d)\n", x, y);
+					mouse_dest->setselect(1); // 선택된 polygon 표시
 					break;
 				}
-			}
-			if (!has_selected) {
-				printf("no polygon selected at (%d, %d)\n", x, y);
 			}
 		}
 		else if (state == GLUT_UP) {
@@ -670,12 +668,11 @@ void Mouse(int button, int state, int x, int y)
 							int next_shape = (colliding_shape + 1) % 5;
 							mouse_dest->resetShape(next_shape);
 							
-							printf("💥 Collision detected with another polygon!\n");
-							printf("Selected polygon: (%.1f,%.1f) to (%.1f,%.1f)\n", 
-								mouse_dest->getX1(), mouse_dest->getY1(), mouse_dest->getX2(), mouse_dest->getY2());
-							printf("Colliding polygon: (%.1f,%.1f) to (%.1f,%.1f)\n", 
-								it->getX1(), it->getY1(), it->getX2(), it->getY2());
-							printf("🔄 Mouse_dest shape changed to: %d\n", next_shape);
+							
+
+							mouse_dest->setmove(); // 충돌 후 움직이기 시작
+							
+
 							break;
 						}
 					}
@@ -684,10 +681,12 @@ void Mouse(int button, int state, int x, int y)
 				if (!collision_detected) {
 					printf("✅ No collision detected\n");
 				}
+				mouse_dest->setselect(0); // 선택 해제
 			}
 			
 			is_dragging = false;
 			has_selected = false;
+			mouse_dest = polygonmap.end();
 			glutPostRedisplay();
 		}
 	}

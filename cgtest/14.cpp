@@ -45,6 +45,8 @@ GLuint fragmentShader; //--- 프래그먼트 세이더 객체
 GLuint VAO, VBO; //--- 버텍스 배열 객체, 버텍스 버퍼 객체
 int nowdrawstate = 0; // 0: point, 1: line, 2: triangle, 3: rectangle
 int selectedshape = -1; // 선택된 도형 인덱스
+int spin = 1; //  1: 시계방향, -1: 반시계방향
+int animation = 1; // 0: 정지, 1: 회전
 
 // Forward declaration
 class polygon;
@@ -635,17 +637,17 @@ void Keyboard(unsigned char key, int x, int y) {
 		break;
 	case 'c': // 오각형 -> 선
 	{
-		
+		spin = 1;
 	}
 	break;
 	case 's': // 오각형 -> 선
 	{
-		stopanimation = !stopanimation;
+		animation = !animation;
 	}
 	break;
 	case 't': // 오각형 -> 선
 	{
-		stopanimation = !stopanimation;
+		spin = -1;
 	}
 	break;
 	default:
@@ -684,9 +686,10 @@ void Mouse(int button, int state, int x, int y)
 
 void TimerFunction(int value)
 {
-	//printf("motion\n");
-	for (auto poly = polygonmap.begin(); poly != polygonmap.end(); ++poly) {
-		poly->update(pi / 30);
+	if (animation) {
+		for (auto poly = polygonmap.begin(); poly != polygonmap.end(); ++poly) {
+			poly->update((pi / 30) * spin);
+		}
 	}
 
 

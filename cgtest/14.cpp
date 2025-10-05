@@ -643,7 +643,22 @@ void Mouse(int button, int state, int x, int y)
 			}
 		}
 		else if (state == GLUT_UP) {
-			
+			auto poly = polygonmap.begin();
+			//poly++;
+			float main1x = poly->getmainx();
+			float main1y = poly->getmainy();
+
+			//poly++;
+			poly++;
+			float main3x = poly->getmainx();
+			float main3y = poly->getmainy();
+
+			float centerx = (main1x + main3x) / 2;
+			float centery = (main1y + main3y) / 2;
+			for (auto poly = polygonmap.begin(); poly != polygonmap.end(); ++poly) {
+				poly->setmid(centerx, centery);
+			}
+
 			glutPostRedisplay();
 		}
 	}

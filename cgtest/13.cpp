@@ -51,6 +51,11 @@ std::list<polygon> polygonmap;
 std::list<polygon>::iterator mouse_dest; // 마우스로 선택된 polygon 저장
 bool has_selected = false; // mouse_dest가 유효한지 확인
 
+// 드래그 관련 변수
+bool is_dragging = false;
+int last_mouse_x = 0;
+int last_mouse_y = 0;
+
 float GuideFrame[5][3][3][2] = {
 	{
 		{ {20,20}, {0,0}, {0,20} },
@@ -306,6 +311,7 @@ bool ptinrect(int x, int y, ret& rect) {
 
 void Keyboard(unsigned char key, int x, int y);
 void Mouse(int button, int state, int x, int y);
+void Motion(int x, int y); // 마우스 모션 콜백 함수 선언
 
 char* filetobuf(const char* file)
 {
@@ -392,6 +398,7 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 
 	glutKeyboardFunc(Keyboard);
 	glutMouseFunc(Mouse);
+	glutMotionFunc(Motion); // 마우스 모션 콜백 등록
 
 	glutMainLoop();
 }
@@ -606,6 +613,9 @@ void Mouse(int button, int state, int x, int y)
 				if (it->ptinrect(x, y)) {
 					mouse_dest = it;
 					has_selected = true;
+					is_dragging = true; // 드래그 시작
+					last_mouse_x = x;   // 마지막 마우스 위치 저장
+					last_mouse_y = y;
 					printf("polygon selected at (%d, %d)\n", x, y);
 					break;
 				}
@@ -615,7 +625,9 @@ void Mouse(int button, int state, int x, int y)
 			}
 		}
 		else if (state == GLUT_UP) {
-
+			// 드래그 종료
+			is_dragging = false;
+			has_selected = false;
 			glutPostRedisplay();
 		}
 	}
@@ -651,4 +663,22 @@ void TimerFunction(int value)
 	//printf("timer is playing now\nq");
 	glutPostRedisplay();
 	glutTimerFunc(25, TimerFunction, 1);
+}
+
+void Motion(int x, int y) // 마우스 모션 콜백 함수
+{
+	if (is_dragging && has_selected) {
+		// 마우스 이동 거리 계산
+		int move_x = x - last_mouse_x;
+		int move_y = y - last_mouse_y;
+		
+		// 선택된 polygon을 드래그한 거리만큼 이동
+		mouse_dest->dragmove(move_x, move_y);
+		
+		// 현재 마우스 위치를 저장
+		last_mouse_x = x;
+		last_mouse_y = y;
+		
+		glutPostRedisplay(); // 화면 다시 그리기
+	}
 }

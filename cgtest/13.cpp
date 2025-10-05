@@ -665,13 +665,14 @@ void Mouse(int button, int state, int x, int y)
 							
 							// 충돌한 polygon의 다음 도형으로 mouse_dest 변환
 							int colliding_shape = it->getMemberShape();
-							int next_shape = (colliding_shape + 1) % 5;
+							int my_shape = mouse_dest->getMemberShape();
+							int next_shape = (colliding_shape + 1 + my_shape) % 5;
 							mouse_dest->resetShape(next_shape);
 							
 							
 
 							mouse_dest->setmove(); // 충돌 후 움직이기 시작
-							
+							it = polygonmap.erase(it); // 충돌한 도형은 제거
 
 							break;
 						}

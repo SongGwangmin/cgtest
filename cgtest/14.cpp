@@ -559,45 +559,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 		poly->sendvertexdata(allVertices);
 	}
 
-	/*for (int i = 0; i < nowdrawsize; i++) {
-		ret after;
-		morph(after, showingrect[i]); // morph 변환 적용
-
-		// level은 그대로 사용 (사각형 그리기용)
-		float x1 = (float)after.x1;
-		float y1 = (float)after.y1;
-		float x2 = (float)after.x2;
-		float y2 = (float)after.y2;
-		float r = (float)after.Rvalue;
-		float g = (float)after.Gvalue;
-		float b = (float)after.Bvalue;
-
-		// 사각형을 위한 6개 정점: (x1,y1), (x1,y2), (x2,y2), (x1,y2), (x2,y2), (x2,y1)
-		// 각 정점마다 위치(3) + 색상(3) = 6개 값
-
-		// 첫 번째 삼각형: (x1,y1), (x1,y2), (x2,y2)
-		if (showingrect[i].level != triangle) {
-			allVertices.insert(allVertices.end(), {
-				x2, y2, 0.0f, r, g, b,  // (x1, y1)
-				x1, y1, 0.0f, r, g, b,  // (x1, y2)
-				x1, y2, 0.0f, r, g, b   // (x2, y2)
-				});
-		}
-		else {
-			allVertices.insert(allVertices.end(), {
-				x2, y2, 0.0f, r, g, b,  // (x1, y1)
-				(x2 + x1) / 2, y1, 0.0f, r, g, b,  // (x1, y2)
-				x1, y2, 0.0f, r, g, b   // (x2, y2)
-				});
-		}
-
-		// 두 번째 삼각형: (x1,y1), (x2,y2), (x2,y1)
-		allVertices.insert(allVertices.end(), {
-			x1, y1, 0.0f, r, g, b,  // (x1, y1)
-			x2, y2, 0.0f, r, g, b,  // (x2, y2)
-			x2, y1, 0.0f, r, g, b   // (x2, y1)
-			});
-	}*/
+	
 
 	if (!allVertices.empty()) {
 		glBindVertexArray(VAO);
@@ -666,9 +628,7 @@ void Mouse(int button, int state, int x, int y)
 	case GLUT_LEFT_BUTTON:
 	{
 		if (state == GLUT_DOWN) {// 도형선택
-			for (auto poly = polygonmap.begin(); poly != polygonmap.end(); ++poly) {
-				poly->innerouterchange();
-			}
+			
 		}
 		else if (state == GLUT_UP) {
 			
@@ -679,8 +639,9 @@ void Mouse(int button, int state, int x, int y)
 	case GLUT_RIGHT_BUTTON:
 	{
 		if (state == GLUT_DOWN) {
-			// 새로운 사각형 추가 (예시)
-
+			for (auto poly = polygonmap.begin(); poly != polygonmap.end(); ++poly) {
+				poly->innerouterchange();
+			}
 		}
 	}
 	break;

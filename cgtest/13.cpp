@@ -23,6 +23,7 @@ std::random_device rd;
 std::mt19937 gen(rd());
 
 std::uniform_int_distribution<int> dis(0, 256);
+std::uniform_int_distribution<int> posdis(0, 700);
 //std::uniform_int_distribution<int> numdis(0, windowWidth - rectspace);
 
 //--- 아래 5개 함수는 사용자 정의 함수 임
@@ -44,7 +45,13 @@ int nowdrawstate = 0; // 0: point, 1: line, 2: triangle, 3: rectangle
 int selectedshape = -1; // 선택된 도형 인덱스
 //--- 메인 함수
 
-float GuideFrame[4][3][3][2] = {
+float GuideFrame[5][3][3][2] = {
+	{
+		{ {20,20}, {0,0}, {0,20} },
+		{ {20,20}, {0, 0}, {0,20} },
+		{ {20,20}, {20,0}, {0,0} }
+	},
+
 	// [0] 선 (3개, 각 3점)
 	{
 		{ {0,0}, {100,100}, {50,50} },

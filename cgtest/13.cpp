@@ -590,8 +590,26 @@ void Keyboard(unsigned char key, int x, int y) {
 		break;
 	case 'c': // 오각형 -> 선
 	{
-		if (selectedshape == -1)
-			selectedshape = line;
+		polygonmap.clear();
+		for (int shape = point; shape <= pentagon; ++shape) {
+			for (int i = 0; i < 3; ++i) {
+				GLdouble x1 = posdis(gen);
+				GLdouble y1 = posdis(gen);
+				GLdouble x2, y2;
+
+				if (shape == point) {
+					x2 = x1 + 20;
+					y2 = y1 + 20;
+				}
+				else {
+					x2 = x1 + 100;
+					y2 = y1 + 100;
+				}
+
+				polygonmap.emplace_back(x1, y1, x2, y2,
+					dis(gen) / 256.0f, dis(gen) / 256.0f, dis(gen) / 256.0f, shape);
+			}
+		}
 	}
 	break;
 	case 's': // 오각형 -> 선

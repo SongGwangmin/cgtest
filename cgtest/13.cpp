@@ -1,4 +1,4 @@
-#define _CRT_SECURE_NO_WARNINGS //--- ÇÁ·Î±×·¥ ¸Ç ¾Õ¿¡ ¼±¾ğÇÒ °Í
+ï»¿#define _CRT_SECURE_NO_WARNINGS //--- í”„ë¡œê·¸ë¨ ë§¨ ì•ì— ì„ ì–¸í•  ê²ƒ
 #include <stdlib.h>
 #include <stdio.h>
 #include <iostream>
@@ -10,7 +10,7 @@
 #include <algorithm>
 #include <vector>
 
-#define MAXRECT 10 // ÃÖ´ë »ç°¢Çü °³¼ö
+#define MAXRECT 10 // ìµœëŒ€ ì‚¬ê°í˜• ê°œìˆ˜
 #define point 0
 #define line 1
 #define triangle 2
@@ -20,14 +20,14 @@
 
 std::random_device rd;
 
-// random_device ¸¦ ÅëÇØ ³­¼ö »ı¼º ¿£ÁøÀ» ÃÊ±âÈ­ ÇÑ´Ù.
+// random_device ë¥¼ í†µí•´ ë‚œìˆ˜ ìƒì„± ì—”ì§„ì„ ì´ˆê¸°í™” í•œë‹¤.
 std::mt19937 gen(rd());
 
 std::uniform_int_distribution<int> dis(0, 256);
 std::uniform_int_distribution<int> posdis(0, 700);
 //std::uniform_int_distribution<int> numdis(0, windowWidth - rectspace);
 
-//--- ¾Æ·¡ 5°³ ÇÔ¼ö´Â »ç¿ëÀÚ Á¤ÀÇ ÇÔ¼ö ÀÓ
+//--- ì•„ë˜ 5ê°œ í•¨ìˆ˜ëŠ” ì‚¬ìš©ì ì •ì˜ í•¨ìˆ˜ ì„
 void make_vertexShaders();
 void make_fragmentShaders();
 GLuint make_shaderProgram();
@@ -36,22 +36,22 @@ GLvoid Reshape(int w, int h);
 void setupBuffers();
 void TimerFunction(int value);
 
-//--- ÇÊ¿äÇÑ º¯¼ö ¼±¾ğ
+//--- í•„ìš”í•œ ë³€ìˆ˜ ì„ ì–¸
 GLint width = 800, height = 800;
-GLuint shaderProgramID; //--- ¼¼ÀÌ´õ ÇÁ·Î±×·¥ ÀÌ¸§
-GLuint vertexShader; //--- ¹öÅØ½º ¼¼ÀÌ´õ °´Ã¼
-GLuint fragmentShader; //--- ÇÁ·¡±×¸ÕÆ® ¼¼ÀÌ´õ °´Ã¼
-GLuint VAO, VBO; //--- ¹öÅØ½º ¹è¿­ °´Ã¼, ¹öÅØ½º ¹öÆÛ °´Ã¼
+GLuint shaderProgramID; //--- ì„¸ì´ë” í”„ë¡œê·¸ë¨ ì´ë¦„
+GLuint vertexShader; //--- ë²„í…ìŠ¤ ì„¸ì´ë” ê°ì²´
+GLuint fragmentShader; //--- í”„ë˜ê·¸ë¨¼íŠ¸ ì„¸ì´ë” ê°ì²´
+GLuint VAO, VBO; //--- ë²„í…ìŠ¤ ë°°ì—´ ê°ì²´, ë²„í…ìŠ¤ ë²„í¼ ê°ì²´
 int nowdrawstate = 0; // 0: point, 1: line, 2: triangle, 3: rectangle
-int selectedshape = -1; // ¼±ÅÃµÈ µµÇü ÀÎµ¦½º
+int selectedshape = -1; // ì„ íƒëœ ë„í˜• ì¸ë±ìŠ¤
 
 // Forward declaration
 class polygon; 
 std::list<polygon> polygonmap;
-std::list<polygon>::iterator mouse_dest; // ¸¶¿ì½º·Î ¼±ÅÃµÈ polygon ÀúÀå
-bool has_selected = false; // mouse_dest°¡ À¯È¿ÇÑÁö È®ÀÎ
+std::list<polygon>::iterator mouse_dest; // ë§ˆìš°ìŠ¤ë¡œ ì„ íƒëœ polygon ì €ì¥
+bool has_selected = false; // mouse_destê°€ ìœ íš¨í•œì§€ í™•ì¸
 
-// µå·¡±× °ü·Ã º¯¼ö
+// ë“œë˜ê·¸ ê´€ë ¨ ë³€ìˆ˜
 bool is_dragging = false;
 int last_mouse_x = 0;
 int last_mouse_y = 0;
@@ -63,28 +63,28 @@ float GuideFrame[5][3][3][2] = {
 		{ {20,20}, {20,0}, {0,0} }
 	},
 
-	// [0] ¼± (3°³, °¢ 3Á¡)
+	// [0] ì„  (3ê°œ, ê° 3ì )
 	{
 		{ {0,0}, {100,100}, {50,50} },
 		{ {0,0}, {100,100}, {50,50} },
 		{ {0,0}, {100,100}, {50,50} }
 	},
 
-	// [1] »ï°¢Çü (3°³)
+	// [1] ì‚¼ê°í˜• (3ê°œ)
 	{
 		{ {100,100}, {50,0}, {0,100} },
 		{ {100,100}, {50,0}, {0,100} },
 		{ {100,100}, {50,0}, {0,100} }
 	},
 
-	// [2] »ç°¢Çü ¡æ »ï°¢Çü ºĞÇØ 3°³
+	// [2] ì‚¬ê°í˜• â†’ ì‚¼ê°í˜• ë¶„í•´ 3ê°œ
 	{
 		{ {100,100}, {0,0}, {0,100} },
 		{ {100,100}, {0, 0}, {0,100} },
 		{ {100,100}, {100,0}, {0,0} }
 	},
 
-	// [3] ¿À°¢Çü ¡æ »ï°¢Çü ºĞÇØ 3°³
+	// [3] ì˜¤ê°í˜• â†’ ì‚¼ê°í˜• ë¶„í•´ 3ê°œ
 	{
 		{ {50,0}, {0,40}, {100,40} },
 		{ {0,40}, {20,100}, {100,40} },
@@ -101,7 +101,7 @@ typedef struct RET {
 } ret;
 
 
-// µµÇü ÀúÀåÇÏ´Â Å¬·¡½º
+// ë„í˜• ì €ì¥í•˜ëŠ” í´ë˜ìŠ¤
 class polygon {
 private:
 	float vertexpos[3][3][2];
@@ -114,7 +114,7 @@ private:
 	int xdir = 0;
 	int ydir = 0;
 	int needmove = 0;
-	int selected = 0; // mouse ¼±ÅÃµÇ¾ú´ÂÁö ¿©ºÎ
+	int selected = 0; // mouse ì„ íƒë˜ì—ˆëŠ”ì§€ ì—¬ë¶€
 
 public:
 	//std::vector<ret> rects;
@@ -146,10 +146,10 @@ public:
 
 						}
 						else {
-							chaging = true; // ÇÏ³ª¶óµµ º¯°æ ÁßÀÌ¸é membershape¸¦ º¯°æÇÏÁö ¾Ê´Â´Ù
+							chaging = true; // í•˜ë‚˜ë¼ë„ ë³€ê²½ ì¤‘ì´ë©´ membershapeë¥¼ ë³€ê²½í•˜ì§€ ì•ŠëŠ”ë‹¤
 
 							if (vertexpos[poly][vert][pos] < GuideFrame[targetshape][poly][vert][pos]) {
-								// GuideFrameÀÌ ´õ Å¬ ¶§¿£ Áõ°¡ÇÏ°í ³Ñ¾î°¡¸é °°Àº °ªÀ» ÁØ´Ù
+								// GuideFrameì´ ë” í´ ë•Œì—” ì¦ê°€í•˜ê³  ë„˜ì–´ê°€ë©´ ê°™ì€ ê°’ì„ ì¤€ë‹¤
 
 								vertexpos[poly][vert][pos] += 5;
 								if (vertexpos[poly][vert][pos] > GuideFrame[targetshape][poly][vert][pos]) {
@@ -245,7 +245,7 @@ public:
 		}
 	}
 
-	void resetShape(int targetshape) {	//	°­Á¦·Î ¸ğ¾çº¯°æ
+	void resetShape(int targetshape) {	//	ê°•ì œë¡œ ëª¨ì–‘ë³€ê²½
 		for (int poly = 0; poly < 3; ++poly) {
 			for (int vert = 0; vert < 3; ++vert) {
 				for (int pos = 0; pos < 2; ++pos) {
@@ -261,17 +261,24 @@ public:
 		Bvalue = dis(gen) / 256.0f;
 	}
 
-	void sendvertexdata(std::vector<float>& vbo) { // vbo¿¡ Á¤Á¡ µ¥ÀÌÅÍ Ãß°¡
+	void sendvertexdata(std::vector<float>& vbo) { // vboì— ì •ì  ë°ì´í„° ì¶”ê°€
 		GLdouble centerx = (x1 + x2) / 2;
 		GLdouble centery = (y1 + y2) / 2;
 
 		centerx -= polygonwidth / 2;
 		centery -= polygonwidth / 2;
 
+
 		for (int poly = 0; poly < 3; ++poly) {
 			for (int vert = 0; vert < 3; ++vert) {
+				
 				float virtualx = vertexpos[poly][vert][0] + centerx;
 				float virtualy = vertexpos[poly][vert][1] + centery;
+
+				if (!membershape) {
+					virtualx = vertexpos[poly][vert][0] + x1;
+					virtualy = vertexpos[poly][vert][1] + y1;
+				}
 
 				float finalx = (virtualx - (width / 2)) / (width / 2);
 				float finaly = (virtualy - (height / 2)) / -(height / 2);
@@ -288,6 +295,12 @@ public:
 	bool ptinrect(int x, int y) {
 		return (x >= x1 && x <= x2 && y >= y1 && y <= y2);
 	}
+
+	// ì¢Œí‘œ ì ‘ê·¼ì„ ìœ„í•œ getter ë©”ì„œë“œë“¤
+	GLdouble getX1() const { return x1; }
+	GLdouble getY1() const { return y1; }
+	GLdouble getX2() const { return x2; }
+	GLdouble getY2() const { return y2; }
 };
 
 polygon activePolygon[4] = {
@@ -311,7 +324,7 @@ bool ptinrect(int x, int y, ret& rect) {
 
 void Keyboard(unsigned char key, int x, int y);
 void Mouse(int button, int state, int x, int y);
-void Motion(int x, int y); // ¸¶¿ì½º ¸ğ¼Ç Äİ¹é ÇÔ¼ö ¼±¾ğ
+void Motion(int x, int y); // ë§ˆìš°ìŠ¤ ëª¨ì…˜ ì½œë°± í•¨ìˆ˜ ì„ ì–¸
 
 char* filetobuf(const char* file)
 {
@@ -338,7 +351,7 @@ void setupBuffers() {
 	glBindVertexArray(VAO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
-	// Á¤Á¡ ¼Ó¼º ¼³Á¤: À§Ä¡ (3°³) + »ö»ó (3°³) = ÃÑ 6°³ float
+	// ì •ì  ì†ì„± ì„¤ì •: ìœ„ì¹˜ (3ê°œ) + ìƒ‰ìƒ (3ê°œ) = ì´ 6ê°œ float
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 
@@ -348,29 +361,29 @@ void setupBuffers() {
 	glBindVertexArray(0);
 }
 
-void main(int argc, char** argv) //--- À©µµ¿ì Ãâ·ÂÇÏ°í Äİ¹éÇÔ¼ö ¼³Á¤
+void main(int argc, char** argv) //--- ìœˆë„ìš° ì¶œë ¥í•˜ê³  ì½œë°±í•¨ìˆ˜ ì„¤ì •
 {
 	//width = 800;
 	//height = 800;
 
-	//--- À©µµ¿ì »ı¼ºÇÏ±â
+	//--- ìœˆë„ìš° ìƒì„±í•˜ê¸°
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
 	glutInitWindowPosition(100, 100);
 	glutInitWindowSize(width, height);
 	glutCreateWindow("Rectangle Rendering");
-	//--- GLEW ÃÊ±âÈ­ÇÏ±â
+	//--- GLEW ì´ˆê¸°í™”í•˜ê¸°
 	glewExperimental = GL_TRUE;
 	glewInit();
-	//--- ¼¼ÀÌ´õ ÀĞ¾î¿Í¼­ ¼¼ÀÌ´õ ÇÁ·Î±×·¥ ¸¸µé±â: »ç¿ëÀÚ Á¤ÀÇÇÔ¼ö È£Ãâ
-	make_vertexShaders(); //--- ¹öÅØ½º ¼¼ÀÌ´õ ¸¸µé±â
-	make_fragmentShaders(); //--- ÇÁ·¡±×¸ÕÆ® ¼¼ÀÌ´õ ¸¸µé±â
+	//--- ì„¸ì´ë” ì½ì–´ì™€ì„œ ì„¸ì´ë” í”„ë¡œê·¸ë¨ ë§Œë“¤ê¸°: ì‚¬ìš©ì ì •ì˜í•¨ìˆ˜ í˜¸ì¶œ
+	make_vertexShaders(); //--- ë²„í…ìŠ¤ ì„¸ì´ë” ë§Œë“¤ê¸°
+	make_fragmentShaders(); //--- í”„ë˜ê·¸ë¨¼íŠ¸ ì„¸ì´ë” ë§Œë“¤ê¸°
 	shaderProgramID = make_shaderProgram();
 
-	// ¹öÆÛ ¼³Á¤
+	// ë²„í¼ ì„¤ì •
 	setupBuffers();
 
-	// polygonmap¿¡ 5Á¾·ù µµÇüÀ» °¢°¢ 3°³¾¿ Ãß°¡
+	// polygonmapì— 5ì¢…ë¥˜ ë„í˜•ì„ ê°ê° 3ê°œì”© ì¶”ê°€
 	for (int shape = point; shape <= pentagon; ++shape) {
 		for (int i = 0; i < 3; ++i) {
 			GLdouble x1 = posdis(gen);
@@ -390,15 +403,15 @@ void main(int argc, char** argv) //--- À©µµ¿ì Ãâ·ÂÇÏ°í Äİ¹éÇÔ¼ö ¼³Á¤
 		}
 	}
 
-	//--- ¼¼ÀÌ´õ ÇÁ·Î±×·¥ ¸¸µé±â
-	glutDisplayFunc(drawScene); //--- Ãâ·Â Äİ¹é ÇÔ¼ö
+	//--- ì„¸ì´ë” í”„ë¡œê·¸ë¨ ë§Œë“¤ê¸°
+	glutDisplayFunc(drawScene); //--- ì¶œë ¥ ì½œë°± í•¨ìˆ˜
 	glutReshapeFunc(Reshape);
 
 	glutTimerFunc(25, TimerFunction, 1);
 
 	glutKeyboardFunc(Keyboard);
 	glutMouseFunc(Mouse);
-	glutMotionFunc(Motion); // ¸¶¿ì½º ¸ğ¼Ç Äİ¹é µî·Ï
+	glutMotionFunc(Motion); // ë§ˆìš°ìŠ¤ ëª¨ì…˜ ì½œë°± ë“±ë¡
 
 	glutMainLoop();
 }
@@ -406,8 +419,8 @@ void main(int argc, char** argv) //--- À©µµ¿ì Ãâ·ÂÇÏ°í Äİ¹éÇÔ¼ö ¼³Á¤
 void make_vertexShaders()
 {
 	GLchar* vertexSource;
-	//--- ¹öÅØ½º ¼¼ÀÌ´õ ÀĞ¾î ÀúÀåÇÏ°í ÄÄÆÄÀÏ ÇÏ±â
-	//--- filetobuf: »ç¿ëÀÚÁ¤ÀÇ ÇÔ¼ö·Î ÅØ½ºÆ®¸¦ ÀĞ¾î¼­ ¹®ÀÚ¿­¿¡ ÀúÀåÇÏ´Â ÇÔ¼ö
+	//--- ë²„í…ìŠ¤ ì„¸ì´ë” ì½ì–´ ì €ì¥í•˜ê³  ì»´íŒŒì¼ í•˜ê¸°
+	//--- filetobuf: ì‚¬ìš©ìì •ì˜ í•¨ìˆ˜ë¡œ í…ìŠ¤íŠ¸ë¥¼ ì½ì–´ì„œ ë¬¸ìì—´ì— ì €ì¥í•˜ëŠ” í•¨ìˆ˜
 	vertexSource = filetobuf("vertex.glsl");
 	vertexShader = glCreateShader(GL_VERTEX_SHADER);
 	glShaderSource(vertexShader, 1, &vertexSource, NULL);
@@ -418,7 +431,7 @@ void make_vertexShaders()
 	if (!result)
 	{
 		glGetShaderInfoLog(vertexShader, 512, NULL, errorLog);
-		std::cerr << "ERROR: vertex shader ÄÄÆÄÀÏ ½ÇÆĞ\n" << errorLog << std::endl;
+		std::cerr << "ERROR: vertex shader ì»´íŒŒì¼ ì‹¤íŒ¨\n" << errorLog << std::endl;
 		return;
 	}
 }
@@ -426,8 +439,8 @@ void make_vertexShaders()
 void make_fragmentShaders()
 {
 	GLchar* fragmentSource;
-	//--- ÇÁ·¡±×¸ÕÆ® ¼¼ÀÌ´õ ÀĞ¾î ÀúÀåÇÏ°í ÄÄÆÄÀÏÇÏ±â
-	fragmentSource = filetobuf("fragment.glsl"); // ÇÁ·¡±×¼¼ÀÌ´õ ÀĞ¾î¿À±â
+	//--- í”„ë˜ê·¸ë¨¼íŠ¸ ì„¸ì´ë” ì½ì–´ ì €ì¥í•˜ê³  ì»´íŒŒì¼í•˜ê¸°
+	fragmentSource = filetobuf("fragment.glsl"); // í”„ë˜ê·¸ì„¸ì´ë” ì½ì–´ì˜¤ê¸°
 	fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
 	glShaderSource(fragmentShader, 1, &fragmentSource, NULL);
 	glCompileShader(fragmentShader);
@@ -437,7 +450,7 @@ void make_fragmentShaders()
 	if (!result)
 	{
 		glGetShaderInfoLog(fragmentShader, 512, NULL, errorLog);
-		std::cerr << "ERROR: frag_shader ÄÄÆÄÀÏ ½ÇÆĞ\n" << errorLog << std::endl;
+		std::cerr << "ERROR: frag_shader ì»´íŒŒì¼ ì‹¤íŒ¨\n" << errorLog << std::endl;
 		return;
 	}
 }
@@ -447,32 +460,32 @@ GLuint make_shaderProgram()
 	GLint result;
 	GLchar* errorLog = NULL;
 	GLuint shaderID;
-	shaderID = glCreateProgram(); //--- ¼¼ÀÌ´õ ÇÁ·Î±×·¥ ¸¸µé±â
-	glAttachShader(shaderID, vertexShader); //--- ¼¼ÀÌ´õ ÇÁ·Î±×·¥¿¡ ¹öÅØ½º ¼¼ÀÌ´õ ºÙÀÌ±â
-	glAttachShader(shaderID, fragmentShader); //--- ¼¼ÀÌ´õ ÇÁ·Î±×·¥¿¡ ÇÁ·¡±×¸ÕÆ® ¼¼ÀÌ´õ ºÙÀÌ±â
-	glLinkProgram(shaderID); //--- ¼¼ÀÌ´õ ÇÁ·Î±×·¥ ¸µÅ©ÇÏ±â
-	glDeleteShader(vertexShader); //--- ¼¼ÀÌ´õ °´Ã¼¸¦ ¼¼ÀÌ´õ ÇÁ·Î±×·¥¿¡ ¸µÅ©ÇßÀ½À¸·Î, ¼¼ÀÌ´õ °´Ã¼ ÀÚÃ¼´Â »èÁ¦ °¡´É
+	shaderID = glCreateProgram(); //--- ì„¸ì´ë” í”„ë¡œê·¸ë¨ ë§Œë“¤ê¸°
+	glAttachShader(shaderID, vertexShader); //--- ì„¸ì´ë” í”„ë¡œê·¸ë¨ì— ë²„í…ìŠ¤ ì„¸ì´ë” ë¶™ì´ê¸°
+	glAttachShader(shaderID, fragmentShader); //--- ì„¸ì´ë” í”„ë¡œê·¸ë¨ì— í”„ë˜ê·¸ë¨¼íŠ¸ ì„¸ì´ë” ë¶™ì´ê¸°
+	glLinkProgram(shaderID); //--- ì„¸ì´ë” í”„ë¡œê·¸ë¨ ë§í¬í•˜ê¸°
+	glDeleteShader(vertexShader); //--- ì„¸ì´ë” ê°ì²´ë¥¼ ì„¸ì´ë” í”„ë¡œê·¸ë¨ì— ë§í¬í–ˆìŒìœ¼ë¡œ, ì„¸ì´ë” ê°ì²´ ìì²´ëŠ” ì‚­ì œ ê°€ëŠ¥
 	glDeleteShader(fragmentShader);
-	glGetProgramiv(shaderID, GL_LINK_STATUS, &result); // ---¼¼ÀÌ´õ°¡ Àß ¿¬°áµÇ¾ú´ÂÁö Ã¼Å©ÇÏ±â
+	glGetProgramiv(shaderID, GL_LINK_STATUS, &result); // ---ì„¸ì´ë”ê°€ ì˜ ì—°ê²°ë˜ì—ˆëŠ”ì§€ ì²´í¬í•˜ê¸°
 	if (!result) {
 		glGetProgramInfoLog(shaderID, 512, NULL, errorLog);
-		std::cerr << "ERROR: shader program ¿¬°á ½ÇÆĞ\n" << errorLog << std::endl;
+		std::cerr << "ERROR: shader program ì—°ê²° ì‹¤íŒ¨\n" << errorLog << std::endl;
 		return false;
 	}
-	glUseProgram(shaderID); //--- ¸¸µé¾îÁø ¼¼ÀÌ´õ ÇÁ·Î±×·¥ »ç¿ëÇÏ±â
+	glUseProgram(shaderID); //--- ë§Œë“¤ì–´ì§„ ì„¸ì´ë” í”„ë¡œê·¸ë¨ ì‚¬ìš©í•˜ê¸°
 	return shaderID;
 }
 
-GLvoid drawScene() //--- Äİ¹é ÇÔ¼ö: ±×¸®±â Äİ¹é ÇÔ¼ö
+GLvoid drawScene() //--- ì½œë°± í•¨ìˆ˜: ê·¸ë¦¬ê¸° ì½œë°± í•¨ìˆ˜
 {
 	GLfloat rColor, gColor, bColor;
 	rColor = gColor = 1.0;
-	bColor = 1.0; //--- ¹è°æ»öÀ» ÆÄ¶û»öÀ¸·Î ¼³Á¤
+	bColor = 1.0; //--- ë°°ê²½ìƒ‰ì„ íŒŒë‘ìƒ‰ìœ¼ë¡œ ì„¤ì •
 	glClearColor(rColor, gColor, bColor, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 	glUseProgram(shaderProgramID);
 
-	// °¢ »ç°¢ÇüÀ» 6°³ Á¤Á¡À¸·Î º¯È¯ÇÑ ÀüÃ¼ µ¥ÀÌÅÍ
+	// ê° ì‚¬ê°í˜•ì„ 6ê°œ ì •ì ìœ¼ë¡œ ë³€í™˜í•œ ì „ì²´ ë°ì´í„°
 	std::vector<float> allVertices;
 
 	
@@ -482,9 +495,9 @@ GLvoid drawScene() //--- Äİ¹é ÇÔ¼ö: ±×¸®±â Äİ¹é ÇÔ¼ö
 
 	/*for (int i = 0; i < nowdrawsize; i++) {
 		ret after;
-		morph(after, showingrect[i]); // morph º¯È¯ Àû¿ë
+		morph(after, showingrect[i]); // morph ë³€í™˜ ì ìš©
 
-		// levelÀº ±×´ë·Î »ç¿ë (»ç°¢Çü ±×¸®±â¿ë)
+		// levelì€ ê·¸ëŒ€ë¡œ ì‚¬ìš© (ì‚¬ê°í˜• ê·¸ë¦¬ê¸°ìš©)
 		float x1 = (float)after.x1;
 		float y1 = (float)after.y1;
 		float x2 = (float)after.x2;
@@ -493,10 +506,10 @@ GLvoid drawScene() //--- Äİ¹é ÇÔ¼ö: ±×¸®±â Äİ¹é ÇÔ¼ö
 		float g = (float)after.Gvalue;
 		float b = (float)after.Bvalue;
 
-		// »ç°¢ÇüÀ» À§ÇÑ 6°³ Á¤Á¡: (x1,y1), (x1,y2), (x2,y2), (x1,y2), (x2,y2), (x2,y1)
-		// °¢ Á¤Á¡¸¶´Ù À§Ä¡(3) + »ö»ó(3) = 6°³ °ª
+		// ì‚¬ê°í˜•ì„ ìœ„í•œ 6ê°œ ì •ì : (x1,y1), (x1,y2), (x2,y2), (x1,y2), (x2,y2), (x2,y1)
+		// ê° ì •ì ë§ˆë‹¤ ìœ„ì¹˜(3) + ìƒ‰ìƒ(3) = 6ê°œ ê°’
 
-		// Ã¹ ¹øÂ° »ï°¢Çü: (x1,y1), (x1,y2), (x2,y2)
+		// ì²« ë²ˆì§¸ ì‚¼ê°í˜•: (x1,y1), (x1,y2), (x2,y2)
 		if (showingrect[i].level != triangle) {
 			allVertices.insert(allVertices.end(), {
 				x2, y2, 0.0f, r, g, b,  // (x1, y1)
@@ -512,7 +525,7 @@ GLvoid drawScene() //--- Äİ¹é ÇÔ¼ö: ±×¸®±â Äİ¹é ÇÔ¼ö
 				});
 		}
 
-		// µÎ ¹øÂ° »ï°¢Çü: (x1,y1), (x2,y2), (x2,y1)
+		// ë‘ ë²ˆì§¸ ì‚¼ê°í˜•: (x1,y1), (x2,y2), (x2,y1)
 		allVertices.insert(allVertices.end(), {
 			x1, y1, 0.0f, r, g, b,  // (x1, y1)
 			x2, y2, 0.0f, r, g, b,  // (x2, y2)
@@ -524,11 +537,11 @@ GLvoid drawScene() //--- Äİ¹é ÇÔ¼ö: ±×¸®±â Äİ¹é ÇÔ¼ö
 		glBindVertexArray(VAO);
 		glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
-		// ¹öÆÛ¿¡ Á¤Á¡ µ¥ÀÌÅÍ ¾÷·Îµå
+		// ë²„í¼ì— ì •ì  ë°ì´í„° ì—…ë¡œë“œ
 		glBufferData(GL_ARRAY_BUFFER, allVertices.size() * sizeof(float),
 			allVertices.data(), GL_DYNAMIC_DRAW);
 
-		// ¸ğµç »ç°¢ÇüÀ» ÇÑ ¹ø¿¡ ±×¸®±â (°¢ »ç°¢Çü´ç 6°³ Á¤Á¡)
+		// ëª¨ë“  ì‚¬ê°í˜•ì„ í•œ ë²ˆì— ê·¸ë¦¬ê¸° (ê° ì‚¬ê°í˜•ë‹¹ 6ê°œ ì •ì )
 
 	}
 
@@ -545,46 +558,46 @@ GLvoid drawScene() //--- Äİ¹é ÇÔ¼ö: ±×¸®±â Äİ¹é ÇÔ¼ö
 
 	glBindVertexArray(0);
 
-	glutSwapBuffers(); // È­¸é¿¡ Ãâ·ÂÇÏ±â
+	glutSwapBuffers(); // í™”ë©´ì— ì¶œë ¥í•˜ê¸°
 }
 
-//--- ´Ù½Ã±×¸®±â Äİ¹é ÇÔ¼ö
-GLvoid Reshape(int w, int h) //--- Äİ¹é ÇÔ¼ö: ´Ù½Ã ±×¸®±â Äİ¹é ÇÔ¼ö
+//--- ë‹¤ì‹œê·¸ë¦¬ê¸° ì½œë°± í•¨ìˆ˜
+GLvoid Reshape(int w, int h) //--- ì½œë°± í•¨ìˆ˜: ë‹¤ì‹œ ê·¸ë¦¬ê¸° ì½œë°± í•¨ìˆ˜
 {
 	glViewport(0, 0, w, h);
 }
 
 void Keyboard(unsigned char key, int x, int y) {
 	switch (key) {
-	case 'q': // ÇÁ·Î±×·¥ Á¾·á
+	case 'q': // í”„ë¡œê·¸ë¨ ì¢…ë£Œ
 		glutLeaveMainLoop();
 		break;
-	case 'p': // ¿À°¢Çü -> ¼±
+	case 'p': // ì˜¤ê°í˜• -> ì„ 
 	{
 		if (selectedshape == -1)
 			selectedshape = line;
 	}
 	break;
-	case 'l': // ¼± -> »ï°¢Çü
+	case 'l': // ì„  -> ì‚¼ê°í˜•
 	{
 		if (selectedshape == -1)
 			selectedshape = triangle;
 	}
 	break;
-	case 't': // »ï°¢Çü -> »ç°¢Çü
+	case 't': // ì‚¼ê°í˜• -> ì‚¬ê°í˜•
 	{
 		if (selectedshape == -1)
 			selectedshape = rectangle;
 	}
 	break;
-	case 'r': // »ç°¢Çü -> ¿À°¢Çü
+	case 'r': // ì‚¬ê°í˜• -> ì˜¤ê°í˜•
 	{
 		if (selectedshape == -1)
 			selectedshape = pentagon;
 	}
 	break;
 
-	case 'a': // °­Á¦·Î ±âº»À¸·Î º¯°æ
+	case 'a': // ê°•ì œë¡œ ê¸°ë³¸ìœ¼ë¡œ ë³€ê²½
 	{
 		activePolygon[0].resetShape(line);
 		activePolygon[1].resetShape(triangle);
@@ -606,15 +619,15 @@ void Mouse(int button, int state, int x, int y)
 	switch (button) {
 	case GLUT_LEFT_BUTTON:
 	{
-		if (state == GLUT_DOWN) {// µµÇü¼±ÅÃ
-			// polygonmap¿¡¼­ Å¬¸¯µÈ À§Ä¡¿¡ ÀÖ´Â polygon Ã£±â
-			has_selected = false; // ÃÊ±âÈ­
+		if (state == GLUT_DOWN) {// ë„í˜•ì„ íƒ
+			// polygonmapì—ì„œ í´ë¦­ëœ ìœ„ì¹˜ì— ìˆëŠ” polygon ì°¾ê¸°
+			has_selected = false; // ì´ˆê¸°í™”
 			for (auto it = polygonmap.begin(); it != polygonmap.end(); ++it) {
 				if (it->ptinrect(x, y)) {
 					mouse_dest = it;
 					has_selected = true;
-					is_dragging = true; // µå·¡±× ½ÃÀÛ
-					last_mouse_x = x;   // ¸¶Áö¸· ¸¶¿ì½º À§Ä¡ ÀúÀå
+					is_dragging = true; // ë“œë˜ê·¸ ì‹œì‘
+					last_mouse_x = x;   // ë§ˆì§€ë§‰ ë§ˆìš°ìŠ¤ ìœ„ì¹˜ ì €ì¥
 					last_mouse_y = y;
 					printf("polygon selected at (%d, %d)\n", x, y);
 					break;
@@ -625,7 +638,32 @@ void Mouse(int button, int state, int x, int y)
 			}
 		}
 		else if (state == GLUT_UP) {
-			// µå·¡±× Á¾·á
+			// ë“œë˜ê·¸ ì¢…ë£Œ ë° ì¶©ëŒ ê²€ì‚¬
+			if (is_dragging && has_selected) {
+				// ì¶©ëŒ ê²€ì‚¬ ìˆ˜í–‰
+				bool collision_detected = false;
+				for (auto it = polygonmap.begin(); it != polygonmap.end(); ++it) {
+					// ìê¸° ìì‹ ê³¼ëŠ” ì¶©ëŒ ê²€ì‚¬ ì•ˆí•¨
+					if (it != mouse_dest) {
+						// AABB ì¶©ëŒ ê²€ì‚¬
+						if (!(mouse_dest->getX2() < it->getX1() || mouse_dest->getX1() > it->getX2() || 
+							  mouse_dest->getY2() < it->getY1() || mouse_dest->getY1() > it->getY2())) {
+							collision_detected = true;
+							printf("ğŸ’¥ Collision detected with another polygon!\n");
+							printf("Selected polygon: (%.1f,%.1f) to (%.1f,%.1f)\n", 
+								mouse_dest->getX1(), mouse_dest->getY1(), mouse_dest->getX2(), mouse_dest->getY2());
+							printf("Colliding polygon: (%.1f,%.1f) to (%.1f,%.1f)\n", 
+								it->getX1(), it->getY1(), it->getX2(), it->getY2());
+							break;
+						}
+					}
+				}
+				
+				if (!collision_detected) {
+					printf("âœ… No collision detected\n");
+				}
+			}
+			
 			is_dragging = false;
 			has_selected = false;
 			glutPostRedisplay();
@@ -635,7 +673,7 @@ void Mouse(int button, int state, int x, int y)
 	case GLUT_RIGHT_BUTTON:
 	{
 		if (state == GLUT_DOWN) {
-			// »õ·Î¿î »ç°¢Çü Ãß°¡ (¿¹½Ã)
+			// ìƒˆë¡œìš´ ì‚¬ê°í˜• ì¶”ê°€ (ì˜ˆì‹œ)
 
 		}
 	}
@@ -665,20 +703,20 @@ void TimerFunction(int value)
 	glutTimerFunc(25, TimerFunction, 1);
 }
 
-void Motion(int x, int y) // ¸¶¿ì½º ¸ğ¼Ç Äİ¹é ÇÔ¼ö
+void Motion(int x, int y) // ë§ˆìš°ìŠ¤ ëª¨ì…˜ ì½œë°± í•¨ìˆ˜
 {
 	if (is_dragging && has_selected) {
-		// ¸¶¿ì½º ÀÌµ¿ °Å¸® °è»ê
+		// ë§ˆìš°ìŠ¤ ì´ë™ ê±°ë¦¬ ê³„ì‚°
 		int move_x = x - last_mouse_x;
 		int move_y = y - last_mouse_y;
 		
-		// ¼±ÅÃµÈ polygonÀ» µå·¡±×ÇÑ °Å¸®¸¸Å­ ÀÌµ¿
+		// ì„ íƒëœ polygonì„ ë“œë˜ê·¸í•œ ê±°ë¦¬ë§Œí¼ ì´ë™
 		mouse_dest->dragmove(move_x, move_y);
 		
-		// ÇöÀç ¸¶¿ì½º À§Ä¡¸¦ ÀúÀå
+		// í˜„ì¬ ë§ˆìš°ìŠ¤ ìœ„ì¹˜ë¥¼ ì €ì¥
 		last_mouse_x = x;
 		last_mouse_y = y;
 		
-		glutPostRedisplay(); // È­¸é ´Ù½Ã ±×¸®±â
+		glutPostRedisplay(); // í™”ë©´ ë‹¤ì‹œ ê·¸ë¦¬ê¸°
 	}
 }

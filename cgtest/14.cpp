@@ -411,51 +411,10 @@ public:
 	float getmainy() const { return vertexpos[0][1]; }
 
 	// vertexpos[0]을 vertexpos[1], vertexpos[2]가 이루는 선분을 기준으로 대칭이동
-	void reflectVertex0() {
-		// 선분의 두 점
-		float x1 = vertexpos[1][0];
-		float y1 = vertexpos[1][1];
-		float x2 = vertexpos[2][0];
-		float y2 = vertexpos[2][1];
-		
-		// 대칭이동할 점
-		float px = vertexpos[0][0];
-		float py = vertexpos[0][1];
-		
-		// 선분의 방향 벡터
-		float dx = x2 - x1;
-		float dy = y2 - y1;
-		
-		// 선분의 길이의 제곱
-		float lengthSquared = dx * dx + dy * dy;
-		
-		// 선분이 점인 경우 (길이가 0) 처리
-		if (lengthSquared == 0) {
-			return; // 대칭이동 불가
-		}
-		
-		// 점 P에서 선분에 내린 수선의 발 구하기
-		// t = ((px-x1)*dx + (py-y1)*dy) / (dx*dx + dy*dy)
-		float t = ((px - x1) * dx + (py - y1) * dy) / lengthSquared;
-		
-		// 수선의 발 좌표
-		float footX = x1 + t * dx;
-		float footY = y1 + t * dy;
-		
-		// 대칭이동된 점 = 원점 + 2 * (수선의 발 - 원점)
-		float reflectedX = 2 * footX - px;
-		float reflectedY = 2 * footY - py;
-		
-		// vertexpos[0] 업데이트
-		vertexpos[0][0] = reflectedX;
-		vertexpos[0][1] = reflectedY;
-		
-		// 대칭이동 후 radius와 angle 다시 계산
-		radius[0] = std::hypot(vertexpos[0][0] - xdir, vertexpos[0][1] - ydir);
-		angle[0] = atan2(vertexpos[0][1] - ydir, vertexpos[0][0] - xdir);
-		
-		printf("Vertex[0] symmetric transformation: (%.2f, %.2f) -> (%.2f, %.2f)\n", 
-			px, py, reflectedX, reflectedY);
+	void hardreset() {
+		xdir = 400;
+		ydir = 400;
+
 	}
 };
 
@@ -687,7 +646,7 @@ void Keyboard(unsigned char key, int x, int y) {
 	case 'r': // vertexpos[0] 대칭이동
 	{
 		for (auto poly = polygonmap.begin(); poly != polygonmap.end(); ++poly) {
-			poly->reflectVertex0();
+			poly->hardreset();
 		}
 	}
 	break;

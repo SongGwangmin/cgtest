@@ -202,6 +202,30 @@ public:
 
 	}
 
+	void sendvertexdata(std::vector<float>& vbo, float mag) { // vbo에 정점 데이터 추가
+		GLdouble centerx = (x1 + x2) / 2;
+		GLdouble centery = (y1 + y2) / 2;
+
+		centerx -= polygonwidth / 2;
+		centery -= polygonwidth / 2;
+
+		for (int poly = 0; poly < 3; ++poly) {
+			for (int vert = 0; vert < 3; ++vert) {
+				float virtualx = (vertexpos[poly][vert][0]) * mag + centerx;
+				float virtualy = vertexpos[poly][vert][1] * mag + centery;
+
+				float finalx = (virtualx - (width / 2)) / (width / 2);
+				float finaly = (virtualy - (height / 2)) / -(height / 2);
+
+				vbo.insert(vbo.end(), {
+					finalx, finaly, 0.0f, (float)Rvalue, (float)Gvalue, (float)Bvalue
+					});
+			}
+		}
+
+
+	}
+
 	int getMemberShape() const { return membershape; }
 };
 
@@ -219,6 +243,11 @@ polygon activePolygon[4] = {
 		dis(gen) / 256.0f, dis(gen) / 256.0f, dis(gen) / 256.0f, pentagon) // (400, 400) ~ (800, 800)
 
 };
+
+int drawmode = 0; // 0: 전체, 1: 선택된 도형만
+
+polygon centerPolygon(0 , 0, width / 2 + width / 8, height / 2 + height / 8,
+	dis(gen) / 256.0f, dis(gen) / 256.0f, dis(gen) / 256.0f, triangle);
 
 ret morph(ret& after, ret& before) {
 	int halfwidth = width / 2;
@@ -385,8 +414,13 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 	// 각 사각형을 6개 정점으로 변환한 전체 데이터
 	std::vector<float> allVertices;
 
-	for (polygon& poly : activePolygon) {
-		poly.sendvertexdata(allVertices);
+	if (!drawmode) {
+		for (polygon& poly : activePolygon) {
+			poly.sendvertexdata(allVertices);
+		}
+	}
+	else {
+		centerPolygon.sendvertexdata(allVertices, 4.0f);
 	}
 
 
@@ -449,55 +483,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 
 	}
 
-	/*for (int i = 0; i < nowdrawsize; ++i) {
-		switch (showingrect[i].level) {
-		case point:
-		{
-			glDrawArrays(GL_TRIANGLES, i * 6, 6);
-
-
-		}
-		break;
-		case line:
-		{
-			glLineWidth(2.0f);
-			glDrawArrays(GL_LINES, i * 6, 2);
-		}
-		break;
-		case triangle:
-		{
-			glDrawArrays(GL_TRIANGLES, i * 6, 3);
-		}
-		break;
-		case rectangle:
-		{
-			// 사각형 그리기
-			// (x1, y1) -> (x1, y2) -> (x2, y2) -> (x2, y1) -> (x1, y1)
-			glDrawArrays(GL_TRIANGLES, i * 6, 6);
-		}
-		break;
-		}
-
-		if (whereiscursor >= 0 && whereiscursor == i) { // 선택된 도형만 윤곽선 그리기
-			glColor3f(0.0f, 0.0f, 0.0f);
-			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-			glLineWidth(3.0f);
-
-			switch (showingrect[i].level) { // i 사용해야 함!
-			case point:
-				glDrawArrays(GL_TRIANGLES, i * 6, 6);
-				break;
-			case triangle:
-				glDrawArrays(GL_TRIANGLES, i * 6, 3);
-				break;
-			case rectangle:
-				glDrawArrays(GL_TRIANGLES, i * 6, 6);
-				break;
-			}
-
-			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		}
-	}*/
+	
 
 
 
@@ -517,28 +503,43 @@ void Keyboard(unsigned char key, int x, int y) {
 	case 'q': // 프로그램 종료
 		glutLeaveMainLoop();
 		break;
+
 	case 'p': // 오각형 -> 선
 	{
-		if (selectedshape == -1)
+		if (selectedshape == -1) {
+			drawmode = 1;
+			centerPolygon.resetShape(pentagon);
 			selectedshape = line;
+		}
+
+		
 	}
 	break;
 	case 'l': // 선 -> 삼각형
 	{
-		if (selectedshape == -1)
+		if (selectedshape == -1) {
+			drawmode = 1;
+			centerPolygon.resetShape(line);
 			selectedshape = triangle;
+		}
 	}
 	break;
 	case 't': // 삼각형 -> 사각형
 	{
-		if (selectedshape == -1)
+		if (selectedshape == -1) {
+			drawmode = 1;
+			centerPolygon.resetShape(triangle);
 			selectedshape = rectangle;
+		}
 	}
 	break;
 	case 'r': // 사각형 -> 오각형
 	{
-		if (selectedshape == -1)
+		if (selectedshape == -1) {
+			drawmode = 1;
+			centerPolygon.resetShape(rectangle);
 			selectedshape = pentagon;
+		}
 	}
 	break;
 
@@ -549,6 +550,7 @@ void Keyboard(unsigned char key, int x, int y) {
 		activePolygon[2].resetShape(rectangle);
 		activePolygon[3].resetShape(pentagon);
 		selectedshape = -1;
+		drawmode = 0;
 	}
 	break;
 
@@ -597,11 +599,14 @@ void TimerFunction(int value)
 	int animationcheck = 0;
 
 	for (polygon& poly : activePolygon) {
-		if (poly.changeShape(selectedshape)) {
-			animationcheck = 1;
+		if (poly.changeShape((poly.getMemberShape() + 1) % 4)) {
+			//animationcheck = 1;
 		}
 	}
-
+	
+	if (centerPolygon.changeShape(selectedshape)) {
+		animationcheck = 1;
+	}
 	if (animationcheck) {
 		printf("someone change position. %d\n", selectedshape);
 	}

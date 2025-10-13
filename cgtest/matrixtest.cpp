@@ -8,14 +8,19 @@
 #include <random>
 #include <list>
 #include <algorithm>
-#include <vector>
+#include <cmath>
+#include <gl/glm/glm.hpp>
+#include <gl/glm/ext.hpp>
+#include <gl/glm/gtc/matrix_transform.hpp>
 
 #define MAXRECT 10 // 최대 사각형 개수
-#define line 0
-#define triangle 1
-#define rectangle 2
-#define pentagon 3
+#define point 0
+#define line 1
+#define triangle 2
+#define rectangle 3
+#define pentagon 4
 #define polygonwidth 100
+#define pi 3.14
 
 std::random_device rd;
 
@@ -23,6 +28,7 @@ std::random_device rd;
 std::mt19937 gen(rd());
 
 std::uniform_int_distribution<int> dis(0, 256);
+std::uniform_int_distribution<int> posdis(0, 700);
 //std::uniform_int_distribution<int> numdis(0, windowWidth - rectspace);
 
 //--- 아래 5개 함수는 사용자 정의 함수 임
@@ -42,9 +48,28 @@ GLuint fragmentShader; //--- 프래그먼트 세이더 객체
 GLuint VAO, VBO; //--- 버텍스 배열 객체, 버텍스 버퍼 객체
 int nowdrawstate = 0; // 0: point, 1: line, 2: triangle, 3: rectangle
 int selectedshape = -1; // 선택된 도형 인덱스
-//--- 메인 함수
+int spin = 1; //  1: 시계방향, -1: 반시계방향
+int animation = 1; // 0: 정지, 1: 회전
 
-float GuideFrame[4][3][3][2] = {
+// Forward declaration
+class polygon;
+std::list<polygon> polygonmap;
+std::list<polygon>::iterator mouse_dest; // 마우스로 선택된 polygon 저장
+bool has_selected = false; // mouse_dest가 유효한지 확인
+
+// 드래그 관련 변수
+bool is_dragging = false;
+int last_mouse_x = 0;
+int last_mouse_y = 0;
+int stopanimation = 0; // 0: 움직임, 1: 멈춤
+
+float GuideFrame[5][3][3][2] = {
+	{
+		{ {20,20}, {0,0}, {0,20} },
+		{ {20,20}, {0, 0}, {0,20} },
+		{ {20,20}, {20,0}, {0,0} }
+	},
+
 	// [0] 선 (3개, 각 3점)
 	{
 		{ {0,0}, {100,100}, {50,50} },
@@ -86,38 +111,107 @@ typedef struct RET {
 // 도형 저장하는 클래스
 class polygon {
 private:
-	float vertexpos[3][3][2];
+	float vertexpos[3][2];
 	bool needchange;
 	GLdouble Rvalue = 0.0;
 	GLdouble Gvalue = 0.0;
 	GLdouble Bvalue = 0.0;
 	GLdouble x1, y1, x2, y2;
+	float angle[3];
+	float radius[3];
 	int membershape; //  0: line, 1: triangle, 2: rectangle, 3: pentagon
+	int xdir = 400; // 중점
+	int ydir = 400;
+	int needmove = 0;
+	int inner = 0; // mouse 선택되었는지 여부
 
 public:
 	//std::vector<ret> rects;
-	polygon(GLdouble x1, GLdouble y1, GLdouble x2, GLdouble y2, 
-		GLdouble rvalue, GLdouble gvalue, GLdouble bvalue, int membershape) 
-		: x1(x1), y1(y1), x2(x2), y2(y2), Rvalue(rvalue), Gvalue(gvalue), Bvalue(bvalue), membershape(membershape){
-		
+	polygon(GLdouble x1, GLdouble y1, GLdouble x2, GLdouble y2, int style)
+		: x1(x1), y1(y1), x2(x2), y2(y2) {
+
 		needchange = false;
 
-		for (int poly = 0; poly < 3; ++poly) {
-			for (int vert = 0; vert < 3; ++vert) {
-				for (int pos = 0; pos < 2; ++pos) {
-					vertexpos[poly][vert][pos] = GuideFrame[membershape][poly][vert][pos];
-				}
-			}
+		xdir = 400;
+		ydir = 400;
+
+
+
+		GLdouble xhalf = (x1 + x2) / 2;
+		GLdouble yhalf = (y1 + y2) / 2;
+
+		switch (style) {
+		case 1:
+		{
+			vertexpos[0][0] = xhalf;
+			vertexpos[0][1] = y1;
+
+			vertexpos[1][0] = x1;
+			vertexpos[1][1] = y2;
+
+			vertexpos[2][0] = x2;
+			vertexpos[2][1] = y2;
+
+
 		}
+		break;
+		case 2:
+		{
+			vertexpos[0][0] = x1;
+			vertexpos[0][1] = yhalf;
+
+			vertexpos[1][0] = x2;
+			vertexpos[1][1] = y2;
+
+			vertexpos[2][0] = x2;
+			vertexpos[2][1] = y1;
+		}
+		break;
+		case 3:
+		{
+			vertexpos[0][0] = xhalf;
+			vertexpos[0][1] = y2;
+
+			vertexpos[1][0] = x1;
+			vertexpos[1][1] = y1;
+
+			vertexpos[2][0] = x2;
+			vertexpos[2][1] = y1;
+		}
+		break;
+		case 4:
+		{
+			vertexpos[0][0] = x2;
+			vertexpos[0][1] = yhalf;
+
+			vertexpos[1][0] = x1;
+			vertexpos[1][1] = y2;
+
+			vertexpos[2][0] = x1;
+			vertexpos[2][1] = y1;
+		}
+		break;
+		}
+
+
+
+
+
+		for (int i = 0; i < 3; ++i) {
+			radius[i] = std::hypot(vertexpos[i][0] - xdir, vertexpos[i][1] - ydir);
+			angle[i] = atan2(vertexpos[i][1] - ydir, vertexpos[i][0] - xdir);
+		}
+
 	}
-	
+
+
 	int changeShape(int targetshape) {
 		if ((membershape + 1) % 4 == targetshape) {
 			printf("activate\n");
 
 			bool chaging = false;
 
-			for(int poly = 0; poly < 3; ++poly) {
+			/*for (int poly = 0; poly < 3; ++poly) {
 				for (int vert = 0; vert < 3; ++vert) {
 					for (int pos = 0; pos < 2; ++pos) {
 						if (vertexpos[poly][vert][pos] == GuideFrame[targetshape][poly][vert][pos]) {
@@ -126,7 +220,7 @@ public:
 						else {
 							chaging = true; // 하나라도 변경 중이면 membershape를 변경하지 않는다
 
-							if (vertexpos[poly][vert][pos] < GuideFrame[targetshape][poly][vert][pos]) { 
+							if (vertexpos[poly][vert][pos] < GuideFrame[targetshape][poly][vert][pos]) {
 								// GuideFrame이 더 클 때엔 증가하고 넘어가면 같은 값을 준다
 
 								vertexpos[poly][vert][pos] += 5;
@@ -145,7 +239,7 @@ public:
 						}
 					}
 				}
-			}
+			}*/
 
 			if (chaging) {
 
@@ -162,16 +256,104 @@ public:
 		}
 	}
 
+	void update(float theta) {
+
+		for (int i = 0; i < 3; ++i) {
+			vertexpos[i][0] = xdir + radius[i] * cos(angle[i] + theta);
+			vertexpos[i][1] = ydir + radius[i] * sin(angle[i] + theta);
+			angle[i] += theta;
+		}
+	}
+
+	void setselect(int select) {
+		//selected = select;
+	}
+
+	void setmove() {
+		if (dis(gen) % 2) {
+			xdir = -1;
+		}
+		else {
+			xdir = 1;
+		}
+
+		if (dis(gen) % 2) {
+			ydir = -1;
+		}
+		else {
+			ydir = 1;
+		}
+		needmove = 1;
+	}
+
+	void innerouterchange(float centerx, float centery) {
+		radius[0] = std::hypot(vertexpos[0][0] - centerx, vertexpos[0][1] - centery);
+		angle[0] = atan2(vertexpos[0][1] - centery, vertexpos[0][0] - centerx);
+
+		if (inner) {
+			radius[0] += 250;
+			inner = 0;
+			printf("%d", inner);
+		}
+		else {
+			radius[0] -= 250;
+			inner = 1;
+			printf("%d", inner);
+		}
+
+
+		vertexpos[0][0] = centerx + radius[0] * cos(angle[0]);
+		vertexpos[0][1] = centery + radius[0] * sin(angle[0]);
+
+		radius[0] = std::hypot(vertexpos[0][0] - xdir, vertexpos[0][1] - ydir);
+		angle[0] = atan2(vertexpos[0][1] - ydir, vertexpos[0][0] - xdir);
+	}
+
+	void dragmove(int movex, int movey) {
+		x1 += movex;
+		x2 += movex;
+		y1 += movey;
+		y2 += movey;
+		if (x1 < 0) {
+			x1 = 0;
+			x2 = polygonwidth;
+		}
+		if (x2 > width) {
+			x2 = width;
+			x1 = width - polygonwidth;
+		}
+		if (y1 < 0) {
+			y1 = 0;
+			y2 = polygonwidth;
+		}
+		if (y2 > height) {
+			y2 = height;
+			y1 = height - polygonwidth;
+		}
+	}
+
 	void resetShape(int targetshape) {	//	강제로 모양변경
 		for (int poly = 0; poly < 3; ++poly) {
 			for (int vert = 0; vert < 3; ++vert) {
 				for (int pos = 0; pos < 2; ++pos) {
-					vertexpos[poly][vert][pos] = GuideFrame[targetshape][poly][vert][pos];
+					//vertexpos[poly][vert][pos] = GuideFrame[targetshape][poly][vert][pos];
 				}
 			}
 		}
 
+
+
 		membershape = targetshape;
+
+		if (!membershape) {
+			x2 = x1 + 20;
+			y2 = y1 + 20;
+		}
+		else {
+
+			x2 = x1 + polygonwidth;
+			y2 = y1 + polygonwidth;
+		}
 
 		Rvalue = dis(gen) / 256.0f;
 		Gvalue = dis(gen) / 256.0f;
@@ -185,57 +367,60 @@ public:
 		centerx -= polygonwidth / 2;
 		centery -= polygonwidth / 2;
 
-		for (int poly = 0; poly < 3; ++poly) {
-			for (int vert = 0; vert < 3; ++vert) {
-				float virtualx = vertexpos[poly][vert][0] + centerx;
-				float virtualy = vertexpos[poly][vert][1] + centery;
 
-				float finalx = (virtualx - (width / 2)) / (width / 2);
-				float finaly = (virtualy - (height / 2)) / -(height / 2);
+		for (int vert = 0; vert < 3; ++vert) {
 
-				vbo.insert(vbo.end(), {
-					finalx, finaly, 0.0f, (float)Rvalue, (float)Gvalue, (float)Bvalue
-					});
-			}
+			float virtualx = vertexpos[vert][0];
+			float virtualy = vertexpos[vert][1];
+
+			/*if (!membershape) {
+				virtualx = vertexpos[vert][0] + x1;
+				virtualy = vertexpos[vert][1] + y1;
+			}*/
+
+			float finalx = (virtualx - (width / 2)) / (width / 2);
+			float finaly = (virtualy - (height / 2)) / -(height / 2);
+
+			vbo.insert(vbo.end(), {
+				finalx, finaly, 0.0f, (float)Rvalue, (float)Gvalue, (float)Bvalue
+				});
 		}
 
-		
+
 	}
 
-	int getMemberShape() const { return membershape; }
+	bool ptinrect(int x, int y) {
+		return (x >= x1 && x <= x2 && y >= y1 && y <= y2);
+	}
+
+	void setmid(int xpos, int ypos) {
+		xdir = xpos;
+		ydir = ypos;
+
+		for (int i = 0; i < 3; ++i) {
+			radius[i] = std::hypot(vertexpos[i][0] - xdir, vertexpos[i][1] - ydir);
+			angle[i] = atan2(vertexpos[i][1] - ydir, vertexpos[i][0] - xdir);
+		}
+	}
+
+	// 좌표 접근을 위한 getter 메서드들
+	GLdouble getX1() const { return x1; }
+	GLdouble getY1() const { return y1; }
+	GLdouble getX2() const { return x2; }
+	GLdouble getY2() const { return y2; }
+
+	float getmainx() const { return vertexpos[0][0]; }
+	float getmainy() const { return vertexpos[0][1]; }
+
+	// vertexpos[0]을 vertexpos[1], vertexpos[2]가 이루는 선분을 기준으로 대칭이동
+	void hardreset() {
+		xdir = 400;
+		ydir = 400;
+
+	}
 };
 
-polygon activePolygon[4] = {
-	polygon(0, 0, width / 2, height / 2, 
-		dis(gen) / 256.0f, dis(gen) / 256.0f, dis(gen) / 256.0f, line), // (0,0) ~ (400, 400)
 
-	polygon(width / 2, 0, width, height / 2, 
-		dis(gen) / 256.0f, dis(gen) / 256.0f, dis(gen) / 256.0f, triangle), // (400, 0) ~ (800, 400)
-
-	polygon(0, height / 2, width / 2, height, 
-		dis(gen) / 256.0f, dis(gen) / 256.0f, dis(gen) / 256.0f, rectangle), // (0, 400) ~ (400, 800)
-
-	polygon(width / 2, height / 2, width, height, 
-		dis(gen) / 256.0f, dis(gen) / 256.0f, dis(gen) / 256.0f, pentagon) // (400, 400) ~ (800, 800)
-
-};
-
-ret morph(ret& after, ret& before) {
-	int halfwidth = width / 2;
-	int halfheight = height / 2;
-	after.x1 = (before.x1 - halfwidth) / halfwidth;
-	after.y1 = (before.y1 - halfheight) / -halfheight;
-	after.x2 = (before.x2 - halfwidth) / halfwidth;
-	after.y2 = (before.y2 - halfheight) / -halfheight;
-
-	// 색상은 그대로 복사
-	after.Rvalue = before.Rvalue;
-	after.Gvalue = before.Gvalue;
-	after.Bvalue = before.Bvalue;
-	after.level = before.level;
-
-	return after;
-}
 
 bool ptinrect(int x, int y, ret& rect) {
 	return (x >= rect.x1 && x <= rect.x2 && y >= rect.y1 && y <= rect.y2);
@@ -243,6 +428,7 @@ bool ptinrect(int x, int y, ret& rect) {
 
 void Keyboard(unsigned char key, int x, int y);
 void Mouse(int button, int state, int x, int y);
+void Motion(int x, int y); // 마우스 모션 콜백 함수 선언
 
 char* filetobuf(const char* file)
 {
@@ -301,6 +487,18 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	// 버퍼 설정
 	setupBuffers();
 
+	polygonmap.emplace_back(polygon(400 - 150, 400 - 300, 400 + 150, 400 - 150, 1));
+
+	polygonmap.emplace_back(polygon(400 - 150, 400 + 150, 400 + 150, 400 + 300, 3));
+
+	polygonmap.emplace_back(polygon(400 - 300, 400 - 150, 400 - 150, 400 + 150, 2));
+
+	polygonmap.emplace_back(polygon(400 + 150, 400 - 150, 400 + 300, 400 + 150, 4));
+
+	//polygonmap.emplace_back(polygon(400 - 150, 400 + 150, 400 + 150, 400 + 300, 3));
+
+
+
 	//--- 세이더 프로그램 만들기
 	glutDisplayFunc(drawScene); //--- 출력 콜백 함수
 	glutReshapeFunc(Reshape);
@@ -309,6 +507,7 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 
 	glutKeyboardFunc(Keyboard);
 	glutMouseFunc(Mouse);
+	glutMotionFunc(Motion); // 마우스 모션 콜백 등록
 
 	glutMainLoop();
 }
@@ -385,50 +584,12 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 	// 각 사각형을 6개 정점으로 변환한 전체 데이터
 	std::vector<float> allVertices;
 
-	for (polygon& poly : activePolygon) {
-		poly.sendvertexdata(allVertices);
+
+	for (auto poly = polygonmap.begin(); poly != polygonmap.end(); ++poly) {
+		poly->sendvertexdata(allVertices);
 	}
 
-	
-	/*for (int i = 0; i < nowdrawsize; i++) {
-		ret after;
-		morph(after, showingrect[i]); // morph 변환 적용
 
-		// level은 그대로 사용 (사각형 그리기용)
-		float x1 = (float)after.x1;
-		float y1 = (float)after.y1;
-		float x2 = (float)after.x2;
-		float y2 = (float)after.y2;
-		float r = (float)after.Rvalue;
-		float g = (float)after.Gvalue;
-		float b = (float)after.Bvalue;
-
-		// 사각형을 위한 6개 정점: (x1,y1), (x1,y2), (x2,y2), (x1,y2), (x2,y2), (x2,y1)
-		// 각 정점마다 위치(3) + 색상(3) = 6개 값
-
-		// 첫 번째 삼각형: (x1,y1), (x1,y2), (x2,y2)
-		if (showingrect[i].level != triangle) {
-			allVertices.insert(allVertices.end(), {
-				x2, y2, 0.0f, r, g, b,  // (x1, y1)
-				x1, y1, 0.0f, r, g, b,  // (x1, y2)
-				x1, y2, 0.0f, r, g, b   // (x2, y2)
-				});
-		}
-		else {
-			allVertices.insert(allVertices.end(), {
-				x2, y2, 0.0f, r, g, b,  // (x1, y1)
-				(x2 + x1) / 2, y1, 0.0f, r, g, b,  // (x1, y2)
-				x1, y2, 0.0f, r, g, b   // (x2, y2)
-				});
-		}
-
-		// 두 번째 삼각형: (x1,y1), (x2,y2), (x2,y1)
-		allVertices.insert(allVertices.end(), {
-			x1, y1, 0.0f, r, g, b,  // (x1, y1)
-			x2, y2, 0.0f, r, g, b,  // (x2, y2)
-			x2, y1, 0.0f, r, g, b   // (x2, y1)
-			});
-	}*/
 
 	if (!allVertices.empty()) {
 		glBindVertexArray(VAO);
@@ -442,62 +603,14 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 
 	}
 
-	for (int i = 0; i < 4; ++i) {
-		glLineWidth(5.0f);
-		glDrawArrays(GL_LINES, i * 9, 9);
-		glDrawArrays(GL_TRIANGLES, i * 9, 9);
+	for (int i = 0; i < 20; ++i) {
+		glLineWidth(2.0f);
+		glDrawArrays(GL_LINES, i * 3, 3);
+		glDrawArrays(GL_TRIANGLES, i * 3, 3);
 
 	}
 
-	/*for (int i = 0; i < nowdrawsize; ++i) {
-		switch (showingrect[i].level) {
-		case point:
-		{
-			glDrawArrays(GL_TRIANGLES, i * 6, 6);
 
-
-		}
-		break;
-		case line:
-		{
-			glLineWidth(2.0f);
-			glDrawArrays(GL_LINES, i * 6, 2);
-		}
-		break;
-		case triangle:
-		{
-			glDrawArrays(GL_TRIANGLES, i * 6, 3);
-		}
-		break;
-		case rectangle:
-		{
-			// 사각형 그리기
-			// (x1, y1) -> (x1, y2) -> (x2, y2) -> (x2, y1) -> (x1, y1)
-			glDrawArrays(GL_TRIANGLES, i * 6, 6);
-		}
-		break;
-		}
-
-		if (whereiscursor >= 0 && whereiscursor == i) { // 선택된 도형만 윤곽선 그리기
-			glColor3f(0.0f, 0.0f, 0.0f);
-			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-			glLineWidth(3.0f);
-
-			switch (showingrect[i].level) { // i 사용해야 함!
-			case point:
-				glDrawArrays(GL_TRIANGLES, i * 6, 6);
-				break;
-			case triangle:
-				glDrawArrays(GL_TRIANGLES, i * 6, 3);
-				break;
-			case rectangle:
-				glDrawArrays(GL_TRIANGLES, i * 6, 6);
-				break;
-			}
-
-			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		}
-	}*/
 
 
 
@@ -517,41 +630,28 @@ void Keyboard(unsigned char key, int x, int y) {
 	case 'q': // 프로그램 종료
 		glutLeaveMainLoop();
 		break;
-	case 'p': // 오각형 -> 선
+	case 'c': // 시계방향 회전
 	{
-		if(selectedshape == -1)
-			selectedshape = line;
+		spin = 1;
 	}
 	break;
-	case 'l': // 선 -> 삼각형
+	case 's': // 애니메이션 토글
 	{
-		if (selectedshape == -1)
-			selectedshape = triangle;
+		animation = !animation;
 	}
 	break;
-	case 't': // 삼각형 -> 사각형
+	case 't': // 반시계방향 회전
 	{
-		if (selectedshape == -1)
-			selectedshape = rectangle;
+		spin = -1;
 	}
 	break;
-	case 'r': // 사각형 -> 오각형
+	case 'r': // vertexpos[0] 대칭이동
 	{
-		if (selectedshape == -1)
-			selectedshape = pentagon;
+		for (auto poly = polygonmap.begin(); poly != polygonmap.end(); ++poly) {
+			poly->hardreset();
+		}
 	}
 	break;
-	
-	case 'a': // 강제로 기본으로 변경
-	{
-		activePolygon[0].resetShape(line);
-		activePolygon[1].resetShape(triangle);
-		activePolygon[2].resetShape(rectangle);
-		activePolygon[3].resetShape(pentagon);
-		selectedshape = -1;
-	}
-	break;
-	
 	default:
 		break;
 	}
@@ -565,9 +665,26 @@ void Mouse(int button, int state, int x, int y)
 	case GLUT_LEFT_BUTTON:
 	{
 		if (state == GLUT_DOWN) {// 도형선택
-			
+			for (auto poly = polygonmap.begin(); poly != polygonmap.end(); ++poly) {
+				poly->setmid(x, y);
+			}
 		}
 		else if (state == GLUT_UP) {
+			auto poly = polygonmap.begin();
+			//poly++;
+			float main1x = poly->getmainx();
+			float main1y = poly->getmainy();
+
+			//poly++;
+			poly++;
+			float main3x = poly->getmainx();
+			float main3y = poly->getmainy();
+
+			float centerx = (main1x + main3x) / 2;
+			float centery = (main1y + main3y) / 2;
+			for (auto poly = polygonmap.begin(); poly != polygonmap.end(); ++poly) {
+				poly->setmid(centerx, centery);
+			}
 
 			glutPostRedisplay();
 		}
@@ -576,8 +693,21 @@ void Mouse(int button, int state, int x, int y)
 	case GLUT_RIGHT_BUTTON:
 	{
 		if (state == GLUT_DOWN) {
-			// 새로운 사각형 추가 (예시)
-			
+			auto poly = polygonmap.begin();
+			//poly++;
+			float main1x = poly->getmainx();
+			float main1y = poly->getmainy();
+
+			//poly++;
+			poly++;
+			float main3x = poly->getmainx();
+			float main3y = poly->getmainy();
+
+			float centerx = (main1x + main3x) / 2;
+			float centery = (main1y + main3y) / 2;
+			for (auto poly = polygonmap.begin(); poly != polygonmap.end(); ++poly) {
+				poly->innerouterchange(centerx, centery);
+			}
 		}
 	}
 	break;
@@ -588,29 +718,19 @@ void Mouse(int button, int state, int x, int y)
 
 void TimerFunction(int value)
 {
-	/*if (pointcount < sizing * 2) {
-		pointcount += 2;
-	}
-	else {
-		pointcount = sizing * 2;
-	}*/
-	int animationcheck = 0;
-
-	for (polygon& poly : activePolygon) {
-		if (poly.changeShape(selectedshape)) {
-			animationcheck = 1;
+	if (animation) {
+		for (auto poly = polygonmap.begin(); poly != polygonmap.end(); ++poly) {
+			poly->update((pi / 30) * spin);
 		}
 	}
 
-	if (animationcheck) {
-		printf("someone change position. %d\n", selectedshape);
-	}
-	else {
-		printf("no one change position. you can move these\n");
-		selectedshape = -1;
-	}
 
-	printf("timer is playing now\nq");
+	//printf("timer is playing now\nq");
 	glutPostRedisplay();
 	glutTimerFunc(25, TimerFunction, 1);
+}
+
+void Motion(int x, int y) // 마우스 모션 콜백 함수
+{
+
 }

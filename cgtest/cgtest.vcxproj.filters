@@ -39,6 +39,9 @@
     <ClCompile Include="matrixtest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="12-new.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="vertex.glsl">

@@ -195,13 +195,14 @@ public:
 				x1 += xdir * 5;
 				x2 += xdir * 5;
 				if (x1 <= 0 || x2 >= width) {
+					if (y1 <= 0 || y2 >= height) {
+						ydir = -ydir;
+					}
 					xdir = -xdir;
 					y1 += ydir * 5;
 					y2 += ydir * 5;
 				}
-				if (y1 <= 0 || y2 >= height) {
-					ydir = -ydir;
-				}
+				
 			}
 			else {
 				x1 += xdir * 5;

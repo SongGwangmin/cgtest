@@ -88,11 +88,63 @@ private:
 public:
 	//std::vector<ret> rects;
 	polygon(pointment p1, pointment p2, pointment p3, GLdouble rv, GLdouble gv, GLdouble bv) {
+		vertexpos[0][0][0] = p1.xpos;
+		vertexpos[0][0][1] = p1.ypos;
+		vertexpos[0][0][2] = p1.zpos;
 		
-
-
+		vertexpos[0][1][0] = p2.xpos;
+		vertexpos[0][1][1] = p2.ypos;
+		vertexpos[0][1][2] = p2.zpos;
 		
+		vertexpos[0][2][0] = p3.xpos;
+		vertexpos[0][2][1] = p3.ypos;
+		vertexpos[0][2][2] = p3.zpos;
 
+		vertexpos[1][0][0] = p1.xpos;
+		vertexpos[1][0][1] = p1.ypos;
+		vertexpos[1][0][2] = p1.zpos;
+		
+		vertexpos[1][1][0] = p2.xpos;
+		vertexpos[1][1][1] = p2.ypos;
+		vertexpos[1][1][2] = p2.zpos;
+		
+		vertexpos[1][2][0] = p3.xpos;
+		vertexpos[1][2][1] = p3.ypos;
+		vertexpos[1][2][2] = p3.zpos;
+
+		Rvalue = rv;
+		Gvalue = gv;
+		Bvalue = bv;
+	}
+
+	polygon(pointment p1, pointment p2, pointment p3, pointment p4, GLdouble rv, GLdouble gv, GLdouble bv) {
+		vertexpos[0][0][0] = p1.xpos;
+		vertexpos[0][0][1] = p1.ypos;
+		vertexpos[0][0][2] = p1.zpos;
+
+		vertexpos[0][1][0] = p2.xpos;
+		vertexpos[0][1][1] = p2.ypos;
+		vertexpos[0][1][2] = p2.zpos;
+
+		vertexpos[0][2][0] = p3.xpos;
+		vertexpos[0][2][1] = p3.ypos;
+		vertexpos[0][2][2] = p3.zpos;
+
+		vertexpos[1][0][0] = p1.xpos;
+		vertexpos[1][0][1] = p1.ypos;
+		vertexpos[1][0][2] = p1.zpos;
+
+		vertexpos[1][2][0] = p3.xpos;
+		vertexpos[1][2][1] = p3.ypos;
+		vertexpos[1][2][2] = p3.zpos;
+
+		vertexpos[1][1][0] = p4.xpos;
+		vertexpos[1][1][1] = p4.ypos;
+		vertexpos[1][1][2] = p4.zpos;
+
+		Rvalue = rv;
+		Gvalue = gv;
+		Bvalue = bv;
 	}
 
 

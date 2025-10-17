@@ -52,6 +52,9 @@ int animation = 1; // 0: 정지, 1: 회전
 class polygon;
 std::list<polygon> polygonmap;
 std::list<polygon>::iterator mouse_dest; // 마우스로 선택된 polygon 저장
+std::vector<float> allVertices;
+
+
 
 typedef struct poitment {
 	GLdouble xpos;
@@ -163,23 +166,14 @@ public:
 		centerx -= polygonwidth / 2;
 		centery -= polygonwidth / 2;
 
+		for (int poly = 0; poly < 3; ++poly) {
+			for (int vert = 0; vert < 3; ++vert) {
 
-		for (int vert = 0; vert < 3; ++vert) {
 
-			float virtualx = vertexpos[vert][0];
-			float virtualy = vertexpos[vert][1];
-
-			/*if (!membershape) {
-				virtualx = vertexpos[vert][0] + x1;
-				virtualy = vertexpos[vert][1] + y1;
-			}*/
-
-			float finalx = (virtualx - (width / 2)) / (width / 2);
-			float finaly = (virtualy - (height / 2)) / -(height / 2);
-
-			vbo.insert(vbo.end(), {
-				finalx, finaly, 0.0f, (float)Rvalue, (float)Gvalue, (float)Bvalue
-				});
+				vbo.insert(vbo.end(), {
+					vertexpos[poly][vert][0], vertexpos[poly][vert][1], vertexpos[poly][vert][2], (float)Rvalue, (float)Gvalue, (float)Bvalue
+					});
+			}
 		}
 
 
@@ -258,8 +252,47 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 
 	//polygonmap.emplace_back(polygon(400 - 150, 400 + 150, 400 + 150, 400 + 300, 3));
 
+	pointment p1{0.5,0.5,0.5};
+	pointment p2{ 0.5,0.5,-0.5 };
+	pointment p3{ -0.5,0.5,-0.5 };
+	pointment p4{ -0.5,0.5,0.5 };
+	pointment p5{ 0.5,-0.5,0.5 };
+	pointment p6{ 0.5,-0.5,-0.5 };
+	pointment p7{ -0.5,-0.5,-0.5 };
+	pointment p8{ -0.5,-0.5,0.5 };
+
+	allVertices.insert(allVertices.end(), {
+					1, 0, 0, 
+					1, 0, 0});
+	allVertices.insert(allVertices.end(), {
+					-1, 0, 0,
+					1, 0, 0 });
+
+	allVertices.insert(allVertices.end(), {
+					0, 1, 0,
+					0, 1, 0 });
+	allVertices.insert(allVertices.end(), {
+					0, -1, 0,
+					0, 1, 0 });
+
+	allVertices.insert(allVertices.end(), {
+					0, 0, 1,
+					0, 0, 1 });
+	allVertices.insert(allVertices.end(), {
+					0, 0, -1,
+					0, 0, 1 });
 
 
+	polygonmap.emplace_back(polygon(p1, p2, p3, p4, dis(gen) / 100.0f, dis(gen) / 100.0f, dis(gen) / 100.0f));
+	polygonmap.emplace_back(polygon(p3, p4, p8, p7, dis(gen) / 100.0f, dis(gen) / 100.0f, dis(gen) / 100.0f));
+	polygonmap.emplace_back(polygon(p1, p4, p8, p5, dis(gen) / 100.0f, dis(gen) / 100.0f, dis(gen) / 100.0f));
+	polygonmap.emplace_back(polygon(p2, p1, p5, p6, dis(gen) / 100.0f, dis(gen) / 100.0f, dis(gen) / 100.0f));
+	polygonmap.emplace_back(polygon(p2, p3, p7, p6, dis(gen) / 100.0f, dis(gen) / 100.0f, dis(gen) / 100.0f));
+	polygonmap.emplace_back(polygon(p5, p6, p7, p8, dis(gen) / 100.0f, dis(gen) / 100.0f, dis(gen) / 100.0f));
+
+	for (auto poly = polygonmap.begin(); poly != polygonmap.end(); ++poly) {
+		poly->sendvertexdata(allVertices);
+	}
 	//--- 세이더 프로그램 만들기
 	glutDisplayFunc(drawScene); //--- 출력 콜백 함수
 	glutReshapeFunc(Reshape);
@@ -343,12 +376,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 	glUseProgram(shaderProgramID);
 
 	// 각 사각형을 6개 정점으로 변환한 전체 데이터
-	std::vector<float> allVertices;
-
-
-	for (auto poly = polygonmap.begin(); poly != polygonmap.end(); ++poly) {
-		poly->sendvertexdata(allVertices);
-	}
+	
 
 
 
@@ -364,12 +392,13 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 
 	}
 
-	for (int i = 0; i < 20; ++i) {
-		glLineWidth(2.0f);
-		glDrawArrays(GL_LINES, 0, 4);
-		glDrawArrays(GL_TRIANGLES, i * 3, 3);
+	glLineWidth(2.0f);
+	glDrawArrays(GL_LINES, 0, 6);
+	//for (int i = 0; i < 20; ++i) {
+		//glDrawArrays(GL_LINES, 0, 4);
+	glDrawArrays(GL_TRIANGLES, 6, 3 * 36);
 
-	}
+	//}
 
 
 

@@ -405,7 +405,7 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설�
 
 	//--- 윈도우 생성하기
 	glutInit(&argc, argv);
-	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
 	glutInitWindowPosition(100, 100);
 	glutInitWindowSize(width, height);
 	glutCreateWindow("Rectangle Rendering");
@@ -520,7 +520,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 	rColor = gColor = 1.0;
 	bColor = 1.0; //--- 배경색을 파랑색으로 설정
 	glClearColor(rColor, gColor, bColor, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glUseProgram(shaderProgramID);
 
 	// 각 사각형을 6개 정점으로 변환한 전체 데이터

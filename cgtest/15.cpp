@@ -17,7 +17,7 @@
 #define rectangle 3
 #define pentagon 4
 #define polygonwidth 100
-#define pi 3.14
+#define pi 3.14159265358979323846
 
 std::random_device rd;
 
@@ -57,9 +57,9 @@ std::vector<float> allVertices;
 
 
 typedef struct poitment {
-	GLdouble xpos;
-	GLdouble ypos;
-	GLdouble zpos;
+	float xpos;
+	float ypos;
+	float zpos;
 } pointment;
 
 typedef struct RET {
@@ -155,7 +155,46 @@ public:
 
 	}
 
-	
+	void rotate(float theta, char command) {
+		switch (command) {
+			case 'x':
+			{
+				float cosTheta = cos(theta);
+				float sinTheta = sin(theta);
+				for (int i = 0; i < 3; ++i) {
+					float y = vertexpos[0][i][1];
+					float z = vertexpos[0][i][2];
+					vertexpos[0][i][1] = y * cosTheta - z * sinTheta;
+					vertexpos[0][i][2] = y * sinTheta + z * cosTheta;
+				}
+			}
+			break;
+			case 'y':
+			{
+				float cosTheta = cos(theta);
+				float sinTheta = sin(theta);
+				for (int i = 0; i < 3; ++i) {
+					float x = vertexpos[0][i][0];
+					float z = vertexpos[0][i][2];
+					vertexpos[0][i][0] = x * cosTheta + z * sinTheta;
+					vertexpos[0][i][2] = -x * sinTheta + z * cosTheta;
+				}
+			}
+			break;
+			case 'z':
+			{
+				float cosTheta = cos(theta);
+				float sinTheta = sin(theta);
+				for (int i = 0; i < 3; ++i) {
+					float x = vertexpos[0][i][0];
+					float y = vertexpos[0][i][1];
+					vertexpos[0][i][0] = x * cosTheta - y * sinTheta;
+					vertexpos[0][i][1] = x * sinTheta + y * cosTheta;
+				}
+			}
+			break;
+		}
+	}
 
 	
 
@@ -261,25 +300,87 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	pointment p7{ -0.5,-0.5,-0.5 };
 	pointment p8{ -0.5,-0.5,0.5 };
 
+	pointment xaxis1{ 1,0,0 };
+	pointment xaxis2{ -1,0,0 };
+	pointment yaxis1{ 0,1,0 };
+	pointment yaxis2{ 0,-1,0 };
+	pointment zaxis1{ 0,0,1 };
+	pointment zaxis2{ 0,0,-1 };
+
+	// x축 30도 == pi/6 라디안 회전
+
+	/*vertexpos[0][i][1] = y * cosTheta - z * sinTheta;
+	vertexpos[0][i][2] = y * sinTheta + z * cosTheta;*/
+	float costheta = cos(pi / 6);
+	float sintheta = sin(pi / 6);
+
+
+	xaxis1.ypos = xaxis1.ypos * costheta - xaxis1.zpos * sintheta;	
+	xaxis1.zpos = xaxis1.ypos * sintheta - xaxis1.zpos * costheta;
+
+	xaxis2.ypos = xaxis2.ypos * costheta - xaxis2.zpos * sintheta;
+	xaxis2.zpos = xaxis2.ypos * sintheta - xaxis2.zpos * costheta;
+
+	yaxis1.ypos = yaxis1.ypos * costheta - yaxis1.zpos * sintheta;
+	yaxis1.zpos = yaxis1.ypos * sintheta - yaxis1.zpos * costheta;
+
+	yaxis2.ypos = yaxis2.ypos * costheta - yaxis2.zpos * sintheta;
+	yaxis2.zpos = yaxis2.ypos * sintheta - yaxis2.zpos * costheta;
+
+	zaxis1.ypos = zaxis1.ypos * costheta - zaxis1.zpos * sintheta;
+	zaxis1.zpos = zaxis1.ypos * sintheta - zaxis1.zpos * costheta;
+
+	zaxis2.ypos = zaxis2.ypos * costheta - zaxis2.zpos * sintheta;
+	zaxis2.zpos = zaxis2.ypos * sintheta - zaxis2.zpos * costheta;
+	
+	// y축으로 -30도 회전
+	/*
+	vertexpos[0][i][0] = x * cosTheta + z * sinTheta;
+					vertexpos[0][i][2] = -x * sinTheta + z * cosTheta;
+	*/
+	costheta = cos(-pi / 6);
+	sintheta = sin(-pi / 6);
+
+
+	xaxis1.xpos = xaxis1.xpos * costheta + xaxis1.zpos * sintheta;
+	xaxis1.zpos = -xaxis1.xpos * sintheta + xaxis1.zpos * costheta;
+	
+	xaxis2.xpos = xaxis2.xpos * costheta + xaxis2.zpos * sintheta;
+	xaxis2.zpos = -xaxis2.xpos * sintheta + xaxis2.zpos * costheta;
+
+	yaxis1.xpos = yaxis1.xpos * costheta + yaxis1.zpos * sintheta;
+	yaxis1.zpos = -yaxis1.xpos * sintheta + yaxis1.zpos * costheta;
+
+	yaxis2.xpos = yaxis2.xpos * costheta + yaxis2.zpos * sintheta;
+	yaxis2.zpos = -yaxis2.xpos * sintheta + yaxis2.zpos * costheta;
+
+	zaxis1.xpos = zaxis1.xpos * costheta + zaxis1.zpos * sintheta;
+	zaxis1.zpos = -zaxis1.xpos * sintheta + zaxis1.zpos * costheta;
+
+	zaxis2.xpos = zaxis2.xpos * costheta + zaxis2.zpos * sintheta;
+	zaxis2.zpos = -zaxis2.xpos * sintheta + zaxis2.zpos * costheta;
+
+
+
 	allVertices.insert(allVertices.end(), {
-					1, 0, 0, 
+					xaxis1.xpos, xaxis1.ypos, xaxis1.zpos,
 					1, 0, 0});
 	allVertices.insert(allVertices.end(), {
-					-1, 0, 0,
+					xaxis2.xpos, xaxis2.ypos, xaxis2.zpos,
 					1, 0, 0 });
 
 	allVertices.insert(allVertices.end(), {
-					0, 1, 0,
+					yaxis1.xpos, yaxis1.ypos, yaxis1.zpos,
 					0, 1, 0 });
 	allVertices.insert(allVertices.end(), {
-					0, -1, 0,
+					yaxis2.xpos, yaxis2.ypos, yaxis2.zpos,
 					0, 1, 0 });
 
 	allVertices.insert(allVertices.end(), {
-					0, 0, 1,
+					zaxis1.xpos, zaxis1.ypos, zaxis1.zpos,
 					0, 0, 1 });
 	allVertices.insert(allVertices.end(), {
-					0, 0, -1,
+					zaxis2.xpos, zaxis2.ypos, zaxis2.zpos,
 					0, 0, 1 });
 
 
@@ -291,6 +392,9 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	polygonmap.emplace_back(polygon(p5, p6, p7, p8, dis(gen) / 100.0f, dis(gen) / 100.0f, dis(gen) / 100.0f));
 
 	for (auto poly = polygonmap.begin(); poly != polygonmap.end(); ++poly) {
+		poly->rotate(pi / 6, 'x');
+		poly->rotate(-pi / 6, 'y');
+
 		poly->sendvertexdata(allVertices);
 	}
 	//--- 세이더 프로그램 만들기

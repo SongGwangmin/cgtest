@@ -48,6 +48,9 @@
     <ClCompile Include="15.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="15_fixed.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="vertex.glsl">

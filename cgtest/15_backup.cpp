@@ -28,7 +28,7 @@ std::random_device rd;
 std::mt19937 gen(rd());
 
 std::uniform_int_distribution<int> dis(0, 256);
-std::uniform_int_distribution<int> polyrandom(0, 24);
+std::uniform_int_distribution<int> posdis(0, 700);
 //std::uniform_int_distribution<int> numdis(0, windowWidth - rectspace);
 
 //--- 아래 5개 함수는 사용자 정의 함수 임
@@ -57,7 +57,7 @@ std::list<polygon> polygonmap;
 std::list<polygon>::iterator mouse_dest; // 마우스로 선택된 polygon 저장
 std::vector<float> allVertices;
 
-int selection[10] = { 0,0,0,0,0,1,0,0,0,0 };
+
 
 typedef struct poitment {
 	float xpos;
@@ -210,14 +210,14 @@ void setupBuffers() {
 	glBindVertexArray(0);
 }
 
-int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
+void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 {
 	//width = 800;
 	//height = 800;
 
 	//--- 윈도우 생성하기
 	glutInit(&argc, argv);
-	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
 	glutInitWindowPosition(100, 100);
 	glutInitWindowSize(width, height);
 	glutCreateWindow("Rectangle Rendering");
@@ -231,9 +231,9 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 
 	// 버퍼 설정
 	setupBuffers();
-	glEnable(GL_DEPTH_TEST);
+
 	allVertices.clear();
-	
+
 	//polygonmap.emplace_back(polygon(400 - 150, 400 + 150, 400 + 150, 400 + 300, 3));
 
 	pointment p1{0.5,0.5,0.5};
@@ -244,54 +244,70 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	pointment p6{ 0.5,-0.5,-0.5 };
 	pointment p7{ -0.5,-0.5,-0.5 };
 	pointment p8{ -0.5,-0.5,0.5 };
-	pointment p9{ 0, 0.5 ,0 };
 
-	// glm::vec4로 축 좌표 정의
-	glm::vec4 xaxis1(10, 0, 0, 1);
-	glm::vec4 xaxis2(-10, 0, 0, 1);
-	glm::vec4 yaxis1(0, 10, 0, 1);
-	glm::vec4 yaxis2(0, -10, 0, 1);
-	glm::vec4 zaxis1(0, 0, 10, 1);
-	glm::vec4 zaxis2(0, 0, -10, 1);
+	glm::vec4 xaxis1(1, 0, 0, 1);
+	glm::vec4 xaxis2(-1, 0, 0, 1);
+	glm::vec4 yaxis1(0, 1, 0, 1);
+	glm::vec4 yaxis2(0, -1, 0, 1);
+	glm::vec4 zaxis1(0, 0, 1, 1);
+	glm::vec4 zaxis2(0, 0, -1, 1);
 
-	// y축으로 -30도 회전 (glm::rotate 사용)
-	xaxis1 = glm::rotate(glm::mat4(1.0f), (float)(-pi / 6), glm::vec3(0.0f, 1.0f, 0.0f)) * xaxis1;
-	xaxis2 = glm::rotate(glm::mat4(1.0f), (float)(-pi / 6), glm::vec3(0.0f, 1.0f, 0.0f)) * xaxis2;
-	yaxis1 = glm::rotate(glm::mat4(1.0f), (float)(-pi / 6), glm::vec3(0.0f, 1.0f, 0.0f)) * yaxis1;
-	yaxis2 = glm::rotate(glm::mat4(1.0f), (float)(-pi / 6), glm::vec3(0.0f, 1.0f, 0.0f)) * yaxis2;
-	zaxis1 = glm::rotate(glm::mat4(1.0f), (float)(-pi / 6), glm::vec3(0.0f, 1.0f, 0.0f)) * zaxis1;
-	zaxis2 = glm::rotate(glm::mat4(1.0f), (float)(-pi / 6), glm::vec3(0.0f, 1.0f, 0.0f)) * zaxis2;
-	
 	// x축으로 30도 회전 (glm::rotate 사용)
-	xaxis1 = glm::rotate(glm::mat4(1.0f), (float)(-pi / 6), glm::vec3(1.0f, 0.0f, 0.0f)) * xaxis1;
-	xaxis2 = glm::rotate(glm::mat4(1.0f), (float)(-pi / 6), glm::vec3(1.0f, 0.0f, 0.0f)) * xaxis2;
-	yaxis1 = glm::rotate(glm::mat4(1.0f), (float)(-pi / 6), glm::vec3(1.0f, 0.0f, 0.0f)) * yaxis1;
-	yaxis2 = glm::rotate(glm::mat4(1.0f), (float)(-pi / 6), glm::vec3(1.0f, 0.0f, 0.0f)) * yaxis2;
-	zaxis1 = glm::rotate(glm::mat4(1.0f), (float)(-pi / 6), glm::vec3(1.0f, 0.0f, 0.0f)) * zaxis1;
-	zaxis2 = glm::rotate(glm::mat4(1.0f), (float)(-pi / 6), glm::vec3(1.0f, 0.0f, 0.0f)) * zaxis2;
-
+	xaxis1 = glm::rotate(glm::mat4(1.0f), (float)(pi / 6), glm::vec3(1.0f, 0.0f, 0.0f)) * xaxis1;
+	xaxis2 = glm::rotate(glm::mat4(1.0f), (float)(pi / 6), glm::vec3(1.0f, 0.0f, 0.0f)) * xaxis2;
+	yaxis1 = glm::rotate(glm::mat4(1.0f), (float)(pi / 6), glm::vec3(1.0f, 0.0f, 0.0f)) * yaxis1;
+	yaxis2 = glm::rotate(glm::mat4(1.0f), (float)(pi / 6), glm::vec3(1.0f, 0.0f, 0.0f)) * yaxis2;
+	zaxis1 = glm::rotate(glm::mat4(1.0f), (float)(pi / 6), glm::vec3(1.0f, 0.0f, 0.0f)) * zaxis1;
+	zaxis2 = glm::rotate(glm::mat4(1.0f), (float)(pi / 6), glm::vec3(1.0f, 0.0f, 0.0f)) * zaxis2;
 	
+	// y축으로 -30도 회전
+	/*
+	vertexpos[0][i][0] = x * cosTheta + z * sinTheta;
+					vertexpos[0][i][2] = -x * sinTheta + z * cosTheta;
+	*/
+	costheta = cos(-pi / 6);
+	sintheta = sin(-pi / 6);
 
-	// 축 데이터를 allVertices에 추가 (vec4의 x, y, z 멤버 사용)
+
+	xaxis1.xpos = xaxis1.xpos * costheta + xaxis1.zpos * sintheta;
+	xaxis1.zpos = -xaxis1.xpos * sintheta + xaxis1.zpos * costheta;
+	
+	xaxis2.xpos = xaxis2.xpos * costheta + xaxis2.zpos * sintheta;
+	xaxis2.zpos = -xaxis2.xpos * sintheta + xaxis2.zpos * costheta;
+
+	yaxis1.xpos = yaxis1.xpos * costheta + yaxis1.zpos * sintheta;
+	yaxis1.zpos = -yaxis1.xpos * sintheta + yaxis1.zpos * costheta;
+
+	yaxis2.xpos = yaxis2.xpos * costheta + yaxis2.zpos * sintheta;
+	yaxis2.zpos = -yaxis2.xpos * sintheta + yaxis2.zpos * costheta;
+
+	zaxis1.xpos = zaxis1.xpos * costheta + zaxis1.zpos * sintheta;
+	zaxis1.zpos = -zaxis1.xpos * sintheta + zaxis1.zpos * costheta;
+
+	zaxis2.xpos = zaxis2.xpos * costheta + zaxis2.zpos * sintheta;
+	zaxis2.zpos = -zaxis2.xpos * sintheta + zaxis2.zpos * costheta;
+
+
+
 	allVertices.insert(allVertices.end(), {
-					xaxis1.x, xaxis1.y, xaxis1.z,
+					xaxis1.xpos, xaxis1.ypos, xaxis1.zpos,
 					1, 0, 0});
 	allVertices.insert(allVertices.end(), {
-					xaxis2.x, xaxis2.y, xaxis2.z,
+					xaxis2.xpos, xaxis2.ypos, xaxis2.zpos,
 					1, 0, 0 });
 
 	allVertices.insert(allVertices.end(), {
-					yaxis1.x, yaxis1.y, yaxis1.z,
+					yaxis1.xpos, yaxis1.ypos, yaxis1.zpos,
 					0, 1, 0 });
 	allVertices.insert(allVertices.end(), {
-					yaxis2.x, yaxis2.y, yaxis2.z,
+					yaxis2.xpos, yaxis2.ypos, yaxis2.zpos,
 					0, 1, 0 });
 
 	allVertices.insert(allVertices.end(), {
-					zaxis1.x, zaxis1.y, zaxis1.z,
+					zaxis1.xpos, zaxis1.ypos, zaxis1.zpos,
 					0, 0, 1 });
 	allVertices.insert(allVertices.end(), {
-					zaxis2.x, zaxis2.y, zaxis2.z,
+					zaxis2.xpos, zaxis2.ypos, zaxis2.zpos,
 					0, 0, 1 });
 
 	polygonmap.emplace_back(polygon(p1, p2, p3, p4, 0, 0, 0));
@@ -301,15 +317,16 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	polygonmap.emplace_back(polygon(p2, p3, p7, p6, 1, 0, 0));
 	polygonmap.emplace_back(polygon(p5, p6, p7, p8, 1, 0, 1));
 
-	polygonmap.emplace_back(polygon(p6, p5, p9, 1, 0, 0));
-	polygonmap.emplace_back(polygon(p8, p5, p9, 0, 1, 0));
-	polygonmap.emplace_back(polygon(p7, p8, p9, 0, 0, 1));
-	polygonmap.emplace_back(polygon(p6, p7, p9, 1, 1, 0));
+	/*polygonmap.emplace_back(polygon(p1, p2, p3, p4, float(dis(gen)) / 100.0f, float(dis(gen)) / 100.0f, float(dis(gen)) / 100.0f));
+	polygonmap.emplace_back(polygon(p3, p4, p8, p7, float(dis(gen)) / 100.0f, float(dis(gen)) / 100.0f, float(dis(gen)) / 100.0f));
+	polygonmap.emplace_back(polygon(p1, p4, p8, p5, float(dis(gen)) / 100.0f, float(dis(gen)) / 100.0f, float(dis(gen)) / 100.0f));
+	polygonmap.emplace_back(polygon(p2, p1, p5, p6, float(dis(gen)) / 100.0f, float(dis(gen)) / 100.0f, float(dis(gen)) / 100.0f));
+	polygonmap.emplace_back(polygon(p2, p3, p7, p6, float(dis(gen)) / 100.0f, float(dis(gen)) / 100.0f, float(dis(gen)) / 100.0f));
+	polygonmap.emplace_back(polygon(p5, p6, p7, p8, float(dis(gen)) / 100.0f, float(dis(gen)) / 100.0f, float(dis(gen)) / 100.0f));*/
 
-	
 	for (auto poly = polygonmap.begin(); poly != polygonmap.end(); ++poly) {
-		poly->rotate(-pi / 6, 'y');
-		poly->rotate(-pi / 6, 'x');
+		poly->rotate(pi / 6, 'x');
+		poly->rotate(pi / 6, 'y');
 
 		poly->sendvertexdata(allVertices);
 	}
@@ -324,7 +341,6 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	glutMotionFunc(Motion); // 마우스 모션 콜백 등록
 
 	glutMainLoop();
-	return 0;
 }
 
 void make_vertexShaders()
@@ -393,7 +409,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 	rColor = gColor = 1.0;
 	bColor = 1.0; //--- 배경색을 파랑색으로 설정
 	glClearColor(rColor, gColor, bColor, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT);
 	glUseProgram(shaderProgramID);
 
 	// 각 사각형을 6개 정점으로 변환한 전체 데이터
@@ -412,13 +428,12 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 		// 모든 사각형을 한 번에 그리기 (각 사각형당 6개 정점)
 
 	}
-	
+
 	glLineWidth(2.0f);
-	for (int i = 0; i < 10; ++i) {
+	for (int i = 0; i < 24; ++i) {
 		//glDrawArrays(GL_LINES, 0, 4);
-		if (selection[i]) {
-			glDrawArrays(GL_TRIANGLES, 6 + 6 * i, 6);
-		}
+
+	glDrawArrays(GL_TRIANGLES, 6 + 6 * i, 6);
 
 	}
 	glDrawArrays(GL_LINES, 0, 6);
@@ -446,53 +461,6 @@ void Keyboard(unsigned char key, int x, int y) {
 	case 'r': // vertexpos[0] 대칭이동
 	{
 		
-	}
-	break;
-	case '0':
-	case '1':
-	case '2':
-	case '3':
-	case '4':
-	case '5':
-	case '6':
-	case '7':
-	case '8':
-	case '9':
-	{
-		int idx = key - '0';
-		for (int i = 0; i < 10; ++i) {
-			selection[i] = 0;
-		}
-		idx += 9;
-		idx %= 10;
-		selection[idx] = 1;
-	}
-	break;
-	case 'c': // 육면체 랜덤
-	{
-		for (int i = 0; i < 10; ++i) {
-			selection[i] = 0;
-		}
-		int copy[6] = { 1,1,0,0,0,0 };
-
-
-
-		std::shuffle(&copy[0], &copy[6], gen);
-
-		for (int i = 0; i < 6; ++i) {
-			selection[i] = copy[i];
-		}
-	}
-	break;
-	case 't':
-	{
-		for (int i = 0; i < 10; ++i) {
-			selection[i] = 0;
-		}
-
-
-		selection[5] = 1;
-		selection[6 + (polyrandom(gen) % 6)] = 1;
 	}
 	break;
 	default:

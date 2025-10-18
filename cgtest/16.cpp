@@ -50,6 +50,9 @@ int nowdrawstate = 0; // 0: point, 1: line, 2: triangle, 3: rectangle
 int selectedshape = -1; // 선택된 도형 인덱스
 int spin = 1; //  1: 시계방향, -1: 반시계방향
 int animation = 1; // 0: 정지, 1: 회전
+int hidetoggle = 1; // 1. 은면제거
+int wiretoggle = 0; // 1. 와이어프레임 모드
+
 
 // Forward declaration
 class polygon;
@@ -58,6 +61,16 @@ std::list<polygon>::iterator mouse_dest; // 마우스로 선택된 polygon 저장
 std::vector<float> allVertices;
 
 int selection[10] = { 1,1,1,1,1,1,0,0,0,0 };
+
+float angle = 0.0f; // 회전 각도
+float xangle = 0.0f;
+float polygon_xpos = 0.0f;
+float polygon_ypos = 0.0f;
+
+// 동적 회전축을 위한 전역 변수
+glm::vec3 current_xaxis;
+glm::vec3 current_yaxis;
+glm::vec3 current_zaxis;
 
 typedef struct poitment {
 	float xpos;
@@ -172,6 +185,7 @@ public:
 }*/
 
 void Keyboard(unsigned char key, int x, int y);
+void SpecialKeys(int key, int x, int y); // 특수 키(화살표 키) 콜백 함수 선언
 void Mouse(int button, int state, int x, int y);
 void Motion(int x, int y); // 마우스 모션 콜백 함수 선언
 
@@ -294,6 +308,11 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 					zaxis2.x, zaxis2.y, zaxis2.z,
 					0, 0, 1 });
 
+	// 현재 축 벡터들 계산 (회전에 사용할 축들)
+	current_xaxis = glm::normalize(glm::vec3(xaxis1 - xaxis2));
+	current_yaxis = glm::normalize(glm::vec3(yaxis1 - yaxis2));
+	current_zaxis = glm::normalize(glm::vec3(zaxis1 - zaxis2));
+
 	polygonmap.emplace_back(polygon(p1, p2, p3, p4, 0, 0, 0));
 	polygonmap.emplace_back(polygon(p4, p8, p7, p3, 0, 0, 1));
 	polygonmap.emplace_back(polygon(p1, p4, p8, p5, 0, 1, 0));
@@ -310,7 +329,7 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	for (auto poly = polygonmap.begin(); poly != polygonmap.end(); ++poly) {
 		poly->rotate(-pi / 6, 'y');
 		poly->rotate(-pi / 6, 'x');
-
+		
 		poly->sendvertexdata(allVertices);
 	}
 	//--- 세이더 프로그램 만들기
@@ -320,6 +339,7 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	glutTimerFunc(25, TimerFunction, 1);
 
 	glutKeyboardFunc(Keyboard);
+	glutSpecialFunc(SpecialKeys); // 특수 키(화살표 키) 콜백 등록
 	glutMouseFunc(Mouse);
 	glutMotionFunc(Motion); // 마우스 모션 콜백 등록
 
@@ -398,8 +418,25 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 
 	// 각 사각형을 6개 정점으로 변환한 전체 데이터
 
+	glm::mat4 model2 = glm::mat4(1.0f);
 
+	model2 = glm::translate(model2, glm::vec3(polygon_xpos, polygon_ypos, 0.0f));
 
+	glm::mat4 model = glm::mat4(1.0f);
+
+	model = glm::rotate(model, angle, current_yaxis);
+
+	glm::mat4 model1 = glm::mat4(1.0f);
+
+	model1 = glm::rotate(model1, xangle, current_xaxis);
+
+	
+
+	model = model2 * model1 * model;
+
+	unsigned int modelLocation = glGetUniformLocation(shaderProgramID, "modelTransform");
+
+	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
 
 	if (!allVertices.empty()) {
 		glBindVertexArray(VAO);
@@ -414,15 +451,34 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 	}
 
 	glLineWidth(2.0f);
-	for (int i = 0; i < 10; ++i) {
-		//glDrawArrays(GL_LINES, 0, 4);
-		if (selection[i]) {
-			//glDrawArrays(GL_TRIANGLES, 6 + 6 * i, 6);
-			glDrawArrays(GL_LINES, 6 + 6 * i, 6);
-		}
-
-	}
+	
+	// 축은 변환 없이 그리기 (단위 행렬 적용)
+	glm::mat4 identityMatrix = glm::mat4(1.0f);
+	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(identityMatrix)); // 버텍스 셰이더에 있는 modelTransform에 단위 행렬 전달
 	glDrawArrays(GL_LINES, 0, 6);
+	
+	// polygon들은 변환 행렬 적용해서 그리기
+	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
+	if (wiretoggle) {
+		for (int i = 0; i < 10; ++i) {
+			//glDrawArrays(GL_LINES, 0, 4);
+			if (selection[i]) {
+				//glDrawArrays(GL_TRIANGLES, 6 + 6 * i, 6);
+				glDrawArrays(GL_LINES, 6 + 6 * i, 6);
+			}
+
+		}
+	}
+	else {
+		for (int i = 0; i < 10; ++i) {
+			//glDrawArrays(GL_LINES, 0, 4);
+			if (selection[i]) {
+				glDrawArrays(GL_TRIANGLES, 6 + 6 * i, 6);
+				//glDrawArrays(GL_LINES, 6 + 6 * i, 6);
+			}
+
+		}
+	}
 
 
 
@@ -489,6 +545,92 @@ void Keyboard(unsigned char key, int x, int y) {
 		}
 	}
 	break;
+	case 'h': // 은면제거 적용/해제
+	{
+		if (hidetoggle) {
+			glEnable(GL_DEPTH_TEST);
+			hidetoggle = 0;
+		}
+		else {
+			glDisable(GL_DEPTH_TEST);
+			hidetoggle = 1;
+		}
+	}
+	break;
+	case 'w': // 와이어객체
+	{
+		wiretoggle = 1;
+	}
+	break;
+	case 'W': // 솔리드객체
+	{
+		wiretoggle = 0;
+
+	}
+	break;
+	case 'x': // x축 기준 양방향 회전애니메이션(자전)
+	{
+		xangle += 0.02f;
+	}
+	break;
+	case 'X': // x축 기준 음방향 회전애니메이션(자전)
+	{
+		xangle -= 0.02f;
+
+	}
+	break;
+	case 'y': // y축 기준 양방향 회전애니메이션(자전)
+	{
+		angle += 0.02f;
+	}
+	break;
+	case 'Y': // y축 기준 음방향 회전애니메이션(자전)
+	{
+		angle -= 0.02f;
+	}
+	break;
+	case 's': // 초기위치로 리셋(모든 애니메이션 멈추기)
+	{
+		xangle = 0.0f;
+		angle = 0.0f;
+		polygon_xpos = 0.0f;
+		polygon_ypos = 0.0f;
+
+	}
+	break;
+	default:
+		break;
+	}
+
+	glutPostRedisplay();
+}
+
+void SpecialKeys(int key, int x, int y) {
+	switch (key) {
+	case GLUT_KEY_LEFT: // ← 좌로 객체 이동 (current_xaxis 음의 방향)
+	{
+		polygon_xpos -= current_xaxis.x * 0.02f;
+		polygon_ypos -= current_xaxis.y * 0.02f;
+	}
+	break;
+	case GLUT_KEY_RIGHT: // → 우로 객체 이동 (current_xaxis 양의 방향)
+	{
+		polygon_xpos += current_xaxis.x * 0.02f;
+		polygon_ypos += current_xaxis.y * 0.02f;
+	}
+	break;
+	case GLUT_KEY_UP: // ↑ 상으로 객체 이동 (current_yaxis 양의 방향)
+	{
+		polygon_xpos += current_yaxis.x * 0.02f;
+		polygon_ypos += current_yaxis.y * 0.02f;
+	}
+	break;
+	case GLUT_KEY_DOWN: // ↓ 하로 객체 이동 (current_yaxis 음의 방향)
+	{
+		polygon_xpos -= current_yaxis.x * 0.02f;
+		polygon_ypos -= current_yaxis.y * 0.02f;
+	}
+	break;
 	default:
 		break;
 	}
@@ -524,7 +666,7 @@ void Mouse(int button, int state, int x, int y)
 
 void TimerFunction(int value)
 {
-
+	
 	glutPostRedisplay();
 	glutTimerFunc(25, TimerFunction, 1);
 }

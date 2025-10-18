@@ -6,9 +6,12 @@ vPos;
 vColor; 
 //--- 컬러 변수:attribute position 1
  out vec3 out_Color;
+ 
+ uniform mat4 modelTransform;
+
  void main(void) 
 {
  //--- 프래그먼트세이더에게전달
-gl_Position = vec4 (vPos.x, vPos.y, vPos.z, 1.0);
+ gl_Position = modelTransform * vec4(vPos, 1.0); 
  out_Color = vColor;
  }

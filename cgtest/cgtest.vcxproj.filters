@@ -63,4 +63,12 @@
       <Filter>Source Files</Filter>
     </Text>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="fragment_matrix.glsl">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="vertex_matrix.glsl">
+      <Filter>Source Files</Filter>
+    </None>
+  </ItemGroup>
 </Project>

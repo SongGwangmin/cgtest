@@ -405,9 +405,9 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	polygonmap.emplace_back(polygon(p5, p6, p7, p8, 1, 0, 1));
 
 	polygonmap.emplace_back(polygon(p6, p5, p9, 1, 0, 0));
-	polygonmap.emplace_back(polygon(p8, p5, p9, 0, 1, 0));
-	polygonmap.emplace_back(polygon(p7, p8, p9, 0, 0, 1));
-	polygonmap.emplace_back(polygon(p6, p7, p9, 1, 1, 0));
+	polygonmap.emplace_back(polygon(p5, p8, p9, 0, 1, 0));
+	polygonmap.emplace_back(polygon(p8, p7, p9, 0, 0, 1));
+	polygonmap.emplace_back(polygon(p7, p6, p9, 1, 1, 0));
 
 
 	for (auto& poly : polygonmap) {
@@ -507,7 +507,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 
 	
 	glm::mat4 model = glm::mat4(1.0f);
-	//model = glm::rotate(model, angle, current_yaxis);
+	model = glm::rotate(model, angle, current_yaxis);
 
 	unsigned int modelLocation = glGetUniformLocation(shaderProgramID, "modelTransform");
 
@@ -642,7 +642,18 @@ void Keyboard(unsigned char key, int x, int y) {
 	break;
 	case 'p':
 	{
-
+		if (selection[0]) {
+			int copy[10] = { 0,0,0,0,0,1,1,1,1,1 };
+			for (int i = 0; i < 10; ++i) {
+				selection[i] = copy[i];
+			}
+		}
+		else {
+			int copy[10] = { 1,1,1,1,1,1,0,0,0,0 };
+			for (int i = 0; i < 10; ++i) {
+				selection[i] = copy[i];
+			}
+		}
 	}
 	break;
 	case 'h': // 은면제거 적용/해제

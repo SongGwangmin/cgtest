@@ -54,10 +54,34 @@ int hidetoggle = 1; // 1. 은면제거
 int wiretoggle = 0; // 1. 와이어프레임 모드
 
 
+// cube 관련 토글 변수
+int zrotoggle = 0; // 1. z축 회전 모드
+int opentoggle = 0; // 1. 도형 열기 모드
+int tiretoggle = 0; // 1. 옆면이 회전
+int backsizetoggle = 0; // 1. 뒷면 size 모드
+
+// piriamid 관련 토글 변수
+int openeverytoggle = 0; // 1. 모든 면 열기 모드	
+int sequentopnetoggle = 0; // 1. 면이 순차적으로 열림
+int sequentoclosetoggle = 0; // 1. 면이 순차적으로 닫힘
+
+// cube 관련 변수
+float topangle = 0.0f; // 윗면 회전 각도
+float oepnangle = 0.0f; // front 열리는 각도
+float tireangle = 0.0f; // 옆면 회전 각도
+float backsize = 1.0f; // 뒷면 크기
+
+// piramid 관련 변수
+float t1angle = 0.0f; // 면1 회전 각도
+float t2angle = 0.0f; // 면2 회전 각도
+float t3angle = 0.0f; // 면3 회전 각도
+float t4angle = 0.0f; // 면4 회전 각도
+
+
 // Forward declaration
 class polygon;
-std::list<polygon> polygonmap;
-std::list<polygon>::iterator mouse_dest; // 마우스로 선택된 polygon 저장
+std::vector<polygon> polygonmap;
+int mouse_dest = -1; // 마우스로 선택된 polygon 인덱스 저장
 std::vector<float> allVertices;
 
 int selection[10] = { 1,1,1,1,1,1,0,0,0,0 };
@@ -176,10 +200,70 @@ public:
 		}
 	}
 
+	// 행렬 뱉는 함수
+	glm::mat4 getedge() {
+		glm::vec3 edge = glm::normalize(glm::vec3(vpos[0][0] - vpos[0][1]));
+		glm::mat4 model1 = glm::mat4(1.0f);
+
+		glm::mat4 transparant = glm::mat4(1.0f);
+		transparant = glm::translate(transparant, glm::vec3(-vpos[0][1].x, -vpos[0][1].y, -vpos[0][1].z));
+
+
+		model1 = glm::rotate(model1, angle, edge);
+
+		glm::mat4 rev = glm::mat4(1.0f);
+		rev = glm::translate(rev, glm::vec3(vpos[0][1].x, vpos[0][1].y, vpos[0][1].z));
+		return rev * model1 * transparant;
+		return model1;
+	}
+
+	glm::mat4 getnomal() {
+		glm::vec4 u((vpos[0][0] - vpos[0][2]));
+		u.x /= -2.0f; 
+		u.y /= -2.0f; 
+		u.z /= -2.0f;
+		// 얘가 transform이 될거임
+		glm::mat4 transport = glm::mat4(1.0f);
+		transport = glm::translate(transport, glm::vec3(u.x, u.y, u.z));
+
+		glm::mat4 model1 = glm::mat4(1.0f);
+		model1 = glm::rotate(model1, angle, current_yaxis);
+
+		glm::mat4 rev = glm::mat4(1.0f);
+		rev = glm::translate(rev, glm::vec3(-u.x, -u.y, -u.z));
+
+		return rev * model1 * transport;
+		
+		//model1 = glm::translate(model1, glm::vec3(-u.x, -u.y, -u.z));
+
+	}
+
+	glm::mat4 getunit() {
+		//glm::vec3 u = glm::vec3(vpos[0][0] - vpos[0][1]);
+		
+		return glm::mat4(1.0f);
+	}
+
+	glm::mat4 gettirerotate() {
+		glm::vec4 u;
+
+		return glm::mat4(1.0f);
+	}
+
+	glm::mat4 getheadrotate() {
+		return glm::mat4(1.0f);
+	}
 };
 
 
+using ActionFunc = glm::mat4(polygon::*)();
 
+// 각 객체가 어떤 행동을 할지 지정
+ActionFunc actions[10] = {
+	&polygon::getheadrotate, &polygon::gettirerotate, &polygon::getunit,
+	&polygon::gettirerotate, &polygon::getedge, &polygon::getunit,
+	&polygon::getedge, &polygon::getedge, &polygon::getedge, &polygon::getedge
+};
 /*bool ptinrect(int x, int y, ret& rect) {
 	return (x >= rect.x1 && x <= rect.x2 && y >= rect.y1 && y <= rect.y2);
 }*/
@@ -326,12 +410,15 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	polygonmap.emplace_back(polygon(p6, p7, p9, 1, 1, 0));
 
 
-	for (auto poly = polygonmap.begin(); poly != polygonmap.end(); ++poly) {
-		poly->rotate(-pi / 6, 'y');
-		poly->rotate(-pi / 6, 'x');
+	for (auto& poly : polygonmap) {
+		poly.rotate(-pi / 6, 'y');
+		poly.rotate(-pi / 6, 'x');
 
-		poly->sendvertexdata(allVertices);
+		poly.sendvertexdata(allVertices);
 	}
+
+	
+
 	//--- 세이더 프로그램 만들기
 	glutDisplayFunc(drawScene); //--- 출력 콜백 함수
 	glutReshapeFunc(Reshape);
@@ -418,21 +505,9 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 
 	// 각 사각형을 6개 정점으로 변환한 전체 데이터
 
-	glm::mat4 model2 = glm::mat4(1.0f);
-
-	model2 = glm::translate(model2, glm::vec3(polygon_xpos, polygon_ypos, 0.0f));
-
+	
 	glm::mat4 model = glm::mat4(1.0f);
-
-	model = glm::rotate(model, angle, current_yaxis);
-
-	glm::mat4 model1 = glm::mat4(1.0f);
-
-	model1 = glm::rotate(model1, xangle, current_xaxis);
-
-
-
-	model = model2 * model1 * model;
+	//model = glm::rotate(model, angle, current_yaxis);
 
 	unsigned int modelLocation = glGetUniformLocation(shaderProgramID, "modelTransform");
 
@@ -458,27 +533,23 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 	glDrawArrays(GL_LINES, 0, 6);
 
 	// polygon들은 변환 행렬 적용해서 그리기
-	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
-	if (wiretoggle) {
-		for (int i = 0; i < 10; ++i) {
-			//glDrawArrays(GL_LINES, 0, 4);
-			if (selection[i]) {
-				//glDrawArrays(GL_TRIANGLES, 6 + 6 * i, 6);
-				glDrawArrays(GL_LINES, 6 + 6 * i, 6);
-			}
+	glm::mat4 temp = model;
+	
+	for (int i = 0; i < 10; ++i) {
+		//glDrawArrays(GL_LINES, 0, 4);
+		if (selection[i]) {
+			temp = model;
+			glm::mat4 model1 = (polygonmap[i].*actions[i])();
+			
+			temp = temp * model1;
 
+			glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(temp));
+			glDrawArrays(GL_TRIANGLES, 6 + 6 * i, 6);
+			//glDrawArrays(GL_LINES, 6 + 6 * i, 6);
 		}
-	}
-	else {
-		for (int i = 0; i < 10; ++i) {
-			//glDrawArrays(GL_LINES, 0, 4);
-			if (selection[i]) {
-				glDrawArrays(GL_TRIANGLES, 6 + 6 * i, 6);
-				//glDrawArrays(GL_LINES, 6 + 6 * i, 6);
-			}
 
-		}
 	}
+	
 
 
 
@@ -534,15 +605,44 @@ void Keyboard(unsigned char key, int x, int y) {
 		for (int i = 0; i < 10; ++i) {
 			selection[i] = copy[i];
 		}
-	}
-	break;
-	case 't':
-	{
+
+		/*
 		int copy[10] = { 0,0,0,0,0,1,1,1,1,1 };
 
 		for (int i = 0; i < 10; ++i) {
 			selection[i] = copy[i];
 		}
+		* */
+	}
+	break;
+	case 't':
+	{
+		angle += 0.02f;
+	}
+	break;
+	case 'f':
+	{
+
+	}
+	break;
+	case 's':
+	{
+
+	}
+	break;
+	case 'b':
+	{
+
+	}
+	break;
+	case 'o':
+	{
+
+	}
+	break;
+	case 'p':
+	{
+
 	}
 	break;
 	case 'h': // 은면제거 적용/해제
@@ -557,47 +657,7 @@ void Keyboard(unsigned char key, int x, int y) {
 		}
 	}
 	break;
-	case 'w': // 와이어객체
-	{
-		wiretoggle = 1;
-	}
-	break;
-	case 'W': // 솔리드객체
-	{
-		wiretoggle = 0;
-
-	}
-	break;
-	case 'x': // x축 기준 양방향 회전애니메이션(자전)
-	{
-		xangle += 0.02f;
-	}
-	break;
-	case 'X': // x축 기준 음방향 회전애니메이션(자전)
-	{
-		xangle -= 0.02f;
-
-	}
-	break;
-	case 'y': // y축 기준 양방향 회전애니메이션(자전)
-	{
-		angle += 0.02f;
-	}
-	break;
-	case 'Y': // y축 기준 음방향 회전애니메이션(자전)
-	{
-		angle -= 0.02f;
-	}
-	break;
-	case 's': // 초기위치로 리셋(모든 애니메이션 멈추기)
-	{
-		xangle = 0.0f;
-		angle = 0.0f;
-		polygon_xpos = 0.0f;
-		polygon_ypos = 0.0f;
-
-	}
-	break;
+	
 	default:
 		break;
 	}

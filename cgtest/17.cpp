@@ -658,12 +658,12 @@ void Keyboard(unsigned char key, int x, int y) {
 	break;
 	case 's':
 	{
-
+		tireangle += 0.02f;
 	}
 	break;
 	case 'b':
 	{
-
+		
 	}
 	break;
 	case 'o':

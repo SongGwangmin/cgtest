@@ -232,19 +232,21 @@ public:
 	}
 
 	glm::mat4 getnomal(float* angles) {
-		glm::vec4 u((vpos[0][0] - vpos[0][2]));
+		glm::vec4 u((vpos[0][0] + vpos[0][2]));
 		u.x /= -2.0f; 
 		u.y /= -2.0f; 
 		u.z /= -2.0f;
+		u.y -= 0.15f;
+		u.x += 0.16f;
 		// 얘가 transform이 될거임
 		glm::mat4 transport = glm::mat4(1.0f);
-		transport = glm::translate(transport, glm::vec3(u.x, u.y, u.z));
-
+		//transport = glm::translate(transport, glm::vec3(u.x, u.y, u.z));
+		transport = glm::translate(transport, glm::vec3(u.x, u.y, 0));
 		glm::mat4 model1 = glm::mat4(1.0f);
-		model1 = glm::rotate(model1, *angles, current_yaxis);
+		model1 = glm::rotate(model1, *angles, current_zaxis);
 
 		glm::mat4 rev = glm::mat4(1.0f);
-		rev = glm::translate(rev, glm::vec3(-u.x, -u.y, -u.z));
+		rev = glm::translate(rev, glm::vec3(-u.x, -u.y, 0));
 
 		return rev * model1 * transport;
 		
@@ -266,8 +268,19 @@ public:
 		return model1;
 	}
 
-	glm::mat4 getheadrotate(float* angles) {
-		return glm::mat4(1.0f);
+	glm::mat4 getbackscale(float* angles) {
+		glm::vec4 u((vpos[0][0] + vpos[0][2]));
+		u /= 2.0f;
+		glm::mat4 transport = glm::mat4(1.0f);
+		transport = glm::translate(transport, glm::vec3(-u.x, -u.y, -u.z));
+
+		glm::mat4 model1 = glm::mat4(1.0f);
+		model1 = glm::scale(model1, glm::vec3(*angles, *angles, *angles));
+
+		glm::mat4 rev = glm::mat4(1.0f);
+		rev = glm::translate(rev, glm::vec3(u.x, u.y, u.z));
+		return rev * model1 * transport;
+		
 	}
 };
 
@@ -276,7 +289,7 @@ using ActionFunc = glm::mat4(polygon::*)(float* angles);
 
 // 각 객체가 어떤 행동을 할지 지정
 ActionFunc actions[10] = {
-	&polygon::getheadrotate, &polygon::gettirerotate, &polygon::getunit,
+	&polygon::getnomal, &polygon::gettirerotate, &polygon::getbackscale,
 	&polygon::gettirerotate, &polygon::getedge, &polygon::getunit,
 	&polygon::getedge, &polygon::getedge, &polygon::getedge, &polygon::getedge
 };
@@ -638,7 +651,7 @@ void Keyboard(unsigned char key, int x, int y) {
 		break;
 	case 't':
 	{
-		
+		topangle += 0.02f;
 	}
 	break;
 	case 'f':
@@ -653,7 +666,7 @@ void Keyboard(unsigned char key, int x, int y) {
 	break;
 	case 'b':
 	{
-		
+		backsize -= 0.02f;
 	}
 	break;
 	case 'o':

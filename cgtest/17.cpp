@@ -77,6 +77,20 @@ float t2angle = 0.0f; // 면2 회전 각도
 float t3angle = 0.0f; // 면3 회전 각도
 float t4angle = 0.0f; // 면4 회전 각도
 
+// 10개짜리 float 포인터 배열 - 각각의 angle 변수들을 가리킴
+float* anglelist[10] = {
+	&topangle,   // 0
+	&tireangle,  // 1
+	&backsize,   // 2
+	&tireangle,  // 3
+	&oepnangle,  // 4
+	&backsize,   // 5
+	&t1angle,    // 6
+	&t2angle,    // 7
+	&t3angle,    // 8
+	&t4angle     // 9
+};
+
 
 // Forward declaration
 class polygon;
@@ -201,7 +215,7 @@ public:
 	}
 
 	// 행렬 뱉는 함수
-	glm::mat4 getedge() {
+	glm::mat4 getedge(float* angles) {
 		glm::vec3 edge = glm::normalize(glm::vec3(vpos[0][0] - vpos[0][1]));
 		glm::mat4 model1 = glm::mat4(1.0f);
 
@@ -209,7 +223,7 @@ public:
 		transparant = glm::translate(transparant, glm::vec3(-vpos[0][1].x, -vpos[0][1].y, -vpos[0][1].z));
 
 
-		model1 = glm::rotate(model1, angle, edge);
+		model1 = glm::rotate(model1, *angles, edge);
 
 		glm::mat4 rev = glm::mat4(1.0f);
 		rev = glm::translate(rev, glm::vec3(vpos[0][1].x, vpos[0][1].y, vpos[0][1].z));
@@ -217,7 +231,7 @@ public:
 		return model1;
 	}
 
-	glm::mat4 getnomal() {
+	glm::mat4 getnomal(float* angles) {
 		glm::vec4 u((vpos[0][0] - vpos[0][2]));
 		u.x /= -2.0f; 
 		u.y /= -2.0f; 
@@ -227,7 +241,7 @@ public:
 		transport = glm::translate(transport, glm::vec3(u.x, u.y, u.z));
 
 		glm::mat4 model1 = glm::mat4(1.0f);
-		model1 = glm::rotate(model1, angle, current_yaxis);
+		model1 = glm::rotate(model1, *angles, current_yaxis);
 
 		glm::mat4 rev = glm::mat4(1.0f);
 		rev = glm::translate(rev, glm::vec3(-u.x, -u.y, -u.z));
@@ -238,25 +252,37 @@ public:
 
 	}
 
-	glm::mat4 getunit() {
+	glm::mat4 getunit(float* angles) {
 		//glm::vec3 u = glm::vec3(vpos[0][0] - vpos[0][1]);
 		
 		return glm::mat4(1.0f);
 	}
 
-	glm::mat4 gettirerotate() {
-		glm::vec4 u;
+	glm::mat4 gettirerotate(float* angles) {
+		glm::vec4 u((vpos[0][0] - vpos[0][2]));
+		u.x /= -2.0f;
+		u.y /= -2.0f;
+		u.z /= -2.0f;
+		// 얘가 transform이 될거임
+		glm::mat4 transport = glm::mat4(1.0f);
+		transport = glm::translate(transport, glm::vec3(u.x, u.y, u.z));
 
-		return glm::mat4(1.0f);
+		glm::mat4 model1 = glm::mat4(1.0f);
+		model1 = glm::rotate(model1, *angles, current_zaxis);
+
+		glm::mat4 rev = glm::mat4(1.0f);
+		rev = glm::translate(rev, glm::vec3(-u.x, -u.y, -u.z));
+
+		return rev * model1 * transport;
 	}
 
-	glm::mat4 getheadrotate() {
+	glm::mat4 getheadrotate(float* angles) {
 		return glm::mat4(1.0f);
 	}
 };
 
 
-using ActionFunc = glm::mat4(polygon::*)();
+using ActionFunc = glm::mat4(polygon::*)(float* angles);
 
 // 각 객체가 어떤 행동을 할지 지정
 ActionFunc actions[10] = {
@@ -539,7 +565,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 		//glDrawArrays(GL_LINES, 0, 4);
 		if (selection[i]) {
 			temp = model;
-			glm::mat4 model1 = (polygonmap[i].*actions[i])();
+			glm::mat4 model1 = (polygonmap[i].*actions[i])(anglelist[i]);
 			
 			temp = temp * model1;
 
@@ -615,14 +641,19 @@ void Keyboard(unsigned char key, int x, int y) {
 		* */
 	}
 	break;
-	case 't':
+	case 'y':
 	{
 		angle += 0.02f;
+	}
+		break;
+	case 't':
+	{
+		
 	}
 	break;
 	case 'f':
 	{
-
+		oepnangle += 0.02f;
 	}
 	break;
 	case 's':
@@ -637,7 +668,10 @@ void Keyboard(unsigned char key, int x, int y) {
 	break;
 	case 'o':
 	{
-
+		t1angle += 0.02f;
+		t2angle += 0.02f;
+		t3angle += 0.02f;
+		t4angle += 0.02f;
 	}
 	break;
 	case 'p':

@@ -64,6 +64,10 @@ int backsizetoggle = 0; // 1. 뒷면 size 모드
 int edgeopentoggle = 0; // 0: edge 열림, 1: edge 닫힘
 int backscaletoggle = 0; // 1: scale 증가, 0: scale 감소
 
+// r키 순차 동작을 위한 변수들
+int rsequence = 0; // 0: 정지, 1: 순차 열기, 2: 순차 닫기
+int rcurrentface = 0; // 현재 동작 중인 면 (0:t1, 1:t2, 2:t3, 3:t4)
+
 // piriamid 관련 토글 변수
 int openeverytoggle = 0; // 1. 모든 면 열기 모드	
 int sequentopnetoggle = 0; // 1. 면이 순차적으로 열림
@@ -675,7 +679,16 @@ void Keyboard(unsigned char key, int x, int y) {
 	break;
 	case 'r': // sequentoclosetoggle
 	{
-		sequentoclosetoggle = !sequentoclosetoggle;
+		if (sequentoclosetoggle == 0) { // 정지 상태에서만 시작
+			sequentoclosetoggle = 1;
+			// 현재 각도에 따라 열기/닫기 모드 결정
+			if (t1angle <= 0.01f && t2angle <= 0.01f && t3angle <= 0.01f && t4angle <= 0.01f) {
+				rsequence = 1; // 순차 열기
+			} else {
+				rsequence = 2; // 순차 닫기
+			}
+			rcurrentface = 0; // 첫 번째 면부터 시작
+		}
 	}
 	break;
 	case 'p':
@@ -847,21 +860,71 @@ void TimerFunction(int value)
 
 	// r키 토글 - 순차 열기/닫기 (sequentoclosetoggle)
 	if (sequentoclosetoggle) {
-		if (sequentoclosetoggle == 1) { // 열림 모드 (sequentoclosetoggle를 상태 저장으로도 사용)
-			t1angle += 0.02f;
-			t2angle += 0.02f;
-			t3angle += 0.02f;
-			t4angle += 0.02f;
-			if (t1angle >= pi / 2) {
-				sequentoclosetoggle = 2; // 닫힘 모드로 변경 (2로 설정하여 구분)
+		if (rsequence == 1) { // 순차 열기
+			switch (rcurrentface) {
+			case 0: // t1 열기
+				t1angle += 0.02f;
+				if (t1angle >= pi / 2) {
+					t1angle = pi / 2;
+					rcurrentface = 1; // 다음 면으로
+				}
+				break;
+			case 1: // t2 열기
+				t2angle += 0.02f;
+				if (t2angle >= pi / 2) {
+					t2angle = pi / 2;
+					rcurrentface = 2; // 다음 면으로
+				}
+				break;
+			case 2: // t3 열기
+				t3angle += 0.02f;
+				if (t3angle >= pi / 2) {
+					t3angle = pi / 2;
+					rcurrentface = 3; // 다음 면으로
+				}
+				break;
+			case 3: // t4 열기
+				t4angle += 0.02f;
+				if (t4angle >= pi / 2) {
+					t4angle = pi / 2;
+					sequentoclosetoggle = 0; // 모든 면이 열렸으므로 토글 끄기
+					rsequence = 0;
+					rcurrentface = 0;
+				}
+				break;
 			}
-		} else if (sequentoclosetoggle == 2) { // 닫힘 모드
-			t1angle -= 0.02f;
-			t2angle -= 0.02f;
-			t3angle -= 0.02f;
-			t4angle -= 0.02f;
-			if (t1angle <= 0.01f) {
-				sequentoclosetoggle = 0; // 토글 끄기
+		} else if (rsequence == 2) { // 순차 닫기
+			switch (rcurrentface) {
+			case 0: // t1 닫기
+				t1angle -= 0.02f;
+				if (t1angle <= 0.0f) {
+					t1angle = 0.0f;
+					rcurrentface = 1; // 다음 면으로
+				}
+				break;
+			case 1: // t2 닫기
+				t2angle -= 0.02f;
+				if (t2angle <= 0.0f) {
+					t2angle = 0.0f;
+					rcurrentface = 2; // 다음 면으로
+				}
+				break;
+			case 2: // t3 닫기
+				t3angle -= 0.02f;
+				if (t3angle <= 0.0f) {
+					t3angle = 0.0f;
+					rcurrentface = 3; // 다음 면으로
+				}
+				break;
+			case 3: // t4 닫기
+				t4angle -= 0.02f;
+				if (t4angle <= 0.0f) {
+					t4angle = 0.0f;
+					sequentoclosetoggle = 0; // 모든 면이 닫혔으므로 토글 끄기
+					rsequence = 0;
+					rcurrentface = 0;
+				}
+				break;
 			}
 		}
 	}

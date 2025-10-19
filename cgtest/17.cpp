@@ -49,7 +49,7 @@ GLuint VAO, VBO; //--- 버텍스 배열 객체, 버텍스 버퍼 객체
 int nowdrawstate = 0; // 0: point, 1: line, 2: triangle, 3: rectangle
 int selectedshape = -1; // 선택된 도형 인덱스
 int spin = 1; //  1: 시계방향, -1: 반시계방향
-int animation = 1; // 0: 정지, 1: 회전
+int animation = 0; // 0: 정지, 1: 회전
 int hidetoggle = 1; // 1. 은면제거
 int wiretoggle = 0; // 1. 와이어프레임 모드
 
@@ -61,7 +61,7 @@ int tiretoggle = 0; // 1. 옆면이 회전
 int backsizetoggle = 0; // 1. 뒷면 size 모드
 
 // 새로운 토글 변수들
-int edgeopentoggle = 0; // 1: edge 열림, 0: edge 닫힘
+int edgeopentoggle = 0; // 0: edge 열림, 1: edge 닫힘
 int backscaletoggle = 0; // 1: scale 증가, 0: scale 감소
 
 // piriamid 관련 토글 변수
@@ -645,43 +645,37 @@ void Keyboard(unsigned char key, int x, int y) {
 	break;
 	case 'y': // 
 	{
-		angle += 0.02f;
+		animation = !animation;
 	}
 		break;
 	case 't': // zrotoggle
 	{
-		topangle += 0.02f;
+		zrotoggle = !zrotoggle;
 	}
 	break;
 	case 'f': // opentoggle
 	{
-		oepnangle += 0.02f;
+		opentoggle = !opentoggle;
 	}
 	break;
 	case 's': // tiretoggle
 	{
-		tireangle += 0.02f;
+		tiretoggle = !tiretoggle;
 	}
 	break;
 	case 'b': // backsizetoggle
 	{
-		backsize -= 0.02f;
+		backsizetoggle = !backsizetoggle;
 	}
 	break;
 	case 'o': // openeverytoggle
 	{
-		t1angle += 0.02f;
-		t2angle += 0.02f;
-		t3angle += 0.02f;
-		t4angle += 0.02f;
+		openeverytoggle = !openeverytoggle;
 	}
 	break;
 	case 'r': // sequentoclosetoggle
 	{
-		t1angle += 0.02f;
-		t2angle += 0.02f;
-		t3angle += 0.02f;
-		t4angle += 0.02f;
+		sequentoclosetoggle = !sequentoclosetoggle;
 	}
 	break;
 	case 'p':
@@ -781,6 +775,96 @@ void Mouse(int button, int state, int x, int y)
 
 void TimerFunction(int value)
 {
+	// y키 토글 - 전체 회전
+	if (animation) {
+		angle += 0.02f;
+	}
+
+	// t키 토글 - topangle (zrotoggle)
+	if (zrotoggle) {
+		topangle += 0.02f;
+	}
+
+	// f키 토글 - openangle (opentoggle)
+	if (opentoggle) {
+		if (edgeopentoggle == 0) { // 열림 모드
+			oepnangle += 0.02f;
+			if (oepnangle >= pi / 2) {
+				opentoggle = 0; // 토글 끄기
+				edgeopentoggle = 1; // 닫힘 모드로 변경
+			}
+		} else { // 닫힘 모드
+			oepnangle -= 0.02f;
+			if (oepnangle <= 0.0f) {
+				opentoggle = 0; // 토글 끄기
+				edgeopentoggle = 0; // 열림 모드로 변경
+			}
+		}
+	}
+
+	// s키 토글 - tireangle (tiretoggle)
+	if (tiretoggle) {
+		tireangle += 0.02f;
+	}
+
+	// b키 토글 - backsize (backsizetoggle)
+	if (backsizetoggle) {
+		if (backscaletoggle == 0) { // 감소 모드
+			backsize -= 0.02f;
+			if (backsize <= 0.0f) {
+				backscaletoggle = 1; // 증가 모드로 변경
+			}
+		} else { // 증가 모드
+			backsize += 0.02f;
+			if (backsize >= 1.0f) {
+				backscaletoggle = 0; // 감소 모드로 변경
+			}
+		}
+	}
+
+	// o키 토글 - 모든 면 열기 (openeverytoggle)
+	if (openeverytoggle) {
+		if (sequentopnetoggle == 0) { // 열림 모드
+			t1angle += 0.02f;
+			t2angle += 0.02f;
+			t3angle += 0.02f;
+			t4angle += 0.02f;
+			if (t1angle >= 2.58 * pi / 2) {
+				openeverytoggle = 0; // 토글 끄기
+				sequentopnetoggle = 1; // 닫힘 모드로 변경
+			}
+		} else { // 닫힘 모드
+			t1angle -= 0.02f;
+			t2angle -= 0.02f;
+			t3angle -= 0.02f;
+			t4angle -= 0.02f;
+			if (t1angle <= 0.01f) {
+				openeverytoggle = 0; // 토글 끄기
+				sequentopnetoggle = 0; // 열림 모드로 변경
+			}
+		}
+	}
+
+	// r키 토글 - 순차 열기/닫기 (sequentoclosetoggle)
+	if (sequentoclosetoggle) {
+		if (sequentoclosetoggle == 1) { // 열림 모드 (sequentoclosetoggle를 상태 저장으로도 사용)
+			t1angle += 0.02f;
+			t2angle += 0.02f;
+			t3angle += 0.02f;
+			t4angle += 0.02f;
+			if (t1angle >= pi / 2) {
+				sequentoclosetoggle = 2; // 닫힘 모드로 변경 (2로 설정하여 구분)
+			}
+		} else if (sequentoclosetoggle == 2) { // 닫힘 모드
+			t1angle -= 0.02f;
+			t2angle -= 0.02f;
+			t3angle -= 0.02f;
+			t4angle -= 0.02f;
+			if (t1angle <= 0.01f) {
+				sequentoclosetoggle = 0; // 토글 끄기
+			}
+		}
+	}
 
 	glutPostRedisplay();
 	glutTimerFunc(25, TimerFunction, 1);

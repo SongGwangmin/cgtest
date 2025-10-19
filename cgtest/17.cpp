@@ -60,6 +60,10 @@ int opentoggle = 0; // 1. 도형 열기 모드
 int tiretoggle = 0; // 1. 옆면이 회전
 int backsizetoggle = 0; // 1. 뒷면 size 모드
 
+// 새로운 토글 변수들
+int edgeopentoggle = 0; // 1: edge 열림, 0: edge 닫힘
+int backscaletoggle = 0; // 1: scale 증가, 0: scale 감소
+
 // piriamid 관련 토글 변수
 int openeverytoggle = 0; // 1. 모든 면 열기 모드	
 int sequentopnetoggle = 0; // 1. 면이 순차적으로 열림
@@ -600,11 +604,6 @@ void Keyboard(unsigned char key, int x, int y) {
 	case 'q': // 프로그램 종료
 		glutLeaveMainLoop();
 		break;
-	case 'r': // vertexpos[0] 대칭이동
-	{
-
-	}
-	break;
 	case '0':
 	case '1':
 	case '2':
@@ -644,32 +643,40 @@ void Keyboard(unsigned char key, int x, int y) {
 		* */
 	}
 	break;
-	case 'y':
+	case 'y': // 
 	{
 		angle += 0.02f;
 	}
 		break;
-	case 't':
+	case 't': // zrotoggle
 	{
 		topangle += 0.02f;
 	}
 	break;
-	case 'f':
+	case 'f': // opentoggle
 	{
 		oepnangle += 0.02f;
 	}
 	break;
-	case 's':
+	case 's': // tiretoggle
 	{
 		tireangle += 0.02f;
 	}
 	break;
-	case 'b':
+	case 'b': // backsizetoggle
 	{
 		backsize -= 0.02f;
 	}
 	break;
-	case 'o':
+	case 'o': // openeverytoggle
+	{
+		t1angle += 0.02f;
+		t2angle += 0.02f;
+		t3angle += 0.02f;
+		t4angle += 0.02f;
+	}
+	break;
+	case 'r': // sequentoclosetoggle
 	{
 		t1angle += 0.02f;
 		t2angle += 0.02f;

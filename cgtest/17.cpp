@@ -259,21 +259,11 @@ public:
 	}
 
 	glm::mat4 gettirerotate(float* angles) {
-		glm::vec4 u((vpos[0][0] - vpos[0][2]));
-		u.x /= -2.0f;
-		u.y /= -2.0f;
-		u.z /= -2.0f;
-		// 얘가 transform이 될거임
-		glm::mat4 transport = glm::mat4(1.0f);
-		transport = glm::translate(transport, glm::vec3(u.x, u.y, u.z));
-
+		
 		glm::mat4 model1 = glm::mat4(1.0f);
-		model1 = glm::rotate(model1, *angles, current_zaxis);
+		model1 = glm::rotate(model1, *angles, current_xaxis);
 
-		glm::mat4 rev = glm::mat4(1.0f);
-		rev = glm::translate(rev, glm::vec3(-u.x, -u.y, -u.z));
-
-		return rev * model1 * transport;
+		return model1;
 	}
 
 	glm::mat4 getheadrotate(float* angles) {

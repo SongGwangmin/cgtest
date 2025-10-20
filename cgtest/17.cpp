@@ -52,7 +52,7 @@ int spin = 1; //  1: 시계방향, -1: 반시계방향
 int animation = 0; // 0: 정지, 1: 회전
 int hidetoggle = 1; // 1. 은면제거
 int wiretoggle = 0; // 1. 와이어프레임 모드
-
+int culltoggle = 0; // 1. 뒷면 컬링 모드
 
 // cube 관련 토글 변수
 int zrotoggle = 0; // 1. z축 회전 모드
@@ -628,23 +628,17 @@ void Keyboard(unsigned char key, int x, int y) {
 		selection[idx] = 1;
 	}
 	break;
-	case 'c': // 육면체
+	case 'u':
 	{
-		int copy[10] = { 1,1,1,1,1,1,0,0,0,0 };
-
-
-
-		for (int i = 0; i < 10; ++i) {
-			selection[i] = copy[i];
+		if(culltoggle==0){
+			glEnable(GL_CULL_FACE);
+			culltoggle = 1;
+		}
+		else{
+			glDisable(GL_CULL_FACE);
+			culltoggle = 0;
 		}
 
-		/*
-		int copy[10] = { 0,0,0,0,0,1,1,1,1,1 };
-
-		for (int i = 0; i < 10; ++i) {
-			selection[i] = copy[i];
-		}
-		* */
 	}
 	break;
 	case 'y': // 
@@ -719,7 +713,31 @@ void Keyboard(unsigned char key, int x, int y) {
 		}
 	}
 	break;
-	
+	case 'c': // 초기화
+	{
+		angle = 0.0f;
+		xangle = 0.0f;
+		polygon_xpos = 0.0f;
+		polygon_ypos = 0.0f;
+		animation = false;
+		zrotoggle = false;
+		opentoggle = false;
+		tiretoggle = false;
+		backsizetoggle = false;
+		openeverytoggle = false;
+		sequentoclosetoggle = 0;
+		topangle = 0.0f;
+		oepnangle = 0.0f;
+		tireangle = 0.0f;
+		backsize = 1.0f;
+		t1angle = 0.0f;
+		t2angle = 0.0f;
+		t3angle = 0.0f;
+		t4angle = 0.0f;
+		edgeopentoggle = 0;
+		backscaletoggle = 0;
+		sequentopnetoggle = 0;
+	}
 	default:
 		break;
 	}

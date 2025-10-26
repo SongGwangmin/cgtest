@@ -1,4 +1,4 @@
-#define _CRT_SECURE_NO_WARNINGS //--- ÇÁ·Î±×·¥ ¸Ç ¾Õ¿¡ ¼±¾ğÇÒ °Í
+ï»¿#define _CRT_SECURE_NO_WARNINGS //--- í”„ë¡œê·¸ë¨ ë§¨ ì•ì— ì„ ì–¸í•  ê²ƒ
 #include <stdlib.h>
 #include <stdio.h>
 #include <iostream>
@@ -13,7 +13,7 @@
 #include <gl/glm/ext.hpp>
 #include <gl/glm/gtc/matrix_transform.hpp>
 
-#define MAXRECT 10 // ÃÖ´ë »ç°¢Çü °³¼ö
+#define MAXRECT 10 // ìµœëŒ€ ì‚¬ê°í˜• ê°œìˆ˜
 #define point 0
 #define line 1
 #define triangle 2
@@ -24,14 +24,14 @@
 
 std::random_device rd;
 
-// random_device ¸¦ ÅëÇØ ³­¼ö »ı¼º ¿£ÁøÀ» ÃÊ±âÈ­ ÇÑ´Ù.
+// random_device ë¥¼ í†µí•´ ë‚œìˆ˜ ìƒì„± ì—”ì§„ì„ ì´ˆê¸°í™” í•œë‹¤.
 std::mt19937 gen(rd());
 
 std::uniform_int_distribution<int> dis(0, 256);
 std::uniform_int_distribution<int> polyrandom(0, 24);
 //std::uniform_int_distribution<int> numdis(0, windowWidth - rectspace);
 
-//--- ¾Æ·¡ 5°³ ÇÔ¼ö´Â »ç¿ëÀÚ Á¤ÀÇ ÇÔ¼ö ÀÓ
+//--- ì•„ë˜ 5ê°œ í•¨ìˆ˜ëŠ” ì‚¬ìš©ì ì •ì˜ í•¨ìˆ˜ ì„
 void make_vertexShaders();
 void make_fragmentShaders();
 GLuint make_shaderProgram();
@@ -40,52 +40,52 @@ GLvoid Reshape(int w, int h);
 void setupBuffers();
 void TimerFunction(int value);
 
-//--- ÇÊ¿äÇÑ º¯¼ö ¼±¾ğ
+//--- í•„ìš”í•œ ë³€ìˆ˜ ì„ ì–¸
 GLint width = 800, height = 800;
-GLuint shaderProgramID; //--- ¼¼ÀÌ´õ ÇÁ·Î±×·¥ ÀÌ¸§
-GLuint vertexShader; //--- ¹öÅØ½º ¼¼ÀÌ´õ °´Ã¼
-GLuint fragmentShader; //--- ÇÁ·¡±×¸ÕÆ® ¼¼ÀÌ´õ °´Ã¼
-GLuint VAO, VBO; //--- ¹öÅØ½º ¹è¿­ °´Ã¼, ¹öÅØ½º ¹öÆÛ °´Ã¼
+GLuint shaderProgramID; //--- ì„¸ì´ë” í”„ë¡œê·¸ë¨ ì´ë¦„
+GLuint vertexShader; //--- ë²„í…ìŠ¤ ì„¸ì´ë” ê°ì²´
+GLuint fragmentShader; //--- í”„ë˜ê·¸ë¨¼íŠ¸ ì„¸ì´ë” ê°ì²´
+GLuint VAO, VBO; //--- ë²„í…ìŠ¤ ë°°ì—´ ê°ì²´, ë²„í…ìŠ¤ ë²„í¼ ê°ì²´
 int nowdrawstate = 0; // 0: point, 1: line, 2: triangle, 3: rectangle
-int selectedshape = -1; // ¼±ÅÃµÈ µµÇü ÀÎµ¦½º
-int spin = 1; //  1: ½Ã°è¹æÇâ, -1: ¹İ½Ã°è¹æÇâ
-int animation = 0; // 0: Á¤Áö, 1: È¸Àü
-int hidetoggle = 1; // 1. Àº¸éÁ¦°Å
-int wiretoggle = 0; // 1. ¿ÍÀÌ¾îÇÁ·¹ÀÓ ¸ğµå
-int culltoggle = 0; // 1. µŞ¸é ÄÃ¸µ ¸ğµå
+int selectedshape = -1; // ì„ íƒëœ ë„í˜• ì¸ë±ìŠ¤
+int spin = 1; //  1: ì‹œê³„ë°©í–¥, -1: ë°˜ì‹œê³„ë°©í–¥
+int animation = 0; // 0: ì •ì§€, 1: íšŒì „
+int hidetoggle = 1; // 1. ì€ë©´ì œê±°
+int wiretoggle = 0; // 1. ì™€ì´ì–´í”„ë ˆì„ ëª¨ë“œ
+int culltoggle = 0; // 1. ë’·ë©´ ì»¬ë§ ëª¨ë“œ
 
-// cube °ü·Ã Åä±Û º¯¼ö
-int zrotoggle = 0; // 1. zÃà È¸Àü ¸ğµå
-int opentoggle = 0; // 1. µµÇü ¿­±â ¸ğµå
-int tiretoggle = 0; // 1. ¿·¸éÀÌ È¸Àü
-int backsizetoggle = 0; // 1. µŞ¸é size ¸ğµå
+// cube ê´€ë ¨ í† ê¸€ ë³€ìˆ˜
+int zrotoggle = 0; // 1. zì¶• íšŒì „ ëª¨ë“œ
+int opentoggle = 0; // 1. ë„í˜• ì—´ê¸° ëª¨ë“œ
+int tiretoggle = 0; // 1. ì˜†ë©´ì´ íšŒì „
+int backsizetoggle = 0; // 1. ë’·ë©´ size ëª¨ë“œ
 
-// »õ·Î¿î Åä±Û º¯¼öµé
-int edgeopentoggle = 0; // 0: edge ¿­¸², 1: edge ´İÈû
-int backscaletoggle = 0; // 1: scale Áõ°¡, 0: scale °¨¼Ò
+// ìƒˆë¡œìš´ í† ê¸€ ë³€ìˆ˜ë“¤
+int edgeopentoggle = 0; // 0: edge ì—´ë¦¼, 1: edge ë‹«í˜
+int backscaletoggle = 0; // 1: scale ì¦ê°€, 0: scale ê°ì†Œ
 
-// rÅ° ¼øÂ÷ µ¿ÀÛÀ» À§ÇÑ º¯¼öµé
-int rsequence = 0; // 0: Á¤Áö, 1: ¼øÂ÷ ¿­±â, 2: ¼øÂ÷ ´İ±â
-int rcurrentface = 0; // ÇöÀç µ¿ÀÛ ÁßÀÎ ¸é (0:t1, 1:t2, 2:t3, 3:t4)
+// rí‚¤ ìˆœì°¨ ë™ì‘ì„ ìœ„í•œ ë³€ìˆ˜ë“¤
+int rsequence = 0; // 0: ì •ì§€, 1: ìˆœì°¨ ì—´ê¸°, 2: ìˆœì°¨ ë‹«ê¸°
+int rcurrentface = 0; // í˜„ì¬ ë™ì‘ ì¤‘ì¸ ë©´ (0:t1, 1:t2, 2:t3, 3:t4)
 
-// piriamid °ü·Ã Åä±Û º¯¼ö
-int openeverytoggle = 0; // 1. ¸ğµç ¸é ¿­±â ¸ğµå	
-int sequentopnetoggle = 0; // 1. ¸éÀÌ ¼øÂ÷ÀûÀ¸·Î ¿­¸²
-int sequentoclosetoggle = 0; // 1. ¸éÀÌ ¼øÂ÷ÀûÀ¸·Î ´İÈû
+// piriamid ê´€ë ¨ í† ê¸€ ë³€ìˆ˜
+int openeverytoggle = 0; // 1. ëª¨ë“  ë©´ ì—´ê¸° ëª¨ë“œ	
+int sequentopnetoggle = 0; // 1. ë©´ì´ ìˆœì°¨ì ìœ¼ë¡œ ì—´ë¦¼
+int sequentoclosetoggle = 0; // 1. ë©´ì´ ìˆœì°¨ì ìœ¼ë¡œ ë‹«í˜
 
-// cube °ü·Ã º¯¼ö
-float topangle = 0.0f; // À­¸é È¸Àü °¢µµ
-float oepnangle = 0.0f; // front ¿­¸®´Â °¢µµ
-float tireangle = 0.0f; // ¿·¸é È¸Àü °¢µµ
-float backsize = 1.0f; // µŞ¸é Å©±â
+// cube ê´€ë ¨ ë³€ìˆ˜
+float topangle = 0.0f; // ìœ—ë©´ íšŒì „ ê°ë„
+float oepnangle = 0.0f; // front ì—´ë¦¬ëŠ” ê°ë„
+float tireangle = 0.0f; // ì˜†ë©´ íšŒì „ ê°ë„
+float backsize = 1.0f; // ë’·ë©´ í¬ê¸°
 
-// piramid °ü·Ã º¯¼ö
-float t1angle = 0.0f; // ¸é1 È¸Àü °¢µµ
-float t2angle = 0.0f; // ¸é2 È¸Àü °¢µµ
-float t3angle = 0.0f; // ¸é3 È¸Àü °¢µµ
-float t4angle = 0.0f; // ¸é4 È¸Àü °¢µµ
+// piramid ê´€ë ¨ ë³€ìˆ˜
+float t1angle = 0.0f; // ë©´1 íšŒì „ ê°ë„
+float t2angle = 0.0f; // ë©´2 íšŒì „ ê°ë„
+float t3angle = 0.0f; // ë©´3 íšŒì „ ê°ë„
+float t4angle = 0.0f; // ë©´4 íšŒì „ ê°ë„
 
-// 10°³Â¥¸® float Æ÷ÀÎÅÍ ¹è¿­ - °¢°¢ÀÇ angle º¯¼öµéÀ» °¡¸®Å´
+// 10ê°œì§œë¦¬ float í¬ì¸í„° ë°°ì—´ - ê°ê°ì˜ angle ë³€ìˆ˜ë“¤ì„ ê°€ë¦¬í‚´
 float* anglelist[10] = {
 	&topangle,   // 0
 	&tireangle,  // 1
@@ -103,17 +103,17 @@ float* anglelist[10] = {
 // Forward declaration
 class polygon;
 std::vector<polygon> polygonmap;
-int mouse_dest = -1; // ¸¶¿ì½º·Î ¼±ÅÃµÈ polygon ÀÎµ¦½º ÀúÀå
+int mouse_dest = -1; // ë§ˆìš°ìŠ¤ë¡œ ì„ íƒëœ polygon ì¸ë±ìŠ¤ ì €ì¥
 std::vector<float> allVertices;
 
 int selection[10] = { 1,1,1,1,1,1,0,0,0,0 };
 
-float angle = 0.0f; // È¸Àü °¢µµ
+float angle = 0.0f; // íšŒì „ ê°ë„
 float xangle = 0.0f;
 float polygon_xpos = 0.0f;
 float polygon_ypos = 0.0f;
 
-// µ¿Àû È¸ÀüÃàÀ» À§ÇÑ Àü¿ª º¯¼ö
+// ë™ì  íšŒì „ì¶•ì„ ìœ„í•œ ì „ì—­ ë³€ìˆ˜
 glm::vec3 current_xaxis;
 glm::vec3 current_yaxis;
 glm::vec3 current_zaxis;
@@ -124,7 +124,7 @@ typedef struct poitment {
 	float zpos;
 } pointment;
 
-// µµÇü ÀúÀåÇÏ´Â Å¬·¡½º
+// ë„í˜• ì €ì¥í•˜ëŠ” í´ë˜ìŠ¤
 class polygon {
 private:
 	GLdouble Rvalue = 0.0;
@@ -132,7 +132,7 @@ private:
 	GLdouble Bvalue = 0.0;
 	glm::vec4 vpos[2][3];
 	int needmove = 0;
-	int inner = 0; // mouse ¼±ÅÃµÇ¾ú´ÂÁö ¿©ºÎ
+	int inner = 0; // mouse ì„ íƒë˜ì—ˆëŠ”ì§€ ì—¬ë¶€
 
 public:
 	//std::vector<ret> rects;
@@ -212,7 +212,7 @@ public:
 
 
 
-	void sendvertexdata(std::vector<float>& vbo) { // vbo¿¡ Á¤Á¡ µ¥ÀÌÅÍ Ãß°¡
+	void sendvertexdata(std::vector<float>& vbo) { // vboì— ì •ì  ë°ì´í„° ì¶”ê°€
 		for (int poly = 0; poly < 2; ++poly) {
 			for (int vert = 0; vert < 3; ++vert) {
 				vbo.insert(vbo.end(), {
@@ -222,7 +222,7 @@ public:
 		}
 	}
 
-	// Çà·Ä ¹ñ´Â ÇÔ¼ö
+	// í–‰ë ¬ ë±‰ëŠ” í•¨ìˆ˜
 	glm::mat4 getedge(float* angles) {
 		glm::vec3 edge = glm::normalize(glm::vec3(vpos[0][0] - vpos[0][1]));
 		glm::mat4 model1 = glm::mat4(1.0f);
@@ -241,12 +241,12 @@ public:
 
 	glm::mat4 getnomal(float* angles) {
 		glm::vec4 u((vpos[0][0] + vpos[0][2]));
-		u.x /= -2.0f; 
-		u.y /= -2.0f; 
+		u.x /= -2.0f;
+		u.y /= -2.0f;
 		u.z /= -2.0f;
 		u.y -= 0.15f;
 		u.x += 0.16f;
-		// ¾ê°¡ transformÀÌ µÉ°ÅÀÓ
+		// ì–˜ê°€ transformì´ ë ê±°ì„
 		glm::mat4 transport = glm::mat4(1.0f);
 		//transport = glm::translate(transport, glm::vec3(u.x, u.y, u.z));
 		transport = glm::translate(transport, glm::vec3(u.x, u.y, 0));
@@ -257,19 +257,19 @@ public:
 		rev = glm::translate(rev, glm::vec3(-u.x, -u.y, 0));
 
 		return rev * model1 * transport;
-		
+
 		//model1 = glm::translate(model1, glm::vec3(-u.x, -u.y, -u.z));
 
 	}
 
 	glm::mat4 getunit(float* angles) {
 		//glm::vec3 u = glm::vec3(vpos[0][0] - vpos[0][1]);
-		
+
 		return glm::mat4(1.0f);
 	}
 
 	glm::mat4 gettirerotate(float* angles) {
-		
+
 		glm::mat4 model1 = glm::mat4(1.0f);
 		model1 = glm::rotate(model1, *angles, current_xaxis);
 
@@ -288,14 +288,14 @@ public:
 		glm::mat4 rev = glm::mat4(1.0f);
 		rev = glm::translate(rev, glm::vec3(u.x, u.y, u.z));
 		return rev * model1 * transport;
-		
+
 	}
 };
 
 
 using ActionFunc = glm::mat4(polygon::*)(float* angles);
 
-// °¢ °´Ã¼°¡ ¾î¶² Çàµ¿À» ÇÒÁö ÁöÁ¤
+// ê° ê°ì²´ê°€ ì–´ë–¤ í–‰ë™ì„ í• ì§€ ì§€ì •
 ActionFunc actions[10] = {
 	&polygon::getnomal, &polygon::gettirerotate, &polygon::getbackscale,
 	&polygon::gettirerotate, &polygon::getedge, &polygon::getunit,
@@ -306,9 +306,9 @@ ActionFunc actions[10] = {
 }*/
 
 void Keyboard(unsigned char key, int x, int y);
-void SpecialKeys(int key, int x, int y); // Æ¯¼ö Å°(È­»ìÇ¥ Å°) Äİ¹é ÇÔ¼ö ¼±¾ğ
+void SpecialKeys(int key, int x, int y); // íŠ¹ìˆ˜ í‚¤(í™”ì‚´í‘œ í‚¤) ì½œë°± í•¨ìˆ˜ ì„ ì–¸
 void Mouse(int button, int state, int x, int y);
-void Motion(int x, int y); // ¸¶¿ì½º ¸ğ¼Ç Äİ¹é ÇÔ¼ö ¼±¾ğ
+void Motion(int x, int y); // ë§ˆìš°ìŠ¤ ëª¨ì…˜ ì½œë°± í•¨ìˆ˜ ì„ ì–¸
 
 char* filetobuf(const char* file)
 {
@@ -335,7 +335,7 @@ void setupBuffers() {
 	glBindVertexArray(VAO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
-	// Á¤Á¡ ¼Ó¼º ¼³Á¤: À§Ä¡ (3°³) + »ö»ó (3°³) = ÃÑ 6°³ float
+	// ì •ì  ì†ì„± ì„¤ì •: ìœ„ì¹˜ (3ê°œ) + ìƒ‰ìƒ (3ê°œ) = ì´ 6ê°œ float
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 
@@ -345,43 +345,34 @@ void setupBuffers() {
 	glBindVertexArray(0);
 }
 
-int main(int argc, char** argv) //--- À©µµ¿ì Ãâ·ÂÇÏ°í Äİ¹éÇÔ¼ö ¼³Á¤
+int main(int argc, char** argv) //--- ìœˆë„ìš° ì¶œë ¥í•˜ê³  ì½œë°±í•¨ìˆ˜ ì„¤ì •
 {
 	//width = 800;
 	//height = 800;
 
-	//--- À©µµ¿ì »ı¼ºÇÏ±â
+	//--- ìœˆë„ìš° ìƒì„±í•˜ê¸°
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
 	glutInitWindowPosition(100, 100);
 	glutInitWindowSize(width, height);
 	glutCreateWindow("Rectangle Rendering");
-	//--- GLEW ÃÊ±âÈ­ÇÏ±â
+	//--- GLEW ì´ˆê¸°í™”í•˜ê¸°
 	glewExperimental = GL_TRUE;
 	glewInit();
-	//--- ¼¼ÀÌ´õ ÀĞ¾î¿Í¼­ ¼¼ÀÌ´õ ÇÁ·Î±×·¥ ¸¸µé±â: »ç¿ëÀÚ Á¤ÀÇÇÔ¼ö È£Ãâ
-	make_vertexShaders(); //--- ¹öÅØ½º ¼¼ÀÌ´õ ¸¸µé±â
-	make_fragmentShaders(); //--- ÇÁ·¡±×¸ÕÆ® ¼¼ÀÌ´õ ¸¸µé±â
+	//--- ì„¸ì´ë” ì½ì–´ì™€ì„œ ì„¸ì´ë” í”„ë¡œê·¸ë¨ ë§Œë“¤ê¸°: ì‚¬ìš©ì ì •ì˜í•¨ìˆ˜ í˜¸ì¶œ
+	make_vertexShaders(); //--- ë²„í…ìŠ¤ ì„¸ì´ë” ë§Œë“¤ê¸°
+	make_fragmentShaders(); //--- í”„ë˜ê·¸ë¨¼íŠ¸ ì„¸ì´ë” ë§Œë“¤ê¸°
 	shaderProgramID = make_shaderProgram();
 
-	// ¹öÆÛ ¼³Á¤
+	// ë²„í¼ ì„¤ì •
 	setupBuffers();
 	glEnable(GL_DEPTH_TEST);
 	allVertices.clear();
 
 	//polygonmap.emplace_back(polygon(400 - 150, 400 + 150, 400 + 150, 400 + 300, 3));
 
-	pointment p1{ 0.5,0.5,0.5 };
-	pointment p2{ 0.5,0.5,-0.5 };
-	pointment p3{ -0.5,0.5,-0.5 };
-	pointment p4{ -0.5,0.5,0.5 };
-	pointment p5{ 0.5,-0.5,0.5 };
-	pointment p6{ 0.5,-0.5,-0.5 };
-	pointment p7{ -0.5,-0.5,-0.5 };
-	pointment p8{ -0.5,-0.5,0.5 };
-	pointment p9{ 0, 0.5 ,0 };
 
-	// glm::vec4·Î Ãà ÁÂÇ¥ Á¤ÀÇ
+	// glm::vec4ë¡œ ì¶• ì¢Œí‘œ ì •ì˜
 	glm::vec4 xaxis1(10, 0, 0, 1);
 	glm::vec4 xaxis2(-10, 0, 0, 1);
 	glm::vec4 yaxis1(0, 10, 0, 1);
@@ -389,25 +380,25 @@ int main(int argc, char** argv) //--- À©µµ¿ì Ãâ·ÂÇÏ°í Äİ¹éÇÔ¼ö ¼³Á¤
 	glm::vec4 zaxis1(0, 0, 10, 1);
 	glm::vec4 zaxis2(0, 0, -10, 1);
 
-	// yÃàÀ¸·Î -30µµ È¸Àü (glm::rotate »ç¿ë)
-	xaxis1 = glm::rotate(glm::mat4(1.0f), (float)(-pi / 6), glm::vec3(0.0f, 1.0f, 0.0f)) * xaxis1;
+	// yì¶•ìœ¼ë¡œ -30ë„ íšŒì „ (glm::rotate ì‚¬ìš©)
+	/*xaxis1 = glm::rotate(glm::mat4(1.0f), (float)(-pi / 6), glm::vec3(0.0f, 1.0f, 0.0f)) * xaxis1;
 	xaxis2 = glm::rotate(glm::mat4(1.0f), (float)(-pi / 6), glm::vec3(0.0f, 1.0f, 0.0f)) * xaxis2;
 	yaxis1 = glm::rotate(glm::mat4(1.0f), (float)(-pi / 6), glm::vec3(0.0f, 1.0f, 0.0f)) * yaxis1;
 	yaxis2 = glm::rotate(glm::mat4(1.0f), (float)(-pi / 6), glm::vec3(0.0f, 1.0f, 0.0f)) * yaxis2;
 	zaxis1 = glm::rotate(glm::mat4(1.0f), (float)(-pi / 6), glm::vec3(0.0f, 1.0f, 0.0f)) * zaxis1;
 	zaxis2 = glm::rotate(glm::mat4(1.0f), (float)(-pi / 6), glm::vec3(0.0f, 1.0f, 0.0f)) * zaxis2;
 
-	// xÃàÀ¸·Î 30µµ È¸Àü (glm::rotate »ç¿ë)
+	// xì¶•ìœ¼ë¡œ 30ë„ íšŒì „ (glm::rotate ì‚¬ìš©)
 	xaxis1 = glm::rotate(glm::mat4(1.0f), (float)(-pi / 6), glm::vec3(1.0f, 0.0f, 0.0f)) * xaxis1;
 	xaxis2 = glm::rotate(glm::mat4(1.0f), (float)(-pi / 6), glm::vec3(1.0f, 0.0f, 0.0f)) * xaxis2;
 	yaxis1 = glm::rotate(glm::mat4(1.0f), (float)(-pi / 6), glm::vec3(1.0f, 0.0f, 0.0f)) * yaxis1;
 	yaxis2 = glm::rotate(glm::mat4(1.0f), (float)(-pi / 6), glm::vec3(1.0f, 0.0f, 0.0f)) * yaxis2;
 	zaxis1 = glm::rotate(glm::mat4(1.0f), (float)(-pi / 6), glm::vec3(1.0f, 0.0f, 0.0f)) * zaxis1;
-	zaxis2 = glm::rotate(glm::mat4(1.0f), (float)(-pi / 6), glm::vec3(1.0f, 0.0f, 0.0f)) * zaxis2;
+	zaxis2 = glm::rotate(glm::mat4(1.0f), (float)(-pi / 6), glm::vec3(1.0f, 0.0f, 0.0f)) * zaxis2;*/
 
 
 
-	// Ãà µ¥ÀÌÅÍ¸¦ allVertices¿¡ Ãß°¡ (vec4ÀÇ x, y, z ¸â¹ö »ç¿ë)
+	// ì¶• ë°ì´í„°ë¥¼ allVerticesì— ì¶”ê°€ (vec4ì˜ x, y, z ë©¤ë²„ ì‚¬ìš©)
 	allVertices.insert(allVertices.end(), {
 					xaxis1.x, xaxis1.y, xaxis1.z,
 					1, 0, 0 });
@@ -429,43 +420,26 @@ int main(int argc, char** argv) //--- À©µµ¿ì Ãâ·ÂÇÏ°í Äİ¹éÇÔ¼ö ¼³Á¤
 					zaxis2.x, zaxis2.y, zaxis2.z,
 					0, 0, 1 });
 
-	// ÇöÀç Ãà º¤ÅÍµé °è»ê (È¸Àü¿¡ »ç¿ëÇÒ Ãàµé)
-	current_xaxis = glm::normalize(glm::vec3(xaxis1 - xaxis2));
-	current_yaxis = glm::normalize(glm::vec3(yaxis1 - yaxis2));
-	current_zaxis = glm::normalize(glm::vec3(zaxis1 - zaxis2));
 
-	polygonmap.emplace_back(polygon(p4, p3, p2, p1, 0, 0, 0));
-	polygonmap.emplace_back(polygon(p4, p8, p7, p3, 0, 0, 1));
-	polygonmap.emplace_back(polygon(p5, p8, p4, p1, 0, 1, 0));
-	polygonmap.emplace_back(polygon(p2, p6, p5, p1, 0, 1, 1));
-	polygonmap.emplace_back(polygon(p2, p3, p7, p6, 1, 0, 0));
-	polygonmap.emplace_back(polygon(p5, p6, p7, p8, 1, 0, 1));
-
-	polygonmap.emplace_back(polygon(p6, p5, p9, 1, 0, 0));
-	polygonmap.emplace_back(polygon(p5, p8, p9, 0, 1, 0));
-	polygonmap.emplace_back(polygon(p8, p7, p9, 0, 0, 1));
-	polygonmap.emplace_back(polygon(p7, p6, p9, 1, 1, 0));
-
-
-	for (auto& poly : polygonmap) {
+	/*for (auto& poly : polygonmap) {
 		poly.rotate(-pi / 6, 'y');
 		poly.rotate(-pi / 6, 'x');
 
 		poly.sendvertexdata(allVertices);
-	}
+	}*/
 
-	
 
-	//--- ¼¼ÀÌ´õ ÇÁ·Î±×·¥ ¸¸µé±â
-	glutDisplayFunc(drawScene); //--- Ãâ·Â Äİ¹é ÇÔ¼ö
+
+	//--- ì„¸ì´ë” í”„ë¡œê·¸ë¨ ë§Œë“¤ê¸°
+	glutDisplayFunc(drawScene); //--- ì¶œë ¥ ì½œë°± í•¨ìˆ˜
 	glutReshapeFunc(Reshape);
 
 	glutTimerFunc(25, TimerFunction, 1);
 
 	glutKeyboardFunc(Keyboard);
-	glutSpecialFunc(SpecialKeys); // Æ¯¼ö Å°(È­»ìÇ¥ Å°) Äİ¹é µî·Ï
+	glutSpecialFunc(SpecialKeys); // íŠ¹ìˆ˜ í‚¤(í™”ì‚´í‘œ í‚¤) ì½œë°± ë“±ë¡
 	glutMouseFunc(Mouse);
-	glutMotionFunc(Motion); // ¸¶¿ì½º ¸ğ¼Ç Äİ¹é µî·Ï
+	glutMotionFunc(Motion); // ë§ˆìš°ìŠ¤ ëª¨ì…˜ ì½œë°± ë“±ë¡
 
 	glutMainLoop();
 	return 0;
@@ -474,9 +448,9 @@ int main(int argc, char** argv) //--- À©µµ¿ì Ãâ·ÂÇÏ°í Äİ¹éÇÔ¼ö ¼³Á¤
 void make_vertexShaders()
 {
 	GLchar* vertexSource;
-	//--- ¹öÅØ½º ¼¼ÀÌ´õ ÀĞ¾î ÀúÀåÇÏ°í ÄÄÆÄÀÏ ÇÏ±â
-	//--- filetobuf: »ç¿ëÀÚÁ¤ÀÇ ÇÔ¼ö·Î ÅØ½ºÆ®¸¦ ÀĞ¾î¼­ ¹®ÀÚ¿­¿¡ ÀúÀåÇÏ´Â ÇÔ¼ö
-	vertexSource = filetobuf("vertex_matrix.glsl");
+	//--- ë²„í…ìŠ¤ ì„¸ì´ë” ì½ì–´ ì €ì¥í•˜ê³  ì»´íŒŒì¼ í•˜ê¸°
+	//--- filetobuf: ì‚¬ìš©ìì •ì˜ í•¨ìˆ˜ë¡œ í…ìŠ¤íŠ¸ë¥¼ ì½ì–´ì„œ ë¬¸ìì—´ì— ì €ì¥í•˜ëŠ” í•¨ìˆ˜
+	vertexSource = filetobuf("vertex_view.glsl");
 	vertexShader = glCreateShader(GL_VERTEX_SHADER);
 	glShaderSource(vertexShader, 1, &vertexSource, NULL);
 	glCompileShader(vertexShader);
@@ -486,7 +460,7 @@ void make_vertexShaders()
 	if (!result)
 	{
 		glGetShaderInfoLog(vertexShader, 512, NULL, errorLog);
-		std::cerr << "ERROR: vertex shader ÄÄÆÄÀÏ ½ÇÆĞ\n" << errorLog << std::endl;
+		std::cerr << "ERROR: vertex shader ì»´íŒŒì¼ ì‹¤íŒ¨\n" << errorLog << std::endl;
 		return;
 	}
 }
@@ -494,8 +468,8 @@ void make_vertexShaders()
 void make_fragmentShaders()
 {
 	GLchar* fragmentSource;
-	//--- ÇÁ·¡±×¸ÕÆ® ¼¼ÀÌ´õ ÀĞ¾î ÀúÀåÇÏ°í ÄÄÆÄÀÏÇÏ±â
-	fragmentSource = filetobuf("fragment_matrix.glsl"); // ÇÁ·¡±×¼¼ÀÌ´õ ÀĞ¾î¿À±â
+	//--- í”„ë˜ê·¸ë¨¼íŠ¸ ì„¸ì´ë” ì½ì–´ ì €ì¥í•˜ê³  ì»´íŒŒì¼í•˜ê¸°
+	fragmentSource = filetobuf("fragment_matrix.glsl"); // í”„ë˜ê·¸ì„¸ì´ë” ì½ì–´ì˜¤ê¸°
 	fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
 	glShaderSource(fragmentShader, 1, &fragmentSource, NULL);
 	glCompileShader(fragmentShader);
@@ -505,7 +479,7 @@ void make_fragmentShaders()
 	if (!result)
 	{
 		glGetShaderInfoLog(fragmentShader, 512, NULL, errorLog);
-		std::cerr << "ERROR: frag_shader ÄÄÆÄÀÏ ½ÇÆĞ\n" << errorLog << std::endl;
+		std::cerr << "ERROR: frag_shader ì»´íŒŒì¼ ì‹¤íŒ¨\n" << errorLog << std::endl;
 		return;
 	}
 }
@@ -515,34 +489,49 @@ GLuint make_shaderProgram()
 	GLint result;
 	GLchar* errorLog = NULL;
 	GLuint shaderID;
-	shaderID = glCreateProgram(); //--- ¼¼ÀÌ´õ ÇÁ·Î±×·¥ ¸¸µé±â
-	glAttachShader(shaderID, vertexShader); //--- ¼¼ÀÌ´õ ÇÁ·Î±×·¥¿¡ ¹öÅØ½º ¼¼ÀÌ´õ ºÙÀÌ±â
-	glAttachShader(shaderID, fragmentShader); //--- ¼¼ÀÌ´õ ÇÁ·Î±×·¥¿¡ ÇÁ·¡±×¸ÕÆ® ¼¼ÀÌ´õ ºÙÀÌ±â
-	glLinkProgram(shaderID); //--- ¼¼ÀÌ´õ ÇÁ·Î±×·¥ ¸µÅ©ÇÏ±â
-	glDeleteShader(vertexShader); //--- ¼¼ÀÌ´õ °´Ã¼¸¦ ¼¼ÀÌ´õ ÇÁ·Î±×·¥¿¡ ¸µÅ©ÇßÀ½À¸·Î, ¼¼ÀÌ´õ °´Ã¼ ÀÚÃ¼´Â »èÁ¦ °¡´É
+	shaderID = glCreateProgram(); //--- ì„¸ì´ë” í”„ë¡œê·¸ë¨ ë§Œë“¤ê¸°
+	glAttachShader(shaderID, vertexShader); //--- ì„¸ì´ë” í”„ë¡œê·¸ë¨ì— ë²„í…ìŠ¤ ì„¸ì´ë” ë¶™ì´ê¸°
+	glAttachShader(shaderID, fragmentShader); //--- ì„¸ì´ë” í”„ë¡œê·¸ë¨ì— í”„ë˜ê·¸ë¨¼íŠ¸ ì„¸ì´ë” ë¶™ì´ê¸°
+	glLinkProgram(shaderID); //--- ì„¸ì´ë” í”„ë¡œê·¸ë¨ ë§í¬í•˜ê¸°
+	glDeleteShader(vertexShader); //--- ì„¸ì´ë” ê°ì²´ë¥¼ ì„¸ì´ë” í”„ë¡œê·¸ë¨ì— ë§í¬í–ˆìŒìœ¼ë¡œ, ì„¸ì´ë” ê°ì²´ ìì²´ëŠ” ì‚­ì œ ê°€ëŠ¥
 	glDeleteShader(fragmentShader);
-	glGetProgramiv(shaderID, GL_LINK_STATUS, &result); // ---¼¼ÀÌ´õ°¡ Àß ¿¬°áµÇ¾ú´ÂÁö Ã¼Å©ÇÏ±â
+	glGetProgramiv(shaderID, GL_LINK_STATUS, &result); // ---ì„¸ì´ë”ê°€ ì˜ ì—°ê²°ë˜ì—ˆëŠ”ì§€ ì²´í¬í•˜ê¸°
 	if (!result) {
 		glGetProgramInfoLog(shaderID, 512, NULL, errorLog);
-		std::cerr << "ERROR: shader program ¿¬°á ½ÇÆĞ\n" << errorLog << std::endl;
+		std::cerr << "ERROR: shader program ì—°ê²° ì‹¤íŒ¨\n" << errorLog << std::endl;
 		return false;
 	}
-	glUseProgram(shaderID); //--- ¸¸µé¾îÁø ¼¼ÀÌ´õ ÇÁ·Î±×·¥ »ç¿ëÇÏ±â
+	glUseProgram(shaderID); //--- ë§Œë“¤ì–´ì§„ ì„¸ì´ë” í”„ë¡œê·¸ë¨ ì‚¬ìš©í•˜ê¸°
 	return shaderID;
 }
 
-GLvoid drawScene() //--- Äİ¹é ÇÔ¼ö: ±×¸®±â Äİ¹é ÇÔ¼ö
+GLvoid drawScene() //--- ì½œë°± í•¨ìˆ˜: ê·¸ë¦¬ê¸° ì½œë°± í•¨ìˆ˜
 {
 	GLfloat rColor, gColor, bColor;
 	rColor = gColor = 1.0;
-	bColor = 1.0; //--- ¹è°æ»öÀ» ÆÄ¶û»öÀ¸·Î ¼³Á¤
+	bColor = 1.0; //--- ë°°ê²½ìƒ‰ì„ íŒŒë‘ìƒ‰ìœ¼ë¡œ ì„¤ì •
 	glClearColor(rColor, gColor, bColor, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glUseProgram(shaderProgramID);
 
-	// °¢ »ç°¢ÇüÀ» 6°³ Á¤Á¡À¸·Î º¯È¯ÇÑ ÀüÃ¼ µ¥ÀÌÅÍ
+	// ê° ì‚¬ê°í˜•ì„ 6ê°œ ì •ì ìœ¼ë¡œ ë³€í™˜í•œ ì „ì²´ ë°ì´í„°
+	glm::mat4 view = glm::mat4(1.0f);
 
+	glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 0.4f);
+	// yì¶•ìœ¼ë¡œ -pi/6 íšŒì „
+	glm::vec4 tempPos = glm::rotate(glm::mat4(1.0f), (float)(-pi / 6), glm::vec3(0.0f, 1.0f, 0.0f)) * glm::vec4(cameraPos, 1.0f);
+	cameraPos = glm::vec3(tempPos);
+	// xì¶•ìœ¼ë¡œ -pi/6 íšŒì „
+	tempPos = glm::rotate(glm::mat4(1.0f), (float)(-pi / 6), glm::vec3(1.0f, 0.0f, 0.0f)) * glm::vec4(cameraPos, 1.0f);
+	cameraPos = glm::vec3(tempPos);
 	
+	glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
+	glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+
+	view = glm::lookAt(cameraPos, cameraTarget, cameraUp);
+	unsigned int viewLocation = glGetUniformLocation(shaderProgramID, "viewTransform"); //--- ë²„í…ìŠ¤ ì„¸ì´ë”ì—ì„œ viewTransform ë³€ìˆ˜ìœ„ì¹˜
+	glUniformMatrix4fv(viewLocation, 1, GL_FALSE, &view[0][0]);
+
 	glm::mat4 model = glm::mat4(1.0f);
 	model = glm::rotate(model, angle, current_yaxis);
 
@@ -554,39 +543,29 @@ GLvoid drawScene() //--- Äİ¹é ÇÔ¼ö: ±×¸®±â Äİ¹é ÇÔ¼ö
 		glBindVertexArray(VAO);
 		glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
-		// ¹öÆÛ¿¡ Á¤Á¡ µ¥ÀÌÅÍ ¾÷·Îµå
+		// ë²„í¼ì— ì •ì  ë°ì´í„° ì—…ë¡œë“œ
 		glBufferData(GL_ARRAY_BUFFER, allVertices.size() * sizeof(float),
 			allVertices.data(), GL_DYNAMIC_DRAW);
 
-		// ¸ğµç »ç°¢ÇüÀ» ÇÑ ¹ø¿¡ ±×¸®±â (°¢ »ç°¢Çü´ç 6°³ Á¤Á¡)
+		// ëª¨ë“  ì‚¬ê°í˜•ì„ í•œ ë²ˆì— ê·¸ë¦¬ê¸° (ê° ì‚¬ê°í˜•ë‹¹ 6ê°œ ì •ì )
 
 	}
 
 	glLineWidth(2.0f);
 
-	// ÃàÀº º¯È¯ ¾øÀÌ ±×¸®±â (´ÜÀ§ Çà·Ä Àû¿ë)
+	// ì¶•ì€ ë³€í™˜ ì—†ì´ ê·¸ë¦¬ê¸° (ë‹¨ìœ„ í–‰ë ¬ ì ìš©)
 	glm::mat4 identityMatrix = glm::mat4(1.0f);
-	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(identityMatrix)); // ¹öÅØ½º ¼ÎÀÌ´õ¿¡ ÀÖ´Â modelTransform¿¡ ´ÜÀ§ Çà·Ä Àü´Ş
+	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(identityMatrix)); // ë²„í…ìŠ¤ ì…°ì´ë”ì— ìˆëŠ” modelTransformì— ë‹¨ìœ„ í–‰ë ¬ ì „ë‹¬
 	glDrawArrays(GL_LINES, 0, 6);
 
-	// polygonµéÀº º¯È¯ Çà·Ä Àû¿ëÇØ¼­ ±×¸®±â
+	// polygonë“¤ì€ ë³€í™˜ í–‰ë ¬ ì ìš©í•´ì„œ ê·¸ë¦¬ê¸°
 	glm::mat4 temp = model;
-	
-	for (int i = 0; i < 10; ++i) {
-		//glDrawArrays(GL_LINES, 0, 4);
-		if (selection[i]) {
-			temp = model;
-			glm::mat4 model1 = (polygonmap[i].*actions[i])(anglelist[i]);
-			
-			temp = temp * model1;
 
-			glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(temp));
-			glDrawArrays(GL_TRIANGLES, 6 + 6 * i, 6);
-			//glDrawArrays(GL_LINES, 6 + 6 * i, 6);
-		}
+	for (int i = 0; i < 10; ++i) {
+		
 
 	}
-	
+
 
 
 
@@ -594,18 +573,18 @@ GLvoid drawScene() //--- Äİ¹é ÇÔ¼ö: ±×¸®±â Äİ¹é ÇÔ¼ö
 
 	glBindVertexArray(0);
 
-	glutSwapBuffers(); // È­¸é¿¡ Ãâ·ÂÇÏ±â
+	glutSwapBuffers(); // í™”ë©´ì— ì¶œë ¥í•˜ê¸°
 }
 
-//--- ´Ù½Ã±×¸®±â Äİ¹é ÇÔ¼ö
-GLvoid Reshape(int w, int h) //--- Äİ¹é ÇÔ¼ö: ´Ù½Ã ±×¸®±â Äİ¹é ÇÔ¼ö
+//--- ë‹¤ì‹œê·¸ë¦¬ê¸° ì½œë°± í•¨ìˆ˜
+GLvoid Reshape(int w, int h) //--- ì½œë°± í•¨ìˆ˜: ë‹¤ì‹œ ê·¸ë¦¬ê¸° ì½œë°± í•¨ìˆ˜
 {
 	glViewport(0, 0, w, h);
 }
 
 void Keyboard(unsigned char key, int x, int y) {
 	switch (key) {
-	case 'q': // ÇÁ·Î±×·¥ Á¾·á
+	case 'q': // í”„ë¡œê·¸ë¨ ì¢…ë£Œ
 		glutLeaveMainLoop();
 		break;
 	case '0':
@@ -630,11 +609,11 @@ void Keyboard(unsigned char key, int x, int y) {
 	break;
 	case 'u':
 	{
-		if(culltoggle==0){
+		if (culltoggle == 0) {
 			glEnable(GL_CULL_FACE);
 			culltoggle = 1;
 		}
-		else{
+		else {
 			glDisable(GL_CULL_FACE);
 			culltoggle = 0;
 		}
@@ -645,7 +624,7 @@ void Keyboard(unsigned char key, int x, int y) {
 	{
 		animation = !animation;
 	}
-		break;
+	break;
 	case 't': // zrotoggle
 	{
 		zrotoggle = !zrotoggle;
@@ -673,35 +652,15 @@ void Keyboard(unsigned char key, int x, int y) {
 	break;
 	case 'r': // sequentoclosetoggle
 	{
-		if (sequentoclosetoggle == 0) { // Á¤Áö »óÅÂ¿¡¼­¸¸ ½ÃÀÛ
-			sequentoclosetoggle = 1;
-			// ÇöÀç °¢µµ¿¡ µû¶ó ¿­±â/´İ±â ¸ğµå °áÁ¤
-			if (t1angle <= 0.01f && t2angle <= 0.01f && t3angle <= 0.01f && t4angle <= 0.01f) {
-				rsequence = 1; // ¼øÂ÷ ¿­±â
-			} else {
-				rsequence = 2; // ¼øÂ÷ ´İ±â
-			}
-			rcurrentface = 0; // Ã¹ ¹øÂ° ¸éºÎÅÍ ½ÃÀÛ
-		}
+		
 	}
 	break;
 	case 'p':
 	{
-		if (selection[0]) {
-			int copy[10] = { 0,0,0,0,0,1,1,1,1,1 };
-			for (int i = 0; i < 10; ++i) {
-				selection[i] = copy[i];
-			}
-		}
-		else {
-			int copy[10] = { 1,1,1,1,1,1,0,0,0,0 };
-			for (int i = 0; i < 10; ++i) {
-				selection[i] = copy[i];
-			}
-		}
+		
 	}
 	break;
-	case 'h': // Àº¸éÁ¦°Å Àû¿ë/ÇØÁ¦
+	case 'h': // ì€ë©´ì œê±° ì ìš©/í•´ì œ
 	{
 		if (hidetoggle) {
 			glEnable(GL_DEPTH_TEST);
@@ -713,30 +672,9 @@ void Keyboard(unsigned char key, int x, int y) {
 		}
 	}
 	break;
-	case 'c': // ÃÊ±âÈ­
+	case 'c': // ì´ˆê¸°í™”
 	{
-		angle = 0.0f;
-		xangle = 0.0f;
-		polygon_xpos = 0.0f;
-		polygon_ypos = 0.0f;
-		animation = false;
-		zrotoggle = false;
-		opentoggle = false;
-		tiretoggle = false;
-		backsizetoggle = false;
-		openeverytoggle = false;
-		sequentoclosetoggle = 0;
-		topangle = 0.0f;
-		oepnangle = 0.0f;
-		tireangle = 0.0f;
-		backsize = 1.0f;
-		t1angle = 0.0f;
-		t2angle = 0.0f;
-		t3angle = 0.0f;
-		t4angle = 0.0f;
-		edgeopentoggle = 0;
-		backscaletoggle = 0;
-		sequentopnetoggle = 0;
+		
 	}
 	default:
 		break;
@@ -747,25 +685,25 @@ void Keyboard(unsigned char key, int x, int y) {
 
 void SpecialKeys(int key, int x, int y) {
 	switch (key) {
-	case GLUT_KEY_LEFT: // ¡ç ÁÂ·Î °´Ã¼ ÀÌµ¿ (current_xaxis À½ÀÇ ¹æÇâ)
+	case GLUT_KEY_LEFT: // â† ì¢Œë¡œ ê°ì²´ ì´ë™ (current_xaxis ìŒì˜ ë°©í–¥)
 	{
 		polygon_xpos -= current_xaxis.x * 0.02f;
 		polygon_ypos -= current_xaxis.y * 0.02f;
 	}
 	break;
-	case GLUT_KEY_RIGHT: // ¡æ ¿ì·Î °´Ã¼ ÀÌµ¿ (current_xaxis ¾çÀÇ ¹æÇâ)
+	case GLUT_KEY_RIGHT: // â†’ ìš°ë¡œ ê°ì²´ ì´ë™ (current_xaxis ì–‘ì˜ ë°©í–¥)
 	{
 		polygon_xpos += current_xaxis.x * 0.02f;
 		polygon_ypos += current_xaxis.y * 0.02f;
 	}
 	break;
-	case GLUT_KEY_UP: // ¡è »óÀ¸·Î °´Ã¼ ÀÌµ¿ (current_yaxis ¾çÀÇ ¹æÇâ)
+	case GLUT_KEY_UP: // â†‘ ìƒìœ¼ë¡œ ê°ì²´ ì´ë™ (current_yaxis ì–‘ì˜ ë°©í–¥)
 	{
 		polygon_xpos += current_yaxis.x * 0.02f;
 		polygon_ypos += current_yaxis.y * 0.02f;
 	}
 	break;
-	case GLUT_KEY_DOWN: // ¡é ÇÏ·Î °´Ã¼ ÀÌµ¿ (current_yaxis À½ÀÇ ¹æÇâ)
+	case GLUT_KEY_DOWN: // â†“ í•˜ë¡œ ê°ì²´ ì´ë™ (current_yaxis ìŒì˜ ë°©í–¥)
 	{
 		polygon_xpos -= current_yaxis.x * 0.02f;
 		polygon_ypos -= current_yaxis.y * 0.02f;
@@ -783,7 +721,7 @@ void Mouse(int button, int state, int x, int y)
 	switch (button) {
 	case GLUT_LEFT_BUTTON:
 	{
-		if (state == GLUT_DOWN) {// µµÇü¼±ÅÃ
+		if (state == GLUT_DOWN) {// ë„í˜•ì„ íƒ
 
 		}
 		else if (state == GLUT_UP) {
@@ -806,152 +744,13 @@ void Mouse(int button, int state, int x, int y)
 
 void TimerFunction(int value)
 {
-	// yÅ° Åä±Û - ÀüÃ¼ È¸Àü
-	if (animation) {
-		angle += 0.02f;
-	}
-
-	// tÅ° Åä±Û - topangle (zrotoggle)
-	if (zrotoggle) {
-		topangle += 0.02f;
-	}
-
-	// fÅ° Åä±Û - openangle (opentoggle)
-	if (opentoggle) {
-		if (edgeopentoggle == 0) { // ¿­¸² ¸ğµå
-			oepnangle += 0.02f;
-			if (oepnangle >= pi / 2) {
-				opentoggle = 0; // Åä±Û ²ô±â
-				edgeopentoggle = 1; // ´İÈû ¸ğµå·Î º¯°æ
-			}
-		} else { // ´İÈû ¸ğµå
-			oepnangle -= 0.02f;
-			if (oepnangle <= 0.0f) {
-				opentoggle = 0; // Åä±Û ²ô±â
-				edgeopentoggle = 0; // ¿­¸² ¸ğµå·Î º¯°æ
-			}
-		}
-	}
-
-	// sÅ° Åä±Û - tireangle (tiretoggle)
-	if (tiretoggle) {
-		tireangle += 0.02f;
-	}
-
-	// bÅ° Åä±Û - backsize (backsizetoggle)
-	if (backsizetoggle) {
-		if (backscaletoggle == 0) { // °¨¼Ò ¸ğµå
-			backsize -= 0.02f;
-			if (backsize <= 0.0f) {
-				backscaletoggle = 1; // Áõ°¡ ¸ğµå·Î º¯°æ
-			}
-		} else { // Áõ°¡ ¸ğµå
-			backsize += 0.02f;
-			if (backsize >= 1.0f) {
-				backscaletoggle = 0; // °¨¼Ò ¸ğµå·Î º¯°æ
-			}
-		}
-	}
-
-	// oÅ° Åä±Û - ¸ğµç ¸é ¿­±â (openeverytoggle)
-	if (openeverytoggle) {
-		if (sequentopnetoggle == 0) { // ¿­¸² ¸ğµå
-			t1angle += 0.02f;
-			t2angle += 0.02f;
-			t3angle += 0.02f;
-			t4angle += 0.02f;
-			if (t1angle >= 2.58 * pi / 2) {
-				openeverytoggle = 0; // Åä±Û ²ô±â
-				sequentopnetoggle = 1; // ´İÈû ¸ğµå·Î º¯°æ
-			}
-		} else { // ´İÈû ¸ğµå
-			t1angle -= 0.02f;
-			t2angle -= 0.02f;
-			t3angle -= 0.02f;
-			t4angle -= 0.02f;
-			if (t1angle <= 0.01f) {
-				openeverytoggle = 0; // Åä±Û ²ô±â
-				sequentopnetoggle = 0; // ¿­¸² ¸ğµå·Î º¯°æ
-			}
-		}
-	}
-
-	// rÅ° Åä±Û - ¼øÂ÷ ¿­±â/´İ±â (sequentoclosetoggle)
-	if (sequentoclosetoggle) {
-		if (rsequence == 1) { // ¼øÂ÷ ¿­±â
-			switch (rcurrentface) {
-			case 0: // t1 ¿­±â
-				t1angle += 0.02f;
-				if (t1angle >= pi / 2) {
-					t1angle = pi / 2;
-					rcurrentface = 1; // ´ÙÀ½ ¸éÀ¸·Î
-				}
-				break;
-			case 1: // t2 ¿­±â
-				t2angle += 0.02f;
-				if (t2angle >= pi / 2) {
-					t2angle = pi / 2;
-					rcurrentface = 2; // ´ÙÀ½ ¸éÀ¸·Î
-				}
-				break;
-			case 2: // t3 ¿­±â
-				t3angle += 0.02f;
-				if (t3angle >= pi / 2) {
-					t3angle = pi / 2;
-					rcurrentface = 3; // ´ÙÀ½ ¸éÀ¸·Î
-				}
-				break;
-			case 3: // t4 ¿­±â
-				t4angle += 0.02f;
-				if (t4angle >= pi / 2) {
-					t4angle = pi / 2;
-					sequentoclosetoggle = 0; // ¸ğµç ¸éÀÌ ¿­·ÈÀ¸¹Ç·Î Åä±Û ²ô±â
-					rsequence = 0;
-					rcurrentface = 0;
-				}
-				break;
-			}
-		} else if (rsequence == 2) { // ¼øÂ÷ ´İ±â
-			switch (rcurrentface) {
-			case 0: // t1 ´İ±â
-				t1angle -= 0.02f;
-				if (t1angle <= 0.0f) {
-					t1angle = 0.0f;
-					rcurrentface = 1; // ´ÙÀ½ ¸éÀ¸·Î
-				}
-				break;
-			case 1: // t2 ´İ±â
-				t2angle -= 0.02f;
-				if (t2angle <= 0.0f) {
-					t2angle = 0.0f;
-					rcurrentface = 2; // ´ÙÀ½ ¸éÀ¸·Î
-				}
-				break;
-			case 2: // t3 ´İ±â
-				t3angle -= 0.02f;
-				if (t3angle <= 0.0f) {
-					t3angle = 0.0f;
-					rcurrentface = 3; // ´ÙÀ½ ¸éÀ¸·Î
-				}
-				break;
-			case 3: // t4 ´İ±â
-				t4angle -= 0.02f;
-				if (t4angle <= 0.0f) {
-					t4angle = 0.0f;
-					sequentoclosetoggle = 0; // ¸ğµç ¸éÀÌ ´İÇûÀ¸¹Ç·Î Åä±Û ²ô±â
-					rsequence = 0;
-					rcurrentface = 0;
-				}
-				break;
-			}
-		}
-	}
+	
 
 	glutPostRedisplay();
 	glutTimerFunc(25, TimerFunction, 1);
 }
 
-void Motion(int x, int y) // ¸¶¿ì½º ¸ğ¼Ç Äİ¹é ÇÔ¼ö
+void Motion(int x, int y) // ë§ˆìš°ìŠ¤ ëª¨ì…˜ ì½œë°± í•¨ìˆ˜
 {
 
 }

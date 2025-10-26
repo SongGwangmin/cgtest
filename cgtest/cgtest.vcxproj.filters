@@ -57,6 +57,9 @@
     <ClCompile Include="17.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="18.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="vertex.glsl">
@@ -71,6 +74,9 @@
       <Filter>Source Files</Filter>
     </None>
     <None Include="vertex_matrix.glsl">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="vertex_view.glsl">
       <Filter>Source Files</Filter>
     </None>
   </ItemGroup>

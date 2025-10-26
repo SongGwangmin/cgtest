@@ -52,6 +52,7 @@ int spin = 1; //  1: 시계방향, -1: 반시계방향
 int animation = 1; // 0: 정지, 1: 회전
 int hidetoggle = 1; // 1. 은면제거
 int wiretoggle = 0; // 1. 와이어프레임 모드
+int culltoggle = 0; // 1. 뒷면 컬링 모드
 
 
 // Forward declaration
@@ -313,10 +314,10 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	current_yaxis = glm::normalize(glm::vec3(yaxis1 - yaxis2));
 	current_zaxis = glm::normalize(glm::vec3(zaxis1 - zaxis2));
 
-	polygonmap.emplace_back(polygon(p1, p2, p3, p4, 0, 0, 0));
+	polygonmap.emplace_back(polygon(p4, p3, p2, p1, 0, 0, 0));
 	polygonmap.emplace_back(polygon(p4, p8, p7, p3, 0, 0, 1));
-	polygonmap.emplace_back(polygon(p1, p4, p8, p5, 0, 1, 0));
-	polygonmap.emplace_back(polygon(p1, p5, p6, p2, 0, 1, 1));
+	polygonmap.emplace_back(polygon(p5, p8, p4, p1, 0, 1, 0));
+	polygonmap.emplace_back(polygon(p2, p6, p5, p1, 0, 1, 1));
 	polygonmap.emplace_back(polygon(p2, p3, p7, p6, 1, 0, 0));
 	polygonmap.emplace_back(polygon(p5, p6, p7, p8, 1, 0, 1));
 
@@ -525,6 +526,22 @@ void Keyboard(unsigned char key, int x, int y) {
 		selection[idx] = 1;
 	}
 	break;
+	case 'p':
+	{
+		if (selection[0]) {
+			int copy[10] = { 0,0,0,0,0,1,1,1,1,1 };
+			for (int i = 0; i < 10; ++i) {
+				selection[i] = copy[i];
+			}
+		}
+		else {
+			int copy[10] = { 1,1,1,1,1,1,0,0,0,0 };
+			for (int i = 0; i < 10; ++i) {
+				selection[i] = copy[i];
+			}
+		}
+	}
+	break;
 	case 'c': // 육면체
 	{
 		int copy[10] = { 1,1,1,1,1,1,0,0,0,0 };
@@ -595,6 +612,19 @@ void Keyboard(unsigned char key, int x, int y) {
 		angle = 0.0f;
 		polygon_xpos = 0.0f;
 		polygon_ypos = 0.0f;
+
+	}
+	break;
+	case 'u':
+	{
+		if (culltoggle == 0) {
+			glEnable(GL_CULL_FACE);
+			culltoggle = 1;
+		}
+		else {
+			glDisable(GL_CULL_FACE);
+			culltoggle = 0;
+		}
 
 	}
 	break;

@@ -124,9 +124,7 @@ typedef struct TransformInfo {
 	float xRotation;      // x축 자전 각도
 	float yRotation;      // y축 자전 각도
 	float localScale;     // 제자리 scale 크기
-	float xpos;           // x 좌표
-	float ypos;           // y 좌표
-	float zpos;           // z 좌표
+	glm::vec3 position;   // 위치 (x, y, z)
 	ShapeType shapeType;  // 도형 타입
 } TransformInfo;
 
@@ -375,17 +373,13 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	transformArray[0].xRotation = 0.0f;
 	transformArray[0].yRotation = 0.0f;
 	transformArray[0].localScale = 1.0f;
-	transformArray[0].xpos = -0.2f;
-	transformArray[0].ypos = 0.0f;
-	transformArray[0].zpos = 0.0f;
+	transformArray[0].position = glm::vec3(-0.2f, 0.0f, 0.0f);
 	transformArray[0].shapeType = SHAPE_CUBE; // 초기: 육면체
 
 	transformArray[1].xRotation = 0.0f;
 	transformArray[1].yRotation = 0.0f;
 	transformArray[1].localScale = 1.0f;
-	transformArray[1].xpos = 0.2f;
-	transformArray[1].ypos = 0.0f;
-	transformArray[1].zpos = 0.0f;
+	transformArray[1].position = glm::vec3(0.2f, 0.0f, 0.0f);
 	transformArray[1].shapeType = SHAPE_CONE; // 초기: 12각뿔
 
 
@@ -594,7 +588,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 	glPushMatrix(); // 현재 행렬 저장
 	
 	// 1. 이동 (translate)
-	glTranslatef(transformArray[0].xpos, transformArray[0].ypos, transformArray[0].zpos);
+	glTranslatef(transformArray[0].position.x, transformArray[0].position.y, transformArray[0].position.z);
 	
 	// 2. y축 자전 (yRotation)
 	glRotatef(glm::degrees(transformArray[0].yRotation), 0.0f, 1.0f, 0.0f);
@@ -639,7 +633,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 	glPushMatrix(); // 현재 행렬 저장
 	
 	// 1. 이동 (translate)
-	glTranslatef(transformArray[1].xpos, transformArray[1].ypos, transformArray[1].zpos);
+	glTranslatef(transformArray[1].position.x, transformArray[1].position.y, transformArray[1].position.z);
 	
 	// 2. y축 자전 (yRotation)
 	glRotatef(glm::degrees(transformArray[1].yRotation), 0.0f, 1.0f, 0.0f);
@@ -765,15 +759,13 @@ void Keyboard(unsigned char key, int x, int y) {
 		for (int i = 0; i < 2; ++i) {
 			if (currentObject == 2 || currentObject == i) {
 				// 현재 좌표를 glm::vec3로 변환
-				glm::vec3 currentPos(transformArray[i].xpos, transformArray[i].ypos, transformArray[i].zpos);
+				glm::vec3 currentPos(transformArray[i].position.x, transformArray[i].position.y, transformArray[i].position.z);
 				// y축으로 5도 회전하는 회전 행렬 생성
 				glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(5.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 				// 좌표에 회전 행렬 적용
 				glm::vec4 rotatedPos = rotationMatrix * glm::vec4(currentPos, 1.0f);
 				// 회전된 좌표를 다시 저장
-				transformArray[i].xpos = rotatedPos.x;
-				transformArray[i].ypos = rotatedPos.y;
-				transformArray[i].zpos = rotatedPos.z;
+				transformArray[i].position = glm::vec3(rotatedPos);
 			}
 		}
 		break;
@@ -781,15 +773,13 @@ void Keyboard(unsigned char key, int x, int y) {
 		for (int i = 0; i < 2; ++i) {
 			if (currentObject == 2 || currentObject == i) {
 				// 현재 좌표를 glm::vec3로 변환
-				glm::vec3 currentPos(transformArray[i].xpos, transformArray[i].ypos, transformArray[i].zpos);
+				glm::vec3 currentPos(transformArray[i].position.x, transformArray[i].position.y, transformArray[i].position.z);
 				// y축으로 -5도 회전하는 회전 행렬 생성
 				glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(-5.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 				// 좌표에 회전 행렬 적용
 				glm::vec4 rotatedPos = rotationMatrix * glm::vec4(currentPos, 1.0f);
 				// 회전된 좌표를 다시 저장
-				transformArray[i].xpos = rotatedPos.x;
-				transformArray[i].ypos = rotatedPos.y;
-				transformArray[i].zpos = rotatedPos.z;
+				transformArray[i].position = glm::vec3(rotatedPos);
 			}
 		}
 		break;
@@ -819,9 +809,9 @@ void Keyboard(unsigned char key, int x, int y) {
 				if (transformArray[i].localScale > 3.0f) 
 					transformArray[i].localScale = 3.0f;
 				// 원점 기준이므로 위치도 확대
-				transformArray[i].xpos *= scaleFactor;
-				transformArray[i].ypos *= scaleFactor;
-				transformArray[i].zpos *= scaleFactor;
+				transformArray[i].position.x *= scaleFactor;
+				transformArray[i].position.y *= scaleFactor;
+				transformArray[i].position.z *= scaleFactor;
 			}
 		}
 		break;
@@ -833,37 +823,37 @@ void Keyboard(unsigned char key, int x, int y) {
 				if (transformArray[i].localScale < 0.1f) 
 					transformArray[i].localScale = 0.1f;
 				// 원점 기준이므로 위치도 축소
-				transformArray[i].xpos *= scaleFactor;
-				transformArray[i].ypos *= scaleFactor;
-				transformArray[i].zpos *= scaleFactor;
+				transformArray[i].position.x *= scaleFactor;
+				transformArray[i].position.y *= scaleFactor;
+				transformArray[i].position.z *= scaleFactor;
 			}
 		}
 		break;
 	case 'd': // x축 좌로 이동
 		for (int i = 0; i < 2; ++i) {
 			if (currentObject == 2 || currentObject == i) {
-				transformArray[i].xpos -= 0.05f;
+				transformArray[i].position.x -= 0.05f;
 			}
 		}
 		break;
 	case 'D': // x축 우로 이동
 		for (int i = 0; i < 2; ++i) {
 			if (currentObject == 2 || currentObject == i) {
-				transformArray[i].xpos += 0.05f;
+				transformArray[i].position.x += 0.05f;
 			}
 		}
 		break;
 	case 'e': // y축 위로 이동
 		for (int i = 0; i < 2; ++i) {
 			if (currentObject == 2 || currentObject == i) {
-				transformArray[i].ypos += 0.05f;
+				transformArray[i].position.y += 0.05f;
 			}
 		}
 		break;
 	case 'E': // y축 아래로 이동
 		for (int i = 0; i < 2; ++i) {
 			if (currentObject == 2 || currentObject == i) {
-				transformArray[i].ypos -= 0.05f;
+				transformArray[i].position.y -= 0.05f;
 			}
 		}
 		break;
@@ -898,9 +888,7 @@ void Keyboard(unsigned char key, int x, int y) {
 				transformArray[i].xRotation = 0.0f;
 				transformArray[i].yRotation = 0.0f;
 				transformArray[i].localScale = 1.0f;
-				transformArray[i].xpos = (i == 0) ? -0.2f : 0.2f;
-				transformArray[i].ypos = 0.0f;
-				transformArray[i].zpos = 0.0f;
+				transformArray[i].position = (i == 0) ? glm::vec3(-0.2f, 0.0f, 0.0f) : glm::vec3(0.2f, 0.0f, 0.0f);
 			}
 		}
 	}
@@ -925,9 +913,7 @@ void Keyboard(unsigned char key, int x, int y) {
 				transformArray[i].xRotation = 0.0f;
 				transformArray[i].yRotation = 0.0f;
 				transformArray[i].localScale = 1.0f;
-				transformArray[i].xpos = (i == 0) ? -0.2f : 0.2f;
-				transformArray[i].ypos = 0.0f;
-				transformArray[i].zpos = 0.0f;
+				transformArray[i].position = (i == 0) ? glm::vec3(-0.2f, 0.0f, 0.0f) : glm::vec3(0.2f, 0.0f, 0.0f);
 			}
 		}
 	}

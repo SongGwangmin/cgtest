@@ -669,15 +669,22 @@ void Keyboard(unsigned char key, int x, int y) {
 	case 'q': // 프로그램 종료
 		glutLeaveMainLoop();
 		break;
-	case '0':
 	case '1':
-		// 객체 선택
-		currentObject = key - '0';
-		if (currentObject > 1) currentObject = 1;
-		std::cout << "Selected object: " << currentObject << std::endl;
+		// 첫 번째 객체만 선택 (transformArray[0])
+		currentObject = 0;
+		std::cout << "Selected object: 0 only" << std::endl;
 		break;
 	case '2':
+		// 두 번째 객체만 선택 (transformArray[1])
+		currentObject = 1;
+		std::cout << "Selected object: 1 only" << std::endl;
+		break;
 	case '3':
+		// 두 객체 모두 선택 (currentObject = 2는 둘 다를 의미)
+		currentObject = 2;
+		std::cout << "Selected both objects" << std::endl;
+		break;
+	case '0':
 	case '4':
 	case '5':
 	case '6':
@@ -695,54 +702,111 @@ void Keyboard(unsigned char key, int x, int y) {
 	}
 	break;
 	case 'x': // x축 양방향 자전
-		transformArray[currentObject].xRotation += glm::radians(5.0f);
+		// currentObject가 2이면 두 객체 모두 적용
+		for (int i = 0; i < 2; ++i) {
+			if (currentObject == 2 || currentObject == i) {
+				transformArray[i].xRotation += glm::radians(5.0f);
+			}
+		}
 		break;
 	case 'X': // x축 음방향 자전
-		transformArray[currentObject].xRotation -= glm::radians(5.0f);
+		for (int i = 0; i < 2; ++i) {
+			if (currentObject == 2 || currentObject == i) {
+				transformArray[i].xRotation -= glm::radians(5.0f);
+			}
+		}
 		break;
 	case 'y': // y축 양방향 자전
-		transformArray[currentObject].yRotation += glm::radians(5.0f);
+		for (int i = 0; i < 2; ++i) {
+			if (currentObject == 2 || currentObject == i) {
+				transformArray[i].yRotation += glm::radians(5.0f);
+			}
+		}
 		break;
 	case 'Y': // y축 음방향 자전
-		transformArray[currentObject].yRotation -= glm::radians(5.0f);
+		for (int i = 0; i < 2; ++i) {
+			if (currentObject == 2 || currentObject == i) {
+				transformArray[i].yRotation -= glm::radians(5.0f);
+			}
+		}
 		break;
 	case 'r': // y축 양방향 공전
-		transformArray[currentObject].yOrbitRotation += glm::radians(5.0f);
+		for (int i = 0; i < 2; ++i) {
+			if (currentObject == 2 || currentObject == i) {
+				transformArray[i].yOrbitRotation += glm::radians(5.0f);
+			}
+		}
 		break;
 	case 'R': // y축 음방향 공전
-		transformArray[currentObject].yOrbitRotation -= glm::radians(5.0f);
+		for (int i = 0; i < 2; ++i) {
+			if (currentObject == 2 || currentObject == i) {
+				transformArray[i].yOrbitRotation -= glm::radians(5.0f);
+			}
+		}
 		break;
 	case 'a': // 제자리에서 확대
-		transformArray[currentObject].localScale += 0.1f;
-		if (transformArray[currentObject].localScale > 3.0f) 
-			transformArray[currentObject].localScale = 3.0f;
+		for (int i = 0; i < 2; ++i) {
+			if (currentObject == 2 || currentObject == i) {
+				transformArray[i].localScale += 0.1f;
+				if (transformArray[i].localScale > 3.0f) 
+					transformArray[i].localScale = 3.0f;
+			}
+		}
 		break;
 	case 'A': // 제자리에서 축소
-		transformArray[currentObject].localScale -= 0.1f;
-		if (transformArray[currentObject].localScale < 0.1f) 
-			transformArray[currentObject].localScale = 0.1f;
+		for (int i = 0; i < 2; ++i) {
+			if (currentObject == 2 || currentObject == i) {
+				transformArray[i].localScale -= 0.1f;
+				if (transformArray[i].localScale < 0.1f) 
+					transformArray[i].localScale = 0.1f;
+			}
+		}
 		break;
 	case 'b': // 원점 기준 확대
-		transformArray[currentObject].originScale += 0.1f;
-		if (transformArray[currentObject].originScale > 3.0f) 
-			transformArray[currentObject].originScale = 3.0f;
+		for (int i = 0; i < 2; ++i) {
+			if (currentObject == 2 || currentObject == i) {
+				transformArray[i].originScale += 0.1f;
+				if (transformArray[i].originScale > 3.0f) 
+					transformArray[i].originScale = 3.0f;
+			}
+		}
 		break;
 	case 'B': // 원점 기준 축소
-		transformArray[currentObject].originScale -= 0.1f;
-		if (transformArray[currentObject].originScale < 0.1f) 
-			transformArray[currentObject].originScale = 0.1f;
+		for (int i = 0; i < 2; ++i) {
+			if (currentObject == 2 || currentObject == i) {
+				transformArray[i].originScale -= 0.1f;
+				if (transformArray[i].originScale < 0.1f) 
+					transformArray[i].originScale = 0.1f;
+			}
+		}
 		break;
 	case 'd': // x축 좌로 이동
-		transformArray[currentObject].xpos -= 0.05f;
+		for (int i = 0; i < 2; ++i) {
+			if (currentObject == 2 || currentObject == i) {
+				transformArray[i].xpos -= 0.05f;
+			}
+		}
 		break;
 	case 'D': // x축 우로 이동
-		transformArray[currentObject].xpos += 0.05f;
+		for (int i = 0; i < 2; ++i) {
+			if (currentObject == 2 || currentObject == i) {
+				transformArray[i].xpos += 0.05f;
+			}
+		}
 		break;
 	case 'e': // y축 위로 이동
-		transformArray[currentObject].ypos += 0.05f;
+		for (int i = 0; i < 2; ++i) {
+			if (currentObject == 2 || currentObject == i) {
+				transformArray[i].ypos += 0.05f;
+			}
+		}
 		break;
 	case 'E': // y축 아래로 이동
-		transformArray[currentObject].ypos -= 0.05f;
+		for (int i = 0; i < 2; ++i) {
+			if (currentObject == 2 || currentObject == i) {
+				transformArray[i].ypos -= 0.05f;
+			}
+		}
 		break;
 	case 'u':
 	{
@@ -796,15 +860,19 @@ void Keyboard(unsigned char key, int x, int y) {
 	break;
 	case 'c': // 초기화
 	{
-		// 선택된 객체 초기화
-		transformArray[currentObject].xRotation = 0.0f;
-		transformArray[currentObject].yRotation = 0.0f;
-		transformArray[currentObject].yOrbitRotation = 0.0f;
-		transformArray[currentObject].localScale = 1.0f;
-		transformArray[currentObject].originScale = 1.0f;
-		transformArray[currentObject].xpos = (currentObject == 0) ? -0.2f : 0.2f;
-		transformArray[currentObject].ypos = 0.0f;
-		transformArray[currentObject].zpos = 0.0f;
+		// 선택된 객체(들) 초기화
+		for (int i = 0; i < 2; ++i) {
+			if (currentObject == 2 || currentObject == i) {
+				transformArray[i].xRotation = 0.0f;
+				transformArray[i].yRotation = 0.0f;
+				transformArray[i].yOrbitRotation = 0.0f;
+				transformArray[i].localScale = 1.0f;
+				transformArray[i].originScale = 1.0f;
+				transformArray[i].xpos = (i == 0) ? -0.2f : 0.2f;
+				transformArray[i].ypos = 0.0f;
+				transformArray[i].zpos = 0.0f;
+			}
+		}
 	}
 	break;
 	default:

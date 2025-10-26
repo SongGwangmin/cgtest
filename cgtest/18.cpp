@@ -93,6 +93,7 @@ int mouse_dest = -1; // 마우스로 선택된 polygon 인덱스 저장
 std::vector<float> allVertices;
 
 int selection[10] = { 1,1,1,1,1,1,0,0,0,0 };
+int currentObject = 0; // 현재 선택된 객체 (0 또는 1)
 
 float angle = 0.0f; // 회전 각도
 float xangle = 0.0f;
@@ -296,6 +297,7 @@ public:
 
 
 using ActionFunc = glm::mat4(polygon::*)(float* angles);
+
 
 
 
@@ -669,6 +671,11 @@ void Keyboard(unsigned char key, int x, int y) {
 		break;
 	case '0':
 	case '1':
+		// 객체 선택
+		currentObject = key - '0';
+		if (currentObject > 1) currentObject = 1;
+		std::cout << "Selected object: " << currentObject << std::endl;
+		break;
 	case '2':
 	case '3':
 	case '4':
@@ -687,6 +694,56 @@ void Keyboard(unsigned char key, int x, int y) {
 		selection[idx] = 1;
 	}
 	break;
+	case 'x': // x축 양방향 자전
+		transformArray[currentObject].xRotation += glm::radians(5.0f);
+		break;
+	case 'X': // x축 음방향 자전
+		transformArray[currentObject].xRotation -= glm::radians(5.0f);
+		break;
+	case 'y': // y축 양방향 자전
+		transformArray[currentObject].yRotation += glm::radians(5.0f);
+		break;
+	case 'Y': // y축 음방향 자전
+		transformArray[currentObject].yRotation -= glm::radians(5.0f);
+		break;
+	case 'r': // y축 양방향 공전
+		transformArray[currentObject].yOrbitRotation += glm::radians(5.0f);
+		break;
+	case 'R': // y축 음방향 공전
+		transformArray[currentObject].yOrbitRotation -= glm::radians(5.0f);
+		break;
+	case 'a': // 제자리에서 확대
+		transformArray[currentObject].localScale += 0.1f;
+		if (transformArray[currentObject].localScale > 3.0f) 
+			transformArray[currentObject].localScale = 3.0f;
+		break;
+	case 'A': // 제자리에서 축소
+		transformArray[currentObject].localScale -= 0.1f;
+		if (transformArray[currentObject].localScale < 0.1f) 
+			transformArray[currentObject].localScale = 0.1f;
+		break;
+	case 'b': // 원점 기준 확대
+		transformArray[currentObject].originScale += 0.1f;
+		if (transformArray[currentObject].originScale > 3.0f) 
+			transformArray[currentObject].originScale = 3.0f;
+		break;
+	case 'B': // 원점 기준 축소
+		transformArray[currentObject].originScale -= 0.1f;
+		if (transformArray[currentObject].originScale < 0.1f) 
+			transformArray[currentObject].originScale = 0.1f;
+		break;
+	case 'd': // x축 좌로 이동
+		transformArray[currentObject].xpos -= 0.05f;
+		break;
+	case 'D': // x축 우로 이동
+		transformArray[currentObject].xpos += 0.05f;
+		break;
+	case 'e': // y축 위로 이동
+		transformArray[currentObject].ypos += 0.05f;
+		break;
+	case 'E': // y축 아래로 이동
+		transformArray[currentObject].ypos -= 0.05f;
+		break;
 	case 'u':
 	{
 		if (culltoggle == 0) {
@@ -698,11 +755,6 @@ void Keyboard(unsigned char key, int x, int y) {
 			culltoggle = 0;
 		}
 
-	}
-	break;
-	case 'y': // 
-	{
-		animation = !animation;
 	}
 	break;
 	case 't': // zrotoggle
@@ -720,19 +772,9 @@ void Keyboard(unsigned char key, int x, int y) {
 		tiretoggle = !tiretoggle;
 	}
 	break;
-	case 'b': // backsizetoggle
-	{
-		backsizetoggle = !backsizetoggle;
-	}
-	break;
 	case 'o': // openeverytoggle
 	{
 		openeverytoggle = !openeverytoggle;
-	}
-	break;
-	case 'r': // sequentoclosetoggle
-	{
-		
 	}
 	break;
 	case 'p':
@@ -754,8 +796,17 @@ void Keyboard(unsigned char key, int x, int y) {
 	break;
 	case 'c': // 초기화
 	{
-		
+		// 선택된 객체 초기화
+		transformArray[currentObject].xRotation = 0.0f;
+		transformArray[currentObject].yRotation = 0.0f;
+		transformArray[currentObject].yOrbitRotation = 0.0f;
+		transformArray[currentObject].localScale = 1.0f;
+		transformArray[currentObject].originScale = 1.0f;
+		transformArray[currentObject].xpos = (currentObject == 0) ? -0.2f : 0.2f;
+		transformArray[currentObject].ypos = 0.0f;
+		transformArray[currentObject].zpos = 0.0f;
 	}
+	break;
 	default:
 		break;
 	}

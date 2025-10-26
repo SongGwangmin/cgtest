@@ -66,6 +66,9 @@ float swapAnimationProgress = 0.0f; // 0.0 ~ 1.0
 glm::vec3 swapStartPos[2]; // 시작 위치
 glm::vec3 swapEndPos[2]; // 목표 위치
 
+// y축 회전 애니메이션 관련 변수
+int yRotationAnimationActive = 0; // 0: 정지, 1: 애니메이션 중
+
 // 새로운 토글 변수들
 int edgeopentoggle = 0; // 0: edge 열림, 1: edge 닫힘
 int backscaletoggle = 0; // 1: scale 증가, 0: scale 감소
@@ -455,10 +458,7 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	glutTimerFunc(25, TimerFunction, 1);
 
 	glutKeyboardFunc(Keyboard);
-	glutSpecialFunc(SpecialKeys); // 특수 키(화살표 키) 콜백 등록
-	glutMouseFunc(Mouse);
-	glutMotionFunc(Motion); // 마우스 모션 콜백 등록
-
+	
 	glutMainLoop();
 	return 0;
 }
@@ -949,6 +949,17 @@ void Keyboard(unsigned char key, int x, int y) {
 		transformArray[1].shapeType = static_cast<ShapeType>(shapeDis(gen));
 	}
 	break;
+	case 'v': // y축 회전 애니메이션 토글
+	{
+		yRotationAnimationActive = !yRotationAnimationActive;
+		if (yRotationAnimationActive) {
+			std::cout << "Y-axis rotation animation started" << std::endl;
+		}
+		else {
+			std::cout << "Y-axis rotation animation stopped" << std::endl;
+		}
+	}
+	break;
 	case '+':
 	{
 		if (culltoggle == 0) {
@@ -968,64 +979,6 @@ void Keyboard(unsigned char key, int x, int y) {
 	glutPostRedisplay();
 }
 
-void SpecialKeys(int key, int x, int y) {
-	switch (key) {
-	case GLUT_KEY_LEFT: // ← 좌로 객체 이동 (current_xaxis 음의 방향)
-	{
-		polygon_xpos -= current_xaxis.x * 0.02f;
-		polygon_ypos -= current_xaxis.y * 0.02f;
-	}
-	break;
-	case GLUT_KEY_RIGHT: // → 우로 객체 이동 (current_xaxis 양의 방향)
-	{
-		polygon_xpos += current_xaxis.x * 0.02f;
-		polygon_ypos += current_xaxis.y * 0.02f;
-	}
-	break;
-	case GLUT_KEY_UP: // ↑ 상으로 객체 이동 (current_yaxis 양의 방향)
-	{
-		polygon_xpos += current_yaxis.x * 0.02f;
-		polygon_ypos += current_yaxis.y * 0.02f;
-	}
-	break;
-	case GLUT_KEY_DOWN: // ↓ 하로 객체 이동 (current_yaxis 음의 방향)
-	{
-		polygon_xpos -= current_yaxis.x * 0.02f;
-		polygon_ypos -= current_yaxis.y * 0.02f;
-	}
-	break;
-	default:
-		break;
-	}
-
-	glutPostRedisplay();
-}
-
-void Mouse(int button, int state, int x, int y)
-{
-	switch (button) {
-	case GLUT_LEFT_BUTTON:
-	{
-		if (state == GLUT_DOWN) {// 도형선택
-
-		}
-		else if (state == GLUT_UP) {
-
-			glutPostRedisplay();
-		}
-	}
-	break;
-	case GLUT_RIGHT_BUTTON:
-	{
-		if (state == GLUT_DOWN) {
-
-		}
-	}
-	break;
-	default:
-		break;
-	}
-}
 
 void TimerFunction(int value)
 {
@@ -1062,6 +1015,24 @@ void TimerFunction(int value)
 				transformArray[1].position = glm::mix(transformArray[1].midPoint, swapEndPos[1], t);
 			}
 		}
+	}
+
+	// y축 회전 애니메이션 처리
+	if (yRotationAnimationActive) {
+		for (int i = 0; i < 2; ++i) {
+			transformArray[i].yRotation += glm::radians(2.0f); // 매 타이머마다 2도 증가
+			glm::vec3 currentPos(transformArray[i].position.x, transformArray[i].position.y, transformArray[i].position.z);
+			// y축으로 -5도 회전하는 회전 행렬 생성
+			glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(-5.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+			// 좌표에 회전 행렬 적용
+			glm::vec4 rotatedPos = rotationMatrix * glm::vec4(currentPos, 1.0f);
+			// 회전된 좌표를 다시 저장
+			transformArray[i].position = glm::vec3(rotatedPos);
+		}
+		transformArray[0].localScale += 0.01f;
+		if (transformArray[1].localScale < 0.03f)
+			transformArray[1].localScale -= 0.01f;
+
 	}
 	
 	glutPostRedisplay();

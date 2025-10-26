@@ -115,9 +115,7 @@ typedef struct poitment {
 typedef struct TransformInfo {
 	float xRotation;      // x축 자전 각도
 	float yRotation;      // y축 자전 각도
-	float yOrbitRotation; // y축 공전 각도
 	float localScale;     // 제자리 scale 크기
-	float originScale;    // 원점기준 scale 크기
 	float xpos;           // x 좌표
 	float ypos;           // y 좌표
 	float zpos;           // z 좌표
@@ -367,18 +365,14 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 
 	transformArray[0].xRotation = 0.0f;
 	transformArray[0].yRotation = 0.0f;
-	transformArray[0].yOrbitRotation = 0.0f;
 	transformArray[0].localScale = 1.0f;
-	transformArray[0].originScale = 1.0f;
 	transformArray[0].xpos = -0.2f;
 	transformArray[0].ypos = 0.0f;
 	transformArray[0].zpos = 0.0f;
 
 	transformArray[1].xRotation = 0.0f;
 	transformArray[1].yRotation = 0.0f;
-	transformArray[1].yOrbitRotation = 0.0f;
 	transformArray[1].localScale = 1.0f;
-	transformArray[1].originScale = 1.0f;
 	transformArray[1].xpos = 0.2f;
 	transformArray[1].ypos = 0.0f;
 	transformArray[1].zpos = 0.0f;
@@ -440,7 +434,7 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 		poly.sendvertexdata(allVertices);
 	}*/
 
-
+	
 
 	//--- 세이더 프로그램 만들기
 	glutDisplayFunc(drawScene); //--- 출력 콜백 함수
@@ -588,22 +582,16 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 	// 첫 번째 객체 (transformArray[0])
 	glPushMatrix(); // 현재 행렬 저장
 	
-	// 1. y축 공전 (yOrbitRotation)
-	glRotatef(glm::degrees(transformArray[0].yOrbitRotation), 0.0f, 1.0f, 0.0f);
-	
-	// 2. 원점 기준 scale (originScale)
-	glScalef(transformArray[0].originScale, transformArray[0].originScale, transformArray[0].originScale);
-	
-	// 3. 이동 (translate)
+	// 1. 이동 (translate)
 	glTranslatef(transformArray[0].xpos, transformArray[0].ypos, transformArray[0].zpos);
 	
-	// 4. y축 자전 (yRotation)
+	// 2. y축 자전 (yRotation)
 	glRotatef(glm::degrees(transformArray[0].yRotation), 0.0f, 1.0f, 0.0f);
 	
-	// 5. x축 자전 (xRotation)
+	// 3. x축 자전 (xRotation)
 	glRotatef(glm::degrees(transformArray[0].xRotation), 1.0f, 0.0f, 0.0f);
 	
-	// 6. 제자리 scale (localScale)
+	// 4. 제자리 scale (localScale)
 	glScalef(transformArray[0].localScale, transformArray[0].localScale, transformArray[0].localScale);
 	
 	// x축으로 -90도 회전 (원래 실린더 방향 조정)
@@ -611,7 +599,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 	
 	GLUquadricObj* qobj;
 	qobj = gluNewQuadric();
-	gluQuadricDrawStyle(qobj, GLU_LINE);
+	gluQuadricDrawStyle(qobj, GLU_FILL);
 	
 	glColor3f(0.0f, 0.0f, 0.0f); // 검은색으로 설정
 	gluCylinder(qobj, 0.1, 0.1, 0.2, 4, 1);
@@ -623,22 +611,16 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 	// 두 번째 객체 (transformArray[1]) - 구 그리기
 	glPushMatrix(); // 현재 행렬 저장
 	
-	// 1. y축 공전 (yOrbitRotation)
-	glRotatef(glm::degrees(transformArray[1].yOrbitRotation), 0.0f, 1.0f, 0.0f);
-	
-	// 2. 원점 기준 scale (originScale)
-	glScalef(transformArray[1].originScale, transformArray[1].originScale, transformArray[1].originScale);
-	
-	// 3. 이동 (translate)
+	// 1. 이동 (translate)
 	glTranslatef(transformArray[1].xpos, transformArray[1].ypos, transformArray[1].zpos);
 	
-	// 4. y축 자전 (yRotation)
+	// 2. y축 자전 (yRotation)
 	glRotatef(glm::degrees(transformArray[1].yRotation), 0.0f, 1.0f, 0.0f);
 	
-	// 5. x축 자전 (xRotation)
+	// 3. x축 자전 (xRotation)
 	glRotatef(glm::degrees(transformArray[1].xRotation), 1.0f, 0.0f, 0.0f);
 	
-	// 6. 제자리 scale (localScale)
+	// 4. 제자리 scale (localScale)
 	glScalef(transformArray[1].localScale, transformArray[1].localScale, transformArray[1].localScale);
 	
 	GLUquadricObj* qobj2;
@@ -667,6 +649,9 @@ GLvoid Reshape(int w, int h) //--- 콜백 함수: 다시 그리기 콜백 함수
 void Keyboard(unsigned char key, int x, int y) {
 	switch (key) {
 	case 'q': // 프로그램 종료
+		glutLeaveMainLoop();
+		break;
+	case 'Q': // 프로그램 종료
 		glutLeaveMainLoop();
 		break;
 	case '1':
@@ -730,17 +715,35 @@ void Keyboard(unsigned char key, int x, int y) {
 			}
 		}
 		break;
-	case 'r': // y축 양방향 공전
+	case 'r': // y축 공전 (좌표를 y축 방향으로 회전)
 		for (int i = 0; i < 2; ++i) {
 			if (currentObject == 2 || currentObject == i) {
-				transformArray[i].yOrbitRotation += glm::radians(5.0f);
+				// 현재 좌표를 glm::vec3로 변환
+				glm::vec3 currentPos(transformArray[i].xpos, transformArray[i].ypos, transformArray[i].zpos);
+				// y축으로 5도 회전하는 회전 행렬 생성
+				glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(5.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+				// 좌표에 회전 행렬 적용
+				glm::vec4 rotatedPos = rotationMatrix * glm::vec4(currentPos, 1.0f);
+				// 회전된 좌표를 다시 저장
+				transformArray[i].xpos = rotatedPos.x;
+				transformArray[i].ypos = rotatedPos.y;
+				transformArray[i].zpos = rotatedPos.z;
 			}
 		}
 		break;
-	case 'R': // y축 음방향 공전
+	case 'R': // y축 역공전 (좌표를 y축 방향으로 역회전)
 		for (int i = 0; i < 2; ++i) {
 			if (currentObject == 2 || currentObject == i) {
-				transformArray[i].yOrbitRotation -= glm::radians(5.0f);
+				// 현재 좌표를 glm::vec3로 변환
+				glm::vec3 currentPos(transformArray[i].xpos, transformArray[i].ypos, transformArray[i].zpos);
+				// y축으로 -5도 회전하는 회전 행렬 생성
+				glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(-5.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+				// 좌표에 회전 행렬 적용
+				glm::vec4 rotatedPos = rotationMatrix * glm::vec4(currentPos, 1.0f);
+				// 회전된 좌표를 다시 저장
+				transformArray[i].xpos = rotatedPos.x;
+				transformArray[i].ypos = rotatedPos.y;
+				transformArray[i].zpos = rotatedPos.z;
 			}
 		}
 		break;
@@ -762,21 +765,31 @@ void Keyboard(unsigned char key, int x, int y) {
 			}
 		}
 		break;
-	case 'b': // 원점 기준 확대
+	case 'b': // 원점 기준 확대 (localScale과 좌표를 함께 조정)
 		for (int i = 0; i < 2; ++i) {
 			if (currentObject == 2 || currentObject == i) {
-				transformArray[i].originScale += 0.1f;
-				if (transformArray[i].originScale > 3.0f) 
-					transformArray[i].originScale = 3.0f;
+				float scaleFactor = 1.1f; // 10% 확대
+				transformArray[i].localScale *= scaleFactor;
+				if (transformArray[i].localScale > 3.0f) 
+					transformArray[i].localScale = 3.0f;
+				// 원점 기준이므로 위치도 확대
+				transformArray[i].xpos *= scaleFactor;
+				transformArray[i].ypos *= scaleFactor;
+				transformArray[i].zpos *= scaleFactor;
 			}
 		}
 		break;
-	case 'B': // 원점 기준 축소
+	case 'B': // 원점 기준 축소 (localScale과 좌표를 함께 조정)
 		for (int i = 0; i < 2; ++i) {
 			if (currentObject == 2 || currentObject == i) {
-				transformArray[i].originScale -= 0.1f;
-				if (transformArray[i].originScale < 0.1f) 
-					transformArray[i].originScale = 0.1f;
+				float scaleFactor = 0.9f; // 10% 축소
+				transformArray[i].localScale *= scaleFactor;
+				if (transformArray[i].localScale < 0.1f) 
+					transformArray[i].localScale = 0.1f;
+				// 원점 기준이므로 위치도 축소
+				transformArray[i].xpos *= scaleFactor;
+				transformArray[i].ypos *= scaleFactor;
+				transformArray[i].zpos *= scaleFactor;
 			}
 		}
 		break;
@@ -831,19 +844,19 @@ void Keyboard(unsigned char key, int x, int y) {
 		opentoggle = !opentoggle;
 	}
 	break;
-	case 's': // tiretoggle
+	case 's': // 초기화
 	{
-		tiretoggle = !tiretoggle;
-	}
-	break;
-	case 'o': // openeverytoggle
-	{
-		openeverytoggle = !openeverytoggle;
-	}
-	break;
-	case 'p':
-	{
-		
+		// 선택된 객체(들) 초기화
+		for (int i = 0; i < 2; ++i) {
+			if (currentObject == 2 || currentObject == i) {
+				transformArray[i].xRotation = 0.0f;
+				transformArray[i].yRotation = 0.0f;
+				transformArray[i].localScale = 1.0f;
+				transformArray[i].xpos = (i == 0) ? -0.2f : 0.2f;
+				transformArray[i].ypos = 0.0f;
+				transformArray[i].zpos = 0.0f;
+			}
+		}
 	}
 	break;
 	case 'h': // 은면제거 적용/해제
@@ -865,9 +878,7 @@ void Keyboard(unsigned char key, int x, int y) {
 			if (currentObject == 2 || currentObject == i) {
 				transformArray[i].xRotation = 0.0f;
 				transformArray[i].yRotation = 0.0f;
-				transformArray[i].yOrbitRotation = 0.0f;
 				transformArray[i].localScale = 1.0f;
-				transformArray[i].originScale = 1.0f;
 				transformArray[i].xpos = (i == 0) ? -0.2f : 0.2f;
 				transformArray[i].ypos = 0.0f;
 				transformArray[i].zpos = 0.0f;

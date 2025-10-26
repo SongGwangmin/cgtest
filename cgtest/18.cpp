@@ -105,6 +105,14 @@ glm::vec3 current_xaxis;
 glm::vec3 current_yaxis;
 glm::vec3 current_zaxis;
 
+// 도형 타입 열거형
+enum ShapeType {
+	SHAPE_CUBE = 0,      // 육면체
+	SHAPE_SPHERE = 1,    // 구
+	SHAPE_CONE = 2,      // 12각뿔
+	SHAPE_CYLINDER = 3   // 12각기둥
+};
+
 typedef struct poitment {
 	float xpos;
 	float ypos;
@@ -119,6 +127,7 @@ typedef struct TransformInfo {
 	float xpos;           // x 좌표
 	float ypos;           // y 좌표
 	float zpos;           // z 좌표
+	ShapeType shapeType;  // 도형 타입
 } TransformInfo;
 
 // 2개짜리 배열 선언
@@ -369,6 +378,7 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	transformArray[0].xpos = -0.2f;
 	transformArray[0].ypos = 0.0f;
 	transformArray[0].zpos = 0.0f;
+	transformArray[0].shapeType = SHAPE_CUBE; // 초기: 육면체
 
 	transformArray[1].xRotation = 0.0f;
 	transformArray[1].yRotation = 0.0f;
@@ -376,6 +386,7 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	transformArray[1].xpos = 0.2f;
 	transformArray[1].ypos = 0.0f;
 	transformArray[1].zpos = 0.0f;
+	transformArray[1].shapeType = SHAPE_CONE; // 초기: 12각뿔
 
 
 	// glm::vec4로 축 좌표 정의
@@ -560,7 +571,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 	glLineWidth(2.0f);
 
 	// 축은 변환 없이 그리기 (단위 행렬 적용)
-	glm::mat4 identityMatrix = glm::mat4(1.0f);
+	glm::mat4 identityMatrix = glm::mat4(1.0);
 	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(identityMatrix)); // 버텍스 셰이더에 있는 modelTransform에 단위 행렬 전달
 	glDrawArrays(GL_LINES, 0, 6);
 
@@ -594,15 +605,31 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 	// 4. 제자리 scale (localScale)
 	glScalef(transformArray[0].localScale, transformArray[0].localScale, transformArray[0].localScale);
 	
-	// x축으로 -90도 회전 (원래 실린더 방향 조정)
 	glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
-	
+
 	GLUquadricObj* qobj;
 	qobj = gluNewQuadric();
 	gluQuadricDrawStyle(qobj, GLU_FILL);
 	
 	glColor3f(0.0f, 0.0f, 0.0f); // 검은색으로 설정
-	gluCylinder(qobj, 0.1, 0.1, 0.2, 4, 1);
+	
+	// shapeType에 따라 도형 그리기
+	switch (transformArray[0].shapeType) {
+	case SHAPE_CUBE: // 육면체
+		gluCylinder(qobj, 0.1, 0.1, 0.2, 4, 1);
+		break;
+	case SHAPE_SPHERE: // 구
+		gluSphere(qobj, 0.1, 20, 20);
+		break;
+	case SHAPE_CONE: // 12각뿔
+		glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
+		gluCylinder(qobj, 0.1, 0.0, 0.2, 12, 1);
+		break;
+	case SHAPE_CYLINDER: // 12각기둥
+		glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
+		gluCylinder(qobj, 0.1, 0.1, 0.2, 12, 1);
+		break;
+	}
 	
 	gluDeleteQuadric(qobj);
 	
@@ -623,13 +650,32 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 	// 4. 제자리 scale (localScale)
 	glScalef(transformArray[1].localScale, transformArray[1].localScale, transformArray[1].localScale);
 	
+	glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
+
 	GLUquadricObj* qobj2;
 	qobj2 = gluNewQuadric();
 	gluQuadricDrawStyle(qobj2, GLU_FILL);
 	
 	glColor3f(0.5f, 0.0f, 0.5f); // 보라색으로 설정
-	//gluSphere(qobj2, 0.1, 10, 10); // 반지름 0.1, 10x10 격자의 구
-	gluCylinder(qobj2, 0.1, 0.005, 0.2, 10, 1);
+	
+	// shapeType에 따라 도형 그리기
+	switch (transformArray[1].shapeType) {
+	case SHAPE_CUBE: // 육면체
+		gluCylinder(qobj2, 0.1, 0.1, 0.2, 4, 1);
+		break;
+	case SHAPE_SPHERE: // 구
+		gluSphere(qobj2, 0.1, 20, 20);
+		break;
+	case SHAPE_CONE: // 12각뿔
+		glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
+		gluCylinder(qobj2, 0.1, 0.0, 0.2, 12, 1);
+		break;
+	case SHAPE_CYLINDER: // 12각기둥
+		glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
+		gluCylinder(qobj2, 0.1, 0.1, 0.2, 12, 1);
+		break;
+	}
+	
 	gluDeleteQuadric(qobj2);
 	
 	glPopMatrix(); // 이전 행렬 복원

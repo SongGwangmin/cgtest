@@ -85,20 +85,6 @@ float t2angle = 0.0f; // 면2 회전 각도
 float t3angle = 0.0f; // 면3 회전 각도
 float t4angle = 0.0f; // 면4 회전 각도
 
-// 10개짜리 float 포인터 배열 - 각각의 angle 변수들을 가리킴
-float* anglelist[10] = {
-	&topangle,   // 0
-	&tireangle,  // 1
-	&backsize,   // 2
-	&tireangle,  // 3
-	&oepnangle,  // 4
-	&backsize,   // 5
-	&t1angle,    // 6
-	&t2angle,    // 7
-	&t3angle,    // 8
-	&t4angle     // 9
-};
-
 
 // Forward declaration
 class polygon;
@@ -123,6 +109,22 @@ typedef struct poitment {
 	float ypos;
 	float zpos;
 } pointment;
+
+// 변환 정보를 저장하는 구조체
+typedef struct TransformInfo {
+	float xRotation;      // x축 자전 각도
+	float yRotation;      // y축 자전 각도
+	float yOrbitRotation; // y축 공전 각도
+	float localScale;     // 제자리 scale 크기
+	float originScale;    // 원점기준 scale 크기
+	float xpos;           // x 좌표
+	float ypos;           // y 좌표
+	float zpos;           // z 좌표
+} TransformInfo;
+
+// 2개짜리 배열 선언
+TransformInfo transformArray[2];
+
 
 // 도형 저장하는 클래스
 class polygon {
@@ -295,15 +297,7 @@ public:
 
 using ActionFunc = glm::mat4(polygon::*)(float* angles);
 
-// 각 객체가 어떤 행동을 할지 지정
-ActionFunc actions[10] = {
-	&polygon::getnomal, &polygon::gettirerotate, &polygon::getbackscale,
-	&polygon::gettirerotate, &polygon::getedge, &polygon::getunit,
-	&polygon::getedge, &polygon::getedge, &polygon::getedge, &polygon::getedge
-};
-/*bool ptinrect(int x, int y, ret& rect) {
-	return (x >= rect.x1 && x <= rect.x2 && y >= rect.y1 && y <= rect.y2);
-}*/
+
 
 void Keyboard(unsigned char key, int x, int y);
 void SpecialKeys(int key, int x, int y); // 특수 키(화살표 키) 콜백 함수 선언
@@ -369,7 +363,23 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	glEnable(GL_DEPTH_TEST);
 	allVertices.clear();
 
-	//polygonmap.emplace_back(polygon(400 - 150, 400 + 150, 400 + 150, 400 + 300, 3));
+	transformArray[0].xRotation = 0.0f;
+	transformArray[0].yRotation = 0.0f;
+	transformArray[0].yOrbitRotation = 0.0f;
+	transformArray[0].localScale = 1.0f;
+	transformArray[0].originScale = 1.0f;
+	transformArray[0].xpos = -0.2f;
+	transformArray[0].ypos = 0.0f;
+	transformArray[0].zpos = 0.0f;
+
+	transformArray[1].xRotation = 0.0f;
+	transformArray[1].yRotation = 0.0f;
+	transformArray[1].yOrbitRotation = 0.0f;
+	transformArray[1].localScale = 1.0f;
+	transformArray[1].originScale = 1.0f;
+	transformArray[1].xpos = 0.2f;
+	transformArray[1].ypos = 0.0f;
+	transformArray[1].zpos = 0.0f;
 
 
 	// glm::vec4로 축 좌표 정의
@@ -517,7 +527,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 	// 각 사각형을 6개 정점으로 변환한 전체 데이터
 	glm::mat4 view = glm::mat4(1.0f);
 
-	glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 0.4f);
+	glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 0.3f);
 	// y축으로 -pi/6 회전
 	glm::vec4 tempPos = glm::rotate(glm::mat4(1.0f), (float)(-pi / 6), glm::vec3(0.0f, 1.0f, 0.0f)) * glm::vec4(cameraPos, 1.0f);
 	cameraPos = glm::vec3(tempPos);
@@ -558,20 +568,90 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(identityMatrix)); // 버텍스 셰이더에 있는 modelTransform에 단위 행렬 전달
 	glDrawArrays(GL_LINES, 0, 6);
 
-	// polygon들은 변환 행렬 적용해서 그리기
-	glm::mat4 temp = model;
-
-	for (int i = 0; i < 10; ++i) {
-		
-
-	}
-
-
-
-
-
-
-	glBindVertexArray(0);
+	// GLU 객체 그리기 (고정 파이프라인 사용)
+	glUseProgram(0); // 셰이더 비활성화
+	
+	// 고정 파이프라인 행렬 설정
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	
+	// view 행렬 적용 (카메라 설정)
+	gluLookAt(cameraPos.x, cameraPos.y, cameraPos.z,
+			  cameraTarget.x, cameraTarget.y, cameraTarget.z,
+			  cameraUp.x, cameraUp.y, cameraUp.z);
+	
+	// 첫 번째 객체 (transformArray[0])
+	glPushMatrix(); // 현재 행렬 저장
+	
+	// 1. y축 공전 (yOrbitRotation)
+	glRotatef(glm::degrees(transformArray[0].yOrbitRotation), 0.0f, 1.0f, 0.0f);
+	
+	// 2. 원점 기준 scale (originScale)
+	glScalef(transformArray[0].originScale, transformArray[0].originScale, transformArray[0].originScale);
+	
+	// 3. 이동 (translate)
+	glTranslatef(transformArray[0].xpos, transformArray[0].ypos, transformArray[0].zpos);
+	
+	// 4. y축 자전 (yRotation)
+	glRotatef(glm::degrees(transformArray[0].yRotation), 0.0f, 1.0f, 0.0f);
+	
+	// 5. x축 자전 (xRotation)
+	glRotatef(glm::degrees(transformArray[0].xRotation), 1.0f, 0.0f, 0.0f);
+	
+	// 6. 제자리 scale (localScale)
+	glScalef(transformArray[0].localScale, transformArray[0].localScale, transformArray[0].localScale);
+	
+	// x축으로 -90도 회전 (원래 실린더 방향 조정)
+	glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
+	
+	GLUquadricObj* qobj;
+	qobj = gluNewQuadric();
+	gluQuadricDrawStyle(qobj, GLU_LINE);
+	
+	glColor3f(0.0f, 0.0f, 0.0f); // 검은색으로 설정
+	gluCylinder(qobj, 0.1, 0.1, 0.2, 4, 1);
+	
+	gluDeleteQuadric(qobj);
+	
+	glPopMatrix(); // 이전 행렬 복원
+	
+	// 두 번째 객체 (transformArray[1]) - 구 그리기
+	glPushMatrix(); // 현재 행렬 저장
+	
+	// 1. y축 공전 (yOrbitRotation)
+	glRotatef(glm::degrees(transformArray[1].yOrbitRotation), 0.0f, 1.0f, 0.0f);
+	
+	// 2. 원점 기준 scale (originScale)
+	glScalef(transformArray[1].originScale, transformArray[1].originScale, transformArray[1].originScale);
+	
+	// 3. 이동 (translate)
+	glTranslatef(transformArray[1].xpos, transformArray[1].ypos, transformArray[1].zpos);
+	
+	// 4. y축 자전 (yRotation)
+	glRotatef(glm::degrees(transformArray[1].yRotation), 0.0f, 1.0f, 0.0f);
+	
+	// 5. x축 자전 (xRotation)
+	glRotatef(glm::degrees(transformArray[1].xRotation), 1.0f, 0.0f, 0.0f);
+	
+	// 6. 제자리 scale (localScale)
+	glScalef(transformArray[1].localScale, transformArray[1].localScale, transformArray[1].localScale);
+	
+	GLUquadricObj* qobj2;
+	qobj2 = gluNewQuadric();
+	gluQuadricDrawStyle(qobj2, GLU_LINE);
+	
+	glColor3f(0.5f, 0.0f, 0.5f); // 보라색으로 설정
+	gluSphere(qobj2, 0.1, 10, 10); // 반지름 0.1, 10x10 격자의 구
+	
+	gluDeleteQuadric(qobj2);
+	
+	glPopMatrix(); // 이전 행렬 복원
+	
+	// 다시 셰이더 활성화
+	glUseProgram(shaderProgramID);
 
 	glutSwapBuffers(); // 화면에 출력하기
 }

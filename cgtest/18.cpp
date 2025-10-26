@@ -625,11 +625,11 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 	
 	GLUquadricObj* qobj2;
 	qobj2 = gluNewQuadric();
-	gluQuadricDrawStyle(qobj2, GLU_LINE);
+	gluQuadricDrawStyle(qobj2, GLU_FILL);
 	
 	glColor3f(0.5f, 0.0f, 0.5f); // 보라색으로 설정
-	gluSphere(qobj2, 0.1, 10, 10); // 반지름 0.1, 10x10 격자의 구
-	
+	//gluSphere(qobj2, 0.1, 10, 10); // 반지름 0.1, 10x10 격자의 구
+	gluCylinder(qobj2, 0.1, 0.005, 0.2, 10, 1);
 	gluDeleteQuadric(qobj2);
 	
 	glPopMatrix(); // 이전 행렬 복원

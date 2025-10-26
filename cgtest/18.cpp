@@ -131,6 +131,7 @@ typedef struct TransformInfo {
 	float yRotation;      // y축 자전 각도
 	float localScale;     // 제자리 scale 크기
 	glm::vec3 position;   // 위치 (x, y, z)
+	glm::vec3 midPoint;   // 중간 경유 지점
 	ShapeType shapeType;  // 도형 타입
 } TransformInfo;
 
@@ -865,13 +866,23 @@ void Keyboard(unsigned char key, int x, int y) {
 		break;
 	case 'u':
 	{
-		if (culltoggle == 0) {
-			glEnable(GL_CULL_FACE);
-			culltoggle = 1;
-		}
-		else {
-			glDisable(GL_CULL_FACE);
-			culltoggle = 0;
+		if (swapAnimationActive == 0) {
+			// 애니메이션 시작
+			swapAnimationActive = 1;
+			swapAnimationProgress = 0.0f;
+
+			transformArray[0].midPoint = glm::vec3(0.0f, 0.5f, 0.0f);
+			transformArray[1].midPoint = glm::vec3(0.0f, -0.5f, 0.0f);
+
+			// 시작 위치 저장
+			swapStartPos[0] = transformArray[0].position;
+			swapStartPos[1] = transformArray[1].position;
+
+			// 목표 위치 설정 (서로 교환)
+			swapEndPos[0] = transformArray[1].position;
+			swapEndPos[1] = transformArray[0].position;
+
+			std::cout << "Position swap animation started" << std::endl;
 		}
 
 	}
@@ -883,6 +894,9 @@ void Keyboard(unsigned char key, int x, int y) {
 			swapAnimationActive = 1;
 			swapAnimationProgress = 0.0f;
 			
+			transformArray[0].midPoint = glm::vec3(0.0f, 0.0f, 0.0f);
+			transformArray[1].midPoint = glm::vec3(0.0f, 0.0f, 0.0f);
+
 			// 시작 위치 저장
 			swapStartPos[0] = transformArray[0].position;
 			swapStartPos[1] = transformArray[1].position;
@@ -925,19 +939,28 @@ void Keyboard(unsigned char key, int x, int y) {
 		}
 	}
 	break;
-	case 'c': // 초기화
+	case 'c': // shapeType 랜덤 변경
 	{
-		// 선택된 객체(들) 초기화
-		for (int i = 0; i < 2; ++i) {
-			if (currentObject == 2 || currentObject == i) {
-				transformArray[i].xRotation = 0.0f;
-				transformArray[i].yRotation = 0.0f;
-				transformArray[i].localScale = 1.0f;
-				transformArray[i].position = (i == 0) ? glm::vec3(-0.2f, 0.0f, 0.0f) : glm::vec3(0.2f, 0.0f, 0.0f);
-			}
-		}
+		// 랜덤 생성기 (0~3: SHAPE_CUBE, SHAPE_SPHERE, SHAPE_CONE, SHAPE_CYLINDER)
+		std::uniform_int_distribution<int> shapeDis(0, 3);
+		
+		// 선택된 객체(들)의 shapeType을 랜덤으로 변경
+		transformArray[0].shapeType = static_cast<ShapeType>(shapeDis(gen));
+		transformArray[1].shapeType = static_cast<ShapeType>(shapeDis(gen));
 	}
 	break;
+	case '+':
+	{
+		if (culltoggle == 0) {
+			glEnable(GL_CULL_FACE);
+			culltoggle = 1;
+		}
+		else {
+			glDisable(GL_CULL_FACE);
+			culltoggle = 0;
+		}
+	}
+		break;
 	default:
 		break;
 	}
@@ -1029,14 +1052,14 @@ void TimerFunction(int value)
 			if (swapAnimationProgress <= 0.5f) {
 				// 첫 번째 단계: 시작 위치 -> 원점
 				float t = swapAnimationProgress * 2.0f; // 0.0 ~ 1.0으로 정규화
-				transformArray[0].position = glm::mix(swapStartPos[0], glm::vec3(0.0f, 0.0f, 0.0f), t);
-				transformArray[1].position = glm::mix(swapStartPos[1], glm::vec3(0.0f, 0.0f, 0.0f), t);
+				transformArray[0].position = glm::mix(swapStartPos[0], transformArray[0].midPoint, t);
+				transformArray[1].position = glm::mix(swapStartPos[1], transformArray[1].midPoint, t);
 			}
 			else {
 				// 두 번째 단계: 원점 -> 목표 위치
 				float t = (swapAnimationProgress - 0.5f) * 2.0f; // 0.0 ~ 1.0으로 정규화
-				transformArray[0].position = glm::mix(glm::vec3(0.0f, 0.0f, 0.0f), swapEndPos[0], t);
-				transformArray[1].position = glm::mix(glm::vec3(0.0f, 0.0f, 0.0f), swapEndPos[1], t);
+				transformArray[0].position = glm::mix(transformArray[0].midPoint, swapEndPos[0], t);
+				transformArray[1].position = glm::mix(transformArray[1].midPoint, swapEndPos[1], t);
 			}
 		}
 	}

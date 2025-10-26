@@ -871,8 +871,8 @@ void Keyboard(unsigned char key, int x, int y) {
 			swapAnimationActive = 1;
 			swapAnimationProgress = 0.0f;
 
-			transformArray[0].midPoint = glm::vec3(0.0f, 0.5f, 0.0f);
-			transformArray[1].midPoint = glm::vec3(0.0f, -0.5f, 0.0f);
+			transformArray[0].midPoint = glm::vec3(0.0f, 0.8f, 0.0f);
+			transformArray[1].midPoint = glm::vec3(0.0f, -0.8f, 0.0f);
 
 			// 시작 위치 저장
 			swapStartPos[0] = transformArray[0].position;

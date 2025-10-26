@@ -60,6 +60,12 @@ int opentoggle = 0; // 1. 도형 열기 모드
 int tiretoggle = 0; // 1. 옆면이 회전
 int backsizetoggle = 0; // 1. 뒷면 size 모드
 
+// 위치 교환 애니메이션 관련 변수
+int swapAnimationActive = 0; // 0: 정지, 1: 애니메이션 중
+float swapAnimationProgress = 0.0f; // 0.0 ~ 1.0
+glm::vec3 swapStartPos[2]; // 시작 위치
+glm::vec3 swapEndPos[2]; // 목표 위치
+
 // 새로운 토글 변수들
 int edgeopentoggle = 0; // 0: edge 열림, 1: edge 닫힘
 int backscaletoggle = 0; // 1: scale 증가, 0: scale 감소
@@ -870,9 +876,23 @@ void Keyboard(unsigned char key, int x, int y) {
 
 	}
 	break;
-	case 't': // zrotoggle
+	case 't': // 위치 교환 애니메이션 시작
 	{
-		zrotoggle = !zrotoggle;
+		if (swapAnimationActive == 0) {
+			// 애니메이션 시작
+			swapAnimationActive = 1;
+			swapAnimationProgress = 0.0f;
+			
+			// 시작 위치 저장
+			swapStartPos[0] = transformArray[0].position;
+			swapStartPos[1] = transformArray[1].position;
+			
+			// 목표 위치 설정 (서로 교환)
+			swapEndPos[0] = transformArray[1].position;
+			swapEndPos[1] = transformArray[0].position;
+			
+			std::cout << "Position swap animation started" << std::endl;
+		}
 	}
 	break;
 	case 'f': // opentoggle
@@ -986,8 +1006,41 @@ void Mouse(int button, int state, int x, int y)
 
 void TimerFunction(int value)
 {
+	// 위치 교환 애니메이션 처리
+	if (swapAnimationActive == 1) {
+		swapAnimationProgress += 0.02f; // 애니메이션 속도 (0.02씩 증가)
+		
+		if (swapAnimationProgress >= 1.0f) {
+			// 애니메이션 완료
+			swapAnimationProgress = 1.0f;
+			swapAnimationActive = 0;
+			
+			// 최종 위치로 설정
+			transformArray[0].position = swapEndPos[0];
+			transformArray[1].position = swapEndPos[1];
+			
+			std::cout << "Position swap animation completed" << std::endl;
+		}
+		else {
+			// 선형보간 (glm::mix 사용)
+			// 0.0 ~ 0.5: 시작 위치 -> 원점
+			// 0.5 ~ 1.0: 원점 -> 목표 위치
+			
+			if (swapAnimationProgress <= 0.5f) {
+				// 첫 번째 단계: 시작 위치 -> 원점
+				float t = swapAnimationProgress * 2.0f; // 0.0 ~ 1.0으로 정규화
+				transformArray[0].position = glm::mix(swapStartPos[0], glm::vec3(0.0f, 0.0f, 0.0f), t);
+				transformArray[1].position = glm::mix(swapStartPos[1], glm::vec3(0.0f, 0.0f, 0.0f), t);
+			}
+			else {
+				// 두 번째 단계: 원점 -> 목표 위치
+				float t = (swapAnimationProgress - 0.5f) * 2.0f; // 0.0 ~ 1.0으로 정규화
+				transformArray[0].position = glm::mix(glm::vec3(0.0f, 0.0f, 0.0f), swapEndPos[0], t);
+				transformArray[1].position = glm::mix(glm::vec3(0.0f, 0.0f, 0.0f), swapEndPos[1], t);
+			}
+		}
+	}
 	
-
 	glutPostRedisplay();
 	glutTimerFunc(25, TimerFunction, 1);
 }

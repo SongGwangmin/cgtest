@@ -495,7 +495,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 		(float)(pi / 3.0f),  // fovy = π/3
 		1.0f,                // aspect ratio = 1
 		0.1f,                // near plane (양수여야 함)
-		200.0f               // far plane
+		300.0f               // far plane (150 + 카메라 거리 150)
 	);
 	unsigned int projectionLocation = glGetUniformLocation(shaderProgramID, "projectionTransform");
 	glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(projection));
@@ -550,7 +550,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 	// 고정 파이프라인 행렬 설정
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluPerspective(60.0, 1.0, 0.1, 200.0); // fovy=60도, aspect=1.0, near=0.1, far=200
+	gluPerspective(60.0, 1.0, 0.1, 300.0); // fovy=60도, aspect=1.0, near=0.1, far=300
 	
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
@@ -589,6 +589,23 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 	gluSphere(qobj2, 5.0, 30, 30); // 반지름 5, 세분화 30x30
 	
 	gluDeleteQuadric(qobj2);
+	
+	glPopMatrix();
+	
+	// 빨간색 위성 그리기 (행성 주위 회전)
+	glPushMatrix();
+	
+	glTranslatef(planetpos.x, planetpos.y, planetpos.z); // planetpos로 이동
+	glTranslatef(moonpos.x, moonpos.y, moonpos.z); // moonpos 상대 좌표로 이동
+	
+	GLUquadricObj* qobj3;
+	qobj3 = gluNewQuadric();
+	gluQuadricDrawStyle(qobj3, GLU_FILL);
+	
+	glColor3f(1.0f, 0.0f, 0.0f); // 빨간색
+	gluSphere(qobj3, 2.5, 30, 30); // 반지름 2.5, 세분화 30x30
+	
+	gluDeleteQuadric(qobj3);
 	
 	glPopMatrix();
 	
@@ -658,6 +675,9 @@ void TimerFunction(int value)
 	glm::mat4 identity = glm::mat4(1.0f);
 	glm::mat4 rotation = glm::rotate(identity, 0.01f, glm::vec3(0.0f, 1.0f, 0.0f));
 	planetpos = glm::vec3(rotation * glm::vec4(planetpos, 1.0f));
+
+	rotation = glm::rotate(identity, 0.05f, glm::vec3(0.0f, 1.0f, 0.0f));
+	moonpos = glm::vec3(rotation * glm::vec4(moonpos, 1.0f));
 
 	glutPostRedisplay();
 	glutTimerFunc(25, TimerFunction, 1);

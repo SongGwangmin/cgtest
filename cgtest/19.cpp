@@ -19,7 +19,7 @@
 #define triangle 2
 #define rectangle 3
 #define pentagon 4
-#define polygonwidth 100
+#define spherelevel 15
 #define pi 3.14159265358979323846
 
 std::random_device rd;
@@ -52,51 +52,51 @@ int selectedshape = -1; // 선택된 도형 인덱스
 int spin = 1; //  1: 시계방향, -1: 반시계방향
 int animation = 0; // 0: 정지, 1: 회전
 int hidetoggle = 1; // 1. 은면제거
-int wiretoggle = 0; // 1. 와이어프레임 모드
+int wiretoggle = 0; // 0: 솔리드 모드, 1: 와이어프레임 모드
 int culltoggle = 0; // 1. 뒷면 컬링 모드
 
-// cube 관련 토글 변수
-int zrotoggle = 0; // 1. z축 회전 모드
-int opentoggle = 0; // 1. 도형 열기 모드
-int tiretoggle = 0; // 1. 옆면이 회전
-int backsizetoggle = 0; // 1. 뒷면 size 모드
+// cube 관련 토글 변수 (사용하지 않음 - 주석처리)
+// int zrotoggle = 0; // 1. z축 회전 모드
+// int opentoggle = 0; // 1. 도형 열기 모드
+// int tiretoggle = 0; // 1. 옆면이 회전
+// int backsizetoggle = 0; // 1. 뒷면 size 모드
 
-// 위치 교환 애니메이션 관련 변수
-int swapAnimationActive = 0; // 0: 정지, 1: 애니메이션 중
-float swapAnimationProgress = 0.0f; // 0.0 ~ 1.0
-glm::vec3 swapStartPos[2]; // 시작 위치
-glm::vec3 swapEndPos[2]; // 목표 위치
+// 위치 교환 애니메이션 관련 변수 (사용하지 않음 - 주석처리)
+// int swapAnimationActive = 0; // 0: 정지, 1: 애니메이션 중
+// float swapAnimationProgress = 0.0f; // 0.0 ~ 1.0
+// glm::vec3 swapStartPos[2]; // 시작 위치
+// glm::vec3 swapEndPos[2]; // 목표 위치
 
-// y축 회전 애니메이션 관련 변수
-int yRotationAnimationActive = 0; // 0: 정지, 1: 애니메이션 중
+// y축 회전 애니메이션 관련 변수 (사용하지 않음 - 주석처리)
+// int yRotationAnimationActive = 0; // 0: 정지, 1: 애니메이션 중
 
-// 새로운 토글 변수들
-int edgeopentoggle = 0; // 0: edge 열림, 1: edge 닫힘
-int backscaletoggle = 0; // 1: scale 증가, 0: scale 감소
+// 새로운 토글 변수들 (사용하지 않음 - 주석처리)
+// int edgeopentoggle = 0; // 0: edge 열림, 1: edge 닫힘
+// int backscaletoggle = 0; // 1: scale 증가, 0: scale 감소
 
-// r키 순차 동작을 위한 변수들
-int rsequence = 0; // 0: 정지, 1: 순차 열기, 2: 순차 닫기
-int rcurrentface = 0; // 현재 동작 중인 면 (0:t1, 1:t2, 2:t3, 3:t4)
+// r키 순차 동작을 위한 변수들 (사용하지 않음 - 주석처리)
+// int rsequence = 0; // 0: 정지, 1: 순차 열기, 2: 순차 닫기
+// int rcurrentface = 0; // 현재 동작 중인 면 (0:t1, 1:t2, 2:t3, 3:t4)
 
-// piriamid 관련 토글 변수
-int openeverytoggle = 0; // 1. 모든 면 열기 모드	
-int sequentopnetoggle = 0; // 1. 면이 순차적으로 열림
-int sequentoclosetoggle = 0; // 1. 면이 순차적으로 닫림
+// piriamid 관련 토글 변수 (사용하지 않음 - 주석처리)
+// int openeverytoggle = 0; // 1. 모든 면 열기 모드	
+// int sequentopnetoggle = 0; // 1. 면이 순차적으로 열림
+// int sequentoclosetoggle = 0; // 1. 면이 순차적으로 닫림
 
 // 투영 관련 토글 변수
 int projectiontoggle = 0; // 0: 기본 투영, 1: 다른 투영
 
-// cube 관련 변수
-float topangle = 0.0f; // 윗면 회전 각도
-float oepnangle = 0.0f; // front 열리는 각도
-float tireangle = 0.0f; // 옆면 회전 각도
-float backsize = 1.0f; // 뒷면 크기
+// cube 관련 변수 (사용하지 않음 - 주석처리)
+// float topangle = 0.0f; // 윗면 회전 각도
+// float oepnangle = 0.0f; // front 열리는 각도
+// float tireangle = 0.0f; // 옆면 회전 각도
+// float backsize = 1.0f; // 뒷면 크기
 
-// piramid 관련 변수
-float t1angle = 0.0f; // 면1 회전 각도
-float t2angle = 0.0f; // 면2 회전 각도
-float t3angle = 0.0f; // 면3 회전 각도
-float t4angle = 0.0f; // 면4 회전 각도
+// piramid 관련 변수 (사용하지 않음 - 주석처리)
+// float t1angle = 0.0f; // 면1 회전 각도
+// float t2angle = 0.0f; // 면2 회전 각도
+// float t3angle = 0.0f; // 면3 회전 각도
+// float t4angle = 0.0f; // 면4 회전 각도
 
 
 // Forward declaration
@@ -529,9 +529,14 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 	glTranslatef(0.0f, 0.0f, 0.0f);
 	
 	GLUquadricObj* qobj = gluNewQuadric();
-	gluQuadricDrawStyle(qobj, GLU_FILL);
+	if (wiretoggle == 1) {
+		gluQuadricDrawStyle(qobj, GLU_LINE); // 와이어프레임
+	}
+	else {
+		gluQuadricDrawStyle(qobj, GLU_FILL); // 솔리드
+	}
 	glColor3f(0.0f, 0.0f, 1.0f); // 파란색
-	gluSphere(qobj, 10.0, 30, 30); // 반지름 10
+	gluSphere(qobj, 10.0, spherelevel, spherelevel); // 반지름 10
 	gluDeleteQuadric(qobj);
 	
 	glPopMatrix();
@@ -555,7 +560,7 @@ void Keyboard(unsigned char key, int x, int y) {
 		break;
 	case 'w': // 와이어프레임 모드 적용/해제
 	{
-
+		wiretoggle = !wiretoggle;
 	}
 	break;
 	case 'z': // z축 회전 모드 적용/해제
@@ -706,9 +711,14 @@ void drawOrbitsAndPlanets(glm::vec3 cameraPos, glm::vec3 cameraTarget, glm::vec3
 	glTranslatef(planetpos.x, planetpos.y, planetpos.z);
 	
 	GLUquadricObj* qobj2 = gluNewQuadric();
-	gluQuadricDrawStyle(qobj2, GLU_FILL);
+	if (wiretoggle == 1) {
+		gluQuadricDrawStyle(qobj2, GLU_LINE); // 와이어프레임
+	}
+	else {
+		gluQuadricDrawStyle(qobj2, GLU_FILL); // 솔리드
+	}
 	glColor3f(0.0f, 1.0f, 0.0f);
-	gluSphere(qobj2, 5.0, 30, 30);
+	gluSphere(qobj2, 5.0, spherelevel, spherelevel);
 	gluDeleteQuadric(qobj2);
 	
 	glPopMatrix();
@@ -719,9 +729,14 @@ void drawOrbitsAndPlanets(glm::vec3 cameraPos, glm::vec3 cameraTarget, glm::vec3
 	glTranslatef(moonpos.x, moonpos.y, moonpos.z);
 	
 	GLUquadricObj* qobj3 = gluNewQuadric();
-	gluQuadricDrawStyle(qobj3, GLU_FILL);
+	if (wiretoggle == 1) {
+		gluQuadricDrawStyle(qobj3, GLU_LINE); // 와이어프레임
+	}
+	else {
+		gluQuadricDrawStyle(qobj3, GLU_FILL); // 솔리드
+	}
 	glColor3f(1.0f, 0.0f, 0.0f);
-	gluSphere(qobj3, 2.5, 30, 30);
+	gluSphere(qobj3, 2.5, spherelevel, spherelevel);
 	gluDeleteQuadric(qobj3);
 	
 	glPopMatrix();

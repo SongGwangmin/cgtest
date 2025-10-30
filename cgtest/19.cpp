@@ -109,6 +109,12 @@ float xangle = 0.0f;
 float polygon_xpos = 0.0f;
 float polygon_ypos = 0.0f;
 
+// 행성 위치
+glm::vec3 planetpos = glm::vec3(50.0f, 0.0f, 0.0f);
+
+// 위성 위치 (행성 기준 상대 좌표)
+glm::vec3 moonpos = glm::vec3(50.0f / 3.0f, 0.0f, 0.0f);
+
 // 동적 회전축을 위한 전역 변수
 glm::vec3 current_xaxis;
 glm::vec3 current_yaxis;
@@ -497,7 +503,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 	// 뷰 행렬 설정
 	glm::mat4 view = glm::mat4(1.0f);
 
-	glm::vec3 cameraPos = glm::vec3(0.0f, 10.0f, 100.0f); // 카메라 y좌표를 10으로 올림
+	glm::vec3 cameraPos = glm::vec3(0.0f, 10.0f, 150.0f); // 카메라 y좌표를 10으로 올림
 	glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
 	glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
@@ -526,12 +532,68 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 
 	glLineWidth(2.0f);
 
-	// 단위 행렬로 원 그리기
+	// 원래 궤도 그리기 (원점 중심)
 	glm::mat4 identityMatrix = glm::mat4(1.0);
 	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(identityMatrix));
-	
-	// 원 그리기 (LINE_LOOP 사용)
 	glDrawArrays(GL_LINE_LOOP, 0, 101); // 101개의 점으로 원 그리기
+	
+	// 새로운 궤도 그리기 - planetpos로 이동하고 1/3 스케일 적용
+	glm::mat4 orbitMatrix = glm::mat4(1.0);
+	orbitMatrix = glm::translate(orbitMatrix, planetpos); // planetpos로 이동
+	orbitMatrix = glm::scale(orbitMatrix, glm::vec3(1.0f/3.0f, 1.0f/3.0f, 1.0f/3.0f)); // 1/3 스케일
+	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(orbitMatrix));
+	glDrawArrays(GL_LINE_LOOP, 0, 101); // 101개의 점으로 원 그리기
+
+	// GLU 객체 그리기 (고정 파이프라인 사용)
+	glUseProgram(0); // 셰이더 비활성화
+	
+	// 고정 파이프라인 행렬 설정
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	gluPerspective(60.0, 1.0, 0.1, 200.0); // fovy=60도, aspect=1.0, near=0.1, far=200
+	
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	
+	// view 행렬 적용 (카메라 설정)
+	gluLookAt(cameraPos.x, cameraPos.y, cameraPos.z,
+			  cameraTarget.x, cameraTarget.y, cameraTarget.z,
+			  cameraUp.x, cameraUp.y, cameraUp.z);
+	
+	// 원점(0,0,0)에 파란색 구 그리기
+	glPushMatrix();
+	
+	glTranslatef(0.0f, 0.0f, 0.0f); // 원점에 위치
+	
+	GLUquadricObj* qobj;
+	qobj = gluNewQuadric();
+	gluQuadricDrawStyle(qobj, GLU_FILL);
+	
+	glColor3f(0.0f, 0.0f, 1.0f); // 파란색
+	gluSphere(qobj, 10.0, 30, 30); // 반지름 10, 세분화 30x30
+	
+	gluDeleteQuadric(qobj);
+	
+	glPopMatrix();
+	
+	// (50, 0, 0)에 초록색 구 그리기 (y축 회전)
+	glPushMatrix();
+	
+	glTranslatef(planetpos.x, planetpos.y, planetpos.z); // planetpos 좌표로 이동
+	
+	GLUquadricObj* qobj2;
+	qobj2 = gluNewQuadric();
+	gluQuadricDrawStyle(qobj2, GLU_FILL);
+	
+	glColor3f(0.0f, 1.0f, 0.0f); // 초록색
+	gluSphere(qobj2, 5.0, 30, 30); // 반지름 5, 세분화 30x30
+	
+	gluDeleteQuadric(qobj2);
+	
+	glPopMatrix();
+	
+	// 다시 셰이더 활성화
+	glUseProgram(shaderProgramID);
 
 	glutSwapBuffers(); // 화면에 출력하기
 }
@@ -593,7 +655,9 @@ void Keyboard(unsigned char key, int x, int y) {
 
 void TimerFunction(int value)
 {
-	
+	glm::mat4 identity = glm::mat4(1.0f);
+	glm::mat4 rotation = glm::rotate(identity, 0.01f, glm::vec3(0.0f, 1.0f, 0.0f));
+	planetpos = glm::vec3(rotation * glm::vec4(planetpos, 1.0f));
 
 	glutPostRedisplay();
 	glutTimerFunc(25, TimerFunction, 1);

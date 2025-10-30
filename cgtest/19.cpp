@@ -57,6 +57,11 @@ int culltoggle = 0; // 1. 뒷면 컬링 모드
 // 투영 관련 토글 변수
 int projectiontoggle = 0; // 0: 기본 투영, 1: 다른 투영
 
+// z축 회전 상태 변수
+int zrotationdirection = 0; // 0: 정지, 1: 시계방향, -1: 반시계방향
+
+// 궤도 스케일 변수
+float orbitscale = 1.0f;
 
 // Forward declaration
 class polygon;
@@ -458,13 +463,13 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 	
 	// 카메라 설정
 	glm::vec3 cameraPos = glm::vec3(0.0f, 10.0f, 150.0f) + additionalCameraPos;
-	glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
+	glm::vec3 cameraTarget = glm::vec3(cameraPos.x, cameraPos.y - 10.0f, cameraPos.z - 150.0f);
 	glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 	
 	// 파이프라인 1: 궤도와 행성/위성 그리기 (z축 회전 적용)
-	drawOrbitsAndPlanets(cameraPos, cameraTarget, cameraUp, 0.0f); // angle을 0으로 전달 (나중에 변경 가능)
-	drawOrbitsAndPlanets(cameraPos, cameraTarget, cameraUp, pi / 4.0f);
-	drawOrbitsAndPlanets(cameraPos, cameraTarget, cameraUp, -pi / 4.0f);
+	drawOrbitsAndPlanets(cameraPos, cameraTarget, cameraUp, 0.0f + angle); // angle을 0으로 전달 (나중에 변경 가능)
+	drawOrbitsAndPlanets(cameraPos, cameraTarget, cameraUp, pi / 4.0f + angle);
+	drawOrbitsAndPlanets(cameraPos, cameraTarget, cameraUp, -pi / 4.0f + angle);
 	
 	// 파이프라인 2: 항성(태양) 그리기
 	glUseProgram(0); // 고정 파이프라인 사용
@@ -526,13 +531,50 @@ void Keyboard(unsigned char key, int x, int y) {
 		wiretoggle = !wiretoggle;
 	}
 	break;
-	case 'z': // z축 회전 모드 적용/해제
+	case 'z': // z축 시계방향 회전
 	{
+		if (zrotationdirection == 1) {
+			zrotationdirection = 0; // 이미 1이면 0으로
+		}
+		else {
+			zrotationdirection = 1; // 아니면 1로
+		}
+	}
+	break;
+	case 'Z': // z축 반시계방향 회전
+	{
+		if (zrotationdirection == -1) {
+			zrotationdirection = 0; // 이미 -1이면 0으로
+		}
+		else {
+			zrotationdirection = -1; // 아니면 -1로
+		}
+	}
+	break;
+	case 'y': // 궤도 스케일 증가
+	{
+		orbitscale += 0.05f;
+	}
+	break;
+	case 'Y': // 궤도 스케일 감소
+	{
+		orbitscale -= 0.05f;
+		if (orbitscale < 0.1f) orbitscale = 0.1f; // 최소값 제한
 	}
 	break;
 	case 'p': // 투영 모드 변경
 	{
 		projectiontoggle = !projectiontoggle;
+	}
+	break;
+	case '+': // z축 앞으로 이동
+	{
+		additionalCameraPos.z -= 5.0f;
+	}
+	break;
+	case '-': // z축 뒤로 이동
+	{
+		additionalCameraPos.z += 5.0f;
 	}
 	break;
 	case 'h': // 은면제거 적용/해제
@@ -547,7 +589,7 @@ void Keyboard(unsigned char key, int x, int y) {
 		}
 	}
 	break;
-	case '+':
+	case '*':
 	{
 		if (culltoggle == 0) {
 			glEnable(GL_CULL_FACE);
@@ -574,6 +616,9 @@ void TimerFunction(int value)
 
 	rotation = glm::rotate(identity, 0.05f, glm::vec3(0.0f, 1.0f, 0.0f));
 	moonpos = glm::vec3(rotation * glm::vec4(moonpos, 1.0f));
+
+	// z축 회전 각도 업데이트
+	angle += zrotationdirection * 0.03f;
 
 	glutPostRedisplay();
 	glutTimerFunc(25, TimerFunction, 1);

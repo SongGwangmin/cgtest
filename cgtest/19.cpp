@@ -654,7 +654,7 @@ void drawOrbitsAndPlanets(glm::vec3 cameraPos, glm::vec3 cameraTarget, glm::vec3
 {
 	// 셰이더 사용
 	glUseProgram(shaderProgramID);
-	
+	glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(orbitscale, orbitscale, orbitscale));
 	// 투영 행렬 설정
 	glm::mat4 projection;
 	if (projectiontoggle == 0) {
@@ -697,15 +697,20 @@ void drawOrbitsAndPlanets(glm::vec3 cameraPos, glm::vec3 cameraTarget, glm::vec3
 	// z축 회전 행렬
 	glm::mat4 zRotation = glm::rotate(glm::mat4(1.0f), rotationAngle, glm::vec3(0.0f, 0.0f, 1.0f));
 	
-	// 원래 궤도 그리기 (z축 회전만 적용)
-	glm::mat4 orbitModel = zRotation;
+	// 원래 궤도 그리기 (스케일도 적용)
+	glm::mat4 orbitModel = zRotation * scaleMatrix;
 	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(orbitModel));
 	glDrawArrays(GL_LINE_LOOP, 0, 101);
 	
 	// 새로운 궤도 그리기 - planetpos로 이동 -> 1/3 스케일 -> z축 회전 순서
 	glm::mat4 smallOrbitMatrix = glm::mat4(1.0f);
-	smallOrbitMatrix = glm::translate(smallOrbitMatrix, planetpos); // 1. 이동
+
+	glm::vec3 tplanetpos = orbitscale * planetpos;
+	glm::vec3 tmoonpos = orbitscale * moonpos;
+
+	smallOrbitMatrix = glm::translate(smallOrbitMatrix, tplanetpos); // 1. 이동
 	smallOrbitMatrix = glm::scale(smallOrbitMatrix, glm::vec3(1.0f/3.0f, 1.0f/3.0f, 1.0f/3.0f)); // 2. 스케일
+	smallOrbitMatrix = glm::scale(smallOrbitMatrix, glm::vec3(orbitscale, orbitscale, orbitscale)); // 2. 스케일
 	smallOrbitMatrix = zRotation * smallOrbitMatrix; // 3. z축 회전 (마지막 적용)
 	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(smallOrbitMatrix));
 	glDrawArrays(GL_LINE_LOOP, 0, 101);
@@ -736,7 +741,7 @@ void drawOrbitsAndPlanets(glm::vec3 cameraPos, glm::vec3 cameraTarget, glm::vec3
 	
 	// 초록색 행성 그리기
 	glPushMatrix();
-	glTranslatef(planetpos.x, planetpos.y, planetpos.z);
+	glTranslatef(tplanetpos.x, tplanetpos.y, tplanetpos.z);
 	
 	GLUquadricObj* qobj2 = gluNewQuadric();
 	if (wiretoggle == 1) {
@@ -753,8 +758,8 @@ void drawOrbitsAndPlanets(glm::vec3 cameraPos, glm::vec3 cameraTarget, glm::vec3
 	
 	// 빨간색 위성 그리기
 	glPushMatrix();
-	glTranslatef(planetpos.x, planetpos.y, planetpos.z);
-	glTranslatef(moonpos.x, moonpos.y, moonpos.z);
+	glTranslatef(tplanetpos.x, tplanetpos.y, tplanetpos.z);
+	glTranslatef(tmoonpos.x, tmoonpos.y, tmoonpos.z);
 	
 	GLUquadricObj* qobj3 = gluNewQuadric();
 	if (wiretoggle == 1) {

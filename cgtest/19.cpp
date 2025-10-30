@@ -39,6 +39,7 @@ GLvoid drawScene();
 GLvoid Reshape(int w, int h);
 void setupBuffers();
 void TimerFunction(int value);
+void drawOrbitsAndPlanets(glm::vec3 cameraPos, glm::vec3 cameraTarget, glm::vec3 cameraUp, float rotationAngle);
 
 //--- 필요한 변수 선언
 GLint width = 800, height = 800;
@@ -485,132 +486,42 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 {
 	GLfloat rColor, gColor, bColor;
 	rColor = gColor = 1.0;
-	bColor = 1.0; //--- 배경색을 파랑색으로 설정
+	bColor = 1.0; //--- 배경색을 흰색으로 설정
 	glClearColor(rColor, gColor, bColor, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glUseProgram(shaderProgramID);
-
-	// 투영 행렬 설정
-	glm::mat4 projection = glm::perspective(
-		(float)(pi / 3.0f),  // fovy = π/3
-		1.0f,                // aspect ratio = 1
-		0.1f,                // near plane (양수여야 함)
-		300.0f               // far plane (150 + 카메라 거리 150)
-	);
-	unsigned int projectionLocation = glGetUniformLocation(shaderProgramID, "projectionTransform");
-	glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(projection));
-
-	// 뷰 행렬 설정
-	glm::mat4 view = glm::mat4(1.0f);
-
-	glm::vec3 cameraPos = glm::vec3(0.0f, 10.0f, 150.0f); // 카메라 y좌표를 10으로 올림
+	
+	// 카메라 설정
+	glm::vec3 cameraPos = glm::vec3(0.0f, 10.0f, 150.0f);
 	glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
 	glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
-
-	view = glm::lookAt(cameraPos, cameraTarget, cameraUp);
-	unsigned int viewLocation = glGetUniformLocation(shaderProgramID, "viewTransform");
-	glUniformMatrix4fv(viewLocation, 1, GL_FALSE, &view[0][0]);
-
-	glm::mat4 model = glm::mat4(1.0f);
-	model = glm::rotate(model, angle, current_yaxis);
-
-	unsigned int modelLocation = glGetUniformLocation(shaderProgramID, "modelTransform");
-
-	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
-
-	if (!allVertices.empty()) {
-		glBindVertexArray(VAO);
-		glBindBuffer(GL_ARRAY_BUFFER, VBO);
-
-		// 버퍼에 정점 데이터 업로드
-		glBufferData(GL_ARRAY_BUFFER, allVertices.size() * sizeof(float),
-			allVertices.data(), GL_DYNAMIC_DRAW);
-
-		// 모든 사각형을 한 번에 그리기 (각 사각형당 6개 정점)
-
-	}
-
-	glLineWidth(2.0f);
-
-	// 원래 궤도 그리기 (원점 중심)
-	glm::mat4 identityMatrix = glm::mat4(1.0);
-	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(identityMatrix));
-	glDrawArrays(GL_LINE_LOOP, 0, 101); // 101개의 점으로 원 그리기
 	
-	// 새로운 궤도 그리기 - planetpos로 이동하고 1/3 스케일 적용
-	glm::mat4 orbitMatrix = glm::mat4(1.0);
-	orbitMatrix = glm::translate(orbitMatrix, planetpos); // planetpos로 이동
-	orbitMatrix = glm::scale(orbitMatrix, glm::vec3(1.0f/3.0f, 1.0f/3.0f, 1.0f/3.0f)); // 1/3 스케일
-	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(orbitMatrix));
-	glDrawArrays(GL_LINE_LOOP, 0, 101); // 101개의 점으로 원 그리기
-
-	// GLU 객체 그리기 (고정 파이프라인 사용)
-	glUseProgram(0); // 셰이더 비활성화
+	// 파이프라인 1: 궤도와 행성/위성 그리기 (z축 회전 적용)
+	drawOrbitsAndPlanets(cameraPos, cameraTarget, cameraUp, 0.0f); // angle을 0으로 전달 (나중에 변경 가능)
 	
-	// 고정 파이프라인 행렬 설정
+	// 파이프라인 2: 항성(태양) 그리기
+	glUseProgram(0); // 고정 파이프라인 사용
+	
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluPerspective(60.0, 1.0, 0.1, 300.0); // fovy=60도, aspect=1.0, near=0.1, far=300
+	gluPerspective(60.0, 1.0, 0.1, 300.0);
 	
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	
-	// view 행렬 적용 (카메라 설정)
 	gluLookAt(cameraPos.x, cameraPos.y, cameraPos.z,
 			  cameraTarget.x, cameraTarget.y, cameraTarget.z,
 			  cameraUp.x, cameraUp.y, cameraUp.z);
 	
-	// 원점(0,0,0)에 파란색 구 그리기
+	// 원점(0,0,0)에 파란색 항성(태양) 그리기
 	glPushMatrix();
+	glTranslatef(0.0f, 0.0f, 0.0f);
 	
-	glTranslatef(0.0f, 0.0f, 0.0f); // 원점에 위치
-	
-	GLUquadricObj* qobj;
-	qobj = gluNewQuadric();
+	GLUquadricObj* qobj = gluNewQuadric();
 	gluQuadricDrawStyle(qobj, GLU_FILL);
-	
 	glColor3f(0.0f, 0.0f, 1.0f); // 파란색
-	gluSphere(qobj, 10.0, 30, 30); // 반지름 10, 세분화 30x30
-	
+	gluSphere(qobj, 10.0, 30, 30); // 반지름 10
 	gluDeleteQuadric(qobj);
 	
 	glPopMatrix();
-	
-	// (50, 0, 0)에 초록색 구 그리기 (y축 회전)
-	glPushMatrix();
-	
-	glTranslatef(planetpos.x, planetpos.y, planetpos.z); // planetpos 좌표로 이동
-	
-	GLUquadricObj* qobj2;
-	qobj2 = gluNewQuadric();
-	gluQuadricDrawStyle(qobj2, GLU_FILL);
-	
-	glColor3f(0.0f, 1.0f, 0.0f); // 초록색
-	gluSphere(qobj2, 5.0, 30, 30); // 반지름 5, 세분화 30x30
-	
-	gluDeleteQuadric(qobj2);
-	
-	glPopMatrix();
-	
-	// 빨간색 위성 그리기 (행성 주위 회전)
-	glPushMatrix();
-	
-	glTranslatef(planetpos.x, planetpos.y, planetpos.z); // planetpos로 이동
-	glTranslatef(moonpos.x, moonpos.y, moonpos.z); // moonpos 상대 좌표로 이동
-	
-	GLUquadricObj* qobj3;
-	qobj3 = gluNewQuadric();
-	gluQuadricDrawStyle(qobj3, GLU_FILL);
-	
-	glColor3f(1.0f, 0.0f, 0.0f); // 빨간색
-	gluSphere(qobj3, 2.5, 30, 30); // 반지름 2.5, 세분화 30x30
-	
-	gluDeleteQuadric(qobj3);
-	
-	glPopMatrix();
-	
-	// 다시 셰이더 활성화
-	glUseProgram(shaderProgramID);
 
 	glutSwapBuffers(); // 화면에 출력하기
 }
@@ -641,15 +552,6 @@ void Keyboard(unsigned char key, int x, int y) {
 		}
 	}
 	break;
-	case 'c': // shapeType 랜덤 변경
-	{
-	}
-	break;
-	case 'v': // y축 회전 애니메이션 토글
-	{
-		
-	}
-	break;
 	case '+':
 	{
 		if (culltoggle == 0) {
@@ -669,7 +571,6 @@ void Keyboard(unsigned char key, int x, int y) {
 	glutPostRedisplay();
 }
 
-
 void TimerFunction(int value)
 {
 	glm::mat4 identity = glm::mat4(1.0f);
@@ -686,4 +587,94 @@ void TimerFunction(int value)
 void Motion(int x, int y) // 마우스 모션 콜백 함수
 {
 
+}
+
+// 궤도와 행성/위성을 그리는 함수
+void drawOrbitsAndPlanets(glm::vec3 cameraPos, glm::vec3 cameraTarget, glm::vec3 cameraUp, float rotationAngle)
+{
+	// 셰이더 사용
+	glUseProgram(shaderProgramID);
+	
+	// 투영 행렬 설정
+	glm::mat4 projection = glm::perspective(
+		(float)(pi / 3.0f),
+		1.0f,
+		0.1f,
+		300.0f
+	);
+	unsigned int projectionLocation = glGetUniformLocation(shaderProgramID, "projectionTransform");
+	glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(projection));
+	
+	// 뷰 행렬 설정
+	glm::mat4 view = glm::lookAt(cameraPos, cameraTarget, cameraUp);
+	unsigned int viewLocation = glGetUniformLocation(shaderProgramID, "viewTransform");
+	glUniformMatrix4fv(viewLocation, 1, GL_FALSE, &view[0][0]);
+	
+	unsigned int modelLocation = glGetUniformLocation(shaderProgramID, "modelTransform");
+	
+	// 버퍼 바인딩
+	if (!allVertices.empty()) {
+		glBindVertexArray(VAO);
+		glBindBuffer(GL_ARRAY_BUFFER, VBO);
+		glBufferData(GL_ARRAY_BUFFER, allVertices.size() * sizeof(float),
+			allVertices.data(), GL_DYNAMIC_DRAW);
+	}
+	
+	glLineWidth(2.0f);
+	
+	// z축 회전 적용
+	glm::mat4 zRotation = glm::rotate(glm::mat4(1.0f), rotationAngle, glm::vec3(0.0f, 0.0f, 1.0f));
+	
+	// 원래 궤도 그리기 (z축 회전 적용)
+	glm::mat4 orbitModel = zRotation;
+	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(orbitModel));
+	glDrawArrays(GL_LINE_LOOP, 0, 101);
+	
+	// 새로운 궤도 그리기 - planetpos로 이동하고 1/3 스케일 적용 (z축 회전 적용)
+	glm::mat4 smallOrbitMatrix = zRotation;
+	smallOrbitMatrix = glm::translate(smallOrbitMatrix, planetpos);
+	smallOrbitMatrix = glm::scale(smallOrbitMatrix, glm::vec3(1.0f/3.0f, 1.0f/3.0f, 1.0f/3.0f));
+	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(smallOrbitMatrix));
+	glDrawArrays(GL_LINE_LOOP, 0, 101);
+	
+	// GLU 객체 그리기 (고정 파이프라인)
+	glUseProgram(0);
+	
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	gluPerspective(60.0, 1.0, 0.1, 300.0);
+	
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	gluLookAt(cameraPos.x, cameraPos.y, cameraPos.z,
+			  cameraTarget.x, cameraTarget.y, cameraTarget.z,
+			  cameraUp.x, cameraUp.y, cameraUp.z);
+	
+	// z축 회전을 GLU 객체에도 적용
+	glRotatef(glm::degrees(rotationAngle), 0.0f, 0.0f, 1.0f);
+	
+	// 초록색 행성 그리기
+	glPushMatrix();
+	glTranslatef(planetpos.x, planetpos.y, planetpos.z);
+	
+	GLUquadricObj* qobj2 = gluNewQuadric();
+	gluQuadricDrawStyle(qobj2, GLU_FILL);
+	glColor3f(0.0f, 1.0f, 0.0f);
+	gluSphere(qobj2, 5.0, 30, 30);
+	gluDeleteQuadric(qobj2);
+	
+	glPopMatrix();
+	
+	// 빨간색 위성 그리기
+	glPushMatrix();
+	glTranslatef(planetpos.x, planetpos.y, planetpos.z);
+	glTranslatef(moonpos.x, moonpos.y, moonpos.z);
+	
+	GLUquadricObj* qobj3 = gluNewQuadric();
+	gluQuadricDrawStyle(qobj3, GLU_FILL);
+	glColor3f(1.0f, 0.0f, 0.0f);
+	gluSphere(qobj3, 2.5, 30, 30);
+	gluDeleteQuadric(qobj3);
+	
+	glPopMatrix();
 }

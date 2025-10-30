@@ -397,7 +397,7 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 		// 점 추가
 		allVertices.insert(allVertices.end(), {
 			rotatedPoint.x, rotatedPoint.y, rotatedPoint.z,
-			1.0f, 1.0f, 0.0f // 노란색
+			0.0f, 0.0f, 0.0f // 검은색
 		});
 	}
 
@@ -420,7 +420,7 @@ void make_vertexShaders()
 	GLchar* vertexSource;
 	//--- 버텍스 세이더 읽어 저장하고 컴파일 하기
 	//--- filetobuf: 사용자정의 함수로 텍스트를 읽어서 문자열에 저장하는 함수
-	vertexSource = filetobuf("vertex_view.glsl");
+	vertexSource = filetobuf("vertex_projection.glsl");
 	vertexShader = glCreateShader(GL_VERTEX_SHADER);
 	glShaderSource(vertexShader, 1, &vertexSource, NULL);
 	glCompileShader(vertexShader);
@@ -484,22 +484,25 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glUseProgram(shaderProgramID);
 
-	// 각 사각형을 6개 정점으로 변환한 전체 데이터
+	// 투영 행렬 설정
+	glm::mat4 projection = glm::perspective(
+		(float)(pi / 3.0f),  // fovy = π/3
+		1.0f,                // aspect ratio = 1
+		0.1f,                // near plane (양수여야 함)
+		200.0f               // far plane
+	);
+	unsigned int projectionLocation = glGetUniformLocation(shaderProgramID, "projectionTransform");
+	glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(projection));
+
+	// 뷰 행렬 설정
 	glm::mat4 view = glm::mat4(1.0f);
 
-	glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 0.3f);
-	// y축으로 -pi/6 회전
-	glm::vec4 tempPos = glm::rotate(glm::mat4(1.0f), (float)(-pi / 6), glm::vec3(0.0f, 1.0f, 0.0f)) * glm::vec4(cameraPos, 1.0f);
-	cameraPos = glm::vec3(tempPos);
-	// x축으로 -pi/6 회전
-	tempPos = glm::rotate(glm::mat4(1.0f), (float)(-pi / 6), glm::vec3(1.0f, 0.0f, 0.0f)) * glm::vec4(cameraPos, 1.0f);
-	cameraPos = glm::vec3(tempPos);
-
+	glm::vec3 cameraPos = glm::vec3(0.0f, 10.0f, 100.0f); // 카메라 y좌표를 10으로 올림
 	glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
 	glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
 	view = glm::lookAt(cameraPos, cameraTarget, cameraUp);
-	unsigned int viewLocation = glGetUniformLocation(shaderProgramID, "viewTransform"); //--- 버텍스 세이더에서 viewTransform 변수위치
+	unsigned int viewLocation = glGetUniformLocation(shaderProgramID, "viewTransform");
 	glUniformMatrix4fv(viewLocation, 1, GL_FALSE, &view[0][0]);
 
 	glm::mat4 model = glm::mat4(1.0f);
@@ -523,13 +526,12 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 
 	glLineWidth(2.0f);
 
-	// 축은 변환 없이 그리기 (단위 행렬 적용)
+	// 단위 행렬로 원 그리기
 	glm::mat4 identityMatrix = glm::mat4(1.0);
-	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(identityMatrix)); // 버텍스 셰이더에 있는 modelTransform에 단위 행렬 전달
-	glDrawArrays(GL_LINES, 0, 6);
-	//// 원 그리기 (LINE_STRIP 사용)
-	//glDrawArrays(GL_LINE_STRIP, 6, 100 + 1); // 6은 축 데이터 개수
+	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(identityMatrix));
 	
+	// 원 그리기 (LINE_LOOP 사용)
+	glDrawArrays(GL_LINE_LOOP, 0, 101); // 101개의 점으로 원 그리기
 
 	glutSwapBuffers(); // 화면에 출력하기
 }

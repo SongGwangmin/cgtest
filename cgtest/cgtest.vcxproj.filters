@@ -82,5 +82,8 @@
     <None Include="vertex_view.glsl">
       <Filter>Source Files</Filter>
     </None>
+    <None Include="vertex_projection.glsl">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

@@ -497,6 +497,8 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 	
 	// 파이프라인 1: 궤도와 행성/위성 그리기 (z축 회전 적용)
 	drawOrbitsAndPlanets(cameraPos, cameraTarget, cameraUp, 0.0f); // angle을 0으로 전달 (나중에 변경 가능)
+	drawOrbitsAndPlanets(cameraPos, cameraTarget, cameraUp, pi / 4.0f);
+	drawOrbitsAndPlanets(cameraPos, cameraTarget, cameraUp, -pi / 4.0f);
 	
 	// 파이프라인 2: 항성(태양) 그리기
 	glUseProgram(0); // 고정 파이프라인 사용
@@ -622,18 +624,19 @@ void drawOrbitsAndPlanets(glm::vec3 cameraPos, glm::vec3 cameraTarget, glm::vec3
 	
 	glLineWidth(2.0f);
 	
-	// z축 회전 적용
+	// z축 회전 행렬
 	glm::mat4 zRotation = glm::rotate(glm::mat4(1.0f), rotationAngle, glm::vec3(0.0f, 0.0f, 1.0f));
 	
-	// 원래 궤도 그리기 (z축 회전 적용)
+	// 원래 궤도 그리기 (z축 회전만 적용)
 	glm::mat4 orbitModel = zRotation;
 	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(orbitModel));
 	glDrawArrays(GL_LINE_LOOP, 0, 101);
 	
-	// 새로운 궤도 그리기 - planetpos로 이동하고 1/3 스케일 적용 (z축 회전 적용)
-	glm::mat4 smallOrbitMatrix = zRotation;
-	smallOrbitMatrix = glm::translate(smallOrbitMatrix, planetpos);
-	smallOrbitMatrix = glm::scale(smallOrbitMatrix, glm::vec3(1.0f/3.0f, 1.0f/3.0f, 1.0f/3.0f));
+	// 새로운 궤도 그리기 - planetpos로 이동 -> 1/3 스케일 -> z축 회전 순서
+	glm::mat4 smallOrbitMatrix = glm::mat4(1.0f);
+	smallOrbitMatrix = glm::translate(smallOrbitMatrix, planetpos); // 1. 이동
+	smallOrbitMatrix = glm::scale(smallOrbitMatrix, glm::vec3(1.0f/3.0f, 1.0f/3.0f, 1.0f/3.0f)); // 2. 스케일
+	smallOrbitMatrix = zRotation * smallOrbitMatrix; // 3. z축 회전 (마지막 적용)
 	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(smallOrbitMatrix));
 	glDrawArrays(GL_LINE_LOOP, 0, 101);
 	

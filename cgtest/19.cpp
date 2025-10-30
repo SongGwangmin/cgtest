@@ -81,7 +81,10 @@ int rcurrentface = 0; // 현재 동작 중인 면 (0:t1, 1:t2, 2:t3, 3:t4)
 // piriamid 관련 토글 변수
 int openeverytoggle = 0; // 1. 모든 면 열기 모드	
 int sequentopnetoggle = 0; // 1. 면이 순차적으로 열림
-int sequentoclosetoggle = 0; // 1. 면이 순차적으로 닫힘
+int sequentoclosetoggle = 0; // 1. 면이 순차적으로 닫림
+
+// 투영 관련 토글 변수
+int projectiontoggle = 0; // 0: 기본 투영, 1: 다른 투영
 
 // cube 관련 변수
 float topangle = 0.0f; // 윗면 회전 각도
@@ -542,6 +545,24 @@ void Keyboard(unsigned char key, int x, int y) {
 	case 'Q': // 프로그램 종료
 		glutLeaveMainLoop();
 		break;
+	case 'w': // 와이어프레임 모드 적용/해제
+	{
+
+	}
+	break;
+	case 'z': // z축 회전 모드 적용/해제
+	{
+	}
+	break;
+	case 'p': // 투영 모드 변경
+	{
+		if (projectiontoggle == 0) {
+			projectiontoggle = 1;
+		}
+		else {
+			projectiontoggle = 0;
+		}
+	}
 	case 'h': // 은면제거 적용/해제
 	{
 		if (hidetoggle) {
@@ -591,7 +612,7 @@ void Motion(int x, int y) // 마우스 모션 콜백 함수
 
 }
 
-// 궤도와 행성/위성을 그리는 함수
+// 궤도와 행성/위를 그리는 함수
 void drawOrbitsAndPlanets(glm::vec3 cameraPos, glm::vec3 cameraTarget, glm::vec3 cameraUp, float rotationAngle)
 {
 	// 셰이더 사용

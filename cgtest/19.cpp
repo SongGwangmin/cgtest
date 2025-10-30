@@ -47,56 +47,15 @@ GLuint shaderProgramID; //--- 세이더 프로그램 이름
 GLuint vertexShader; //--- 버텍스 세이더 객체
 GLuint fragmentShader; //--- 프래그먼트 세이더 객체
 GLuint VAO, VBO; //--- 버텍스 배열 객체, 버텍스 버퍼 객체
-int nowdrawstate = 0; // 0: point, 1: line, 2: triangle, 3: rectangle
-int selectedshape = -1; // 선택된 도형 인덱스
-int spin = 1; //  1: 시계방향, -1: 반시계방향
-int animation = 0; // 0: 정지, 1: 회전
+
 int hidetoggle = 1; // 1. 은면제거
 int wiretoggle = 0; // 0: 솔리드 모드, 1: 와이어프레임 모드
 int culltoggle = 0; // 1. 뒷면 컬링 모드
 
-// cube 관련 토글 변수 (사용하지 않음 - 주석처리)
-// int zrotoggle = 0; // 1. z축 회전 모드
-// int opentoggle = 0; // 1. 도형 열기 모드
-// int tiretoggle = 0; // 1. 옆면이 회전
-// int backsizetoggle = 0; // 1. 뒷면 size 모드
 
-// 위치 교환 애니메이션 관련 변수 (사용하지 않음 - 주석처리)
-// int swapAnimationActive = 0; // 0: 정지, 1: 애니메이션 중
-// float swapAnimationProgress = 0.0f; // 0.0 ~ 1.0
-// glm::vec3 swapStartPos[2]; // 시작 위치
-// glm::vec3 swapEndPos[2]; // 목표 위치
-
-// y축 회전 애니메이션 관련 변수 (사용하지 않음 - 주석처리)
-// int yRotationAnimationActive = 0; // 0: 정지, 1: 애니메이션 중
-
-// 새로운 토글 변수들 (사용하지 않음 - 주석처리)
-// int edgeopentoggle = 0; // 0: edge 열림, 1: edge 닫힘
-// int backscaletoggle = 0; // 1: scale 증가, 0: scale 감소
-
-// r키 순차 동작을 위한 변수들 (사용하지 않음 - 주석처리)
-// int rsequence = 0; // 0: 정지, 1: 순차 열기, 2: 순차 닫기
-// int rcurrentface = 0; // 현재 동작 중인 면 (0:t1, 1:t2, 2:t3, 3:t4)
-
-// piriamid 관련 토글 변수 (사용하지 않음 - 주석처리)
-// int openeverytoggle = 0; // 1. 모든 면 열기 모드	
-// int sequentopnetoggle = 0; // 1. 면이 순차적으로 열림
-// int sequentoclosetoggle = 0; // 1. 면이 순차적으로 닫림
 
 // 투영 관련 토글 변수
 int projectiontoggle = 0; // 0: 기본 투영, 1: 다른 투영
-
-// cube 관련 변수 (사용하지 않음 - 주석처리)
-// float topangle = 0.0f; // 윗면 회전 각도
-// float oepnangle = 0.0f; // front 열리는 각도
-// float tireangle = 0.0f; // 옆면 회전 각도
-// float backsize = 1.0f; // 뒷면 크기
-
-// piramid 관련 변수 (사용하지 않음 - 주석처리)
-// float t1angle = 0.0f; // 면1 회전 각도
-// float t2angle = 0.0f; // 면2 회전 각도
-// float t3angle = 0.0f; // 면3 회전 각도
-// float t4angle = 0.0f; // 면4 회전 각도
 
 
 // Forward declaration
@@ -118,6 +77,9 @@ glm::vec3 planetpos = glm::vec3(50.0f, 0.0f, 0.0f);
 
 // 위성 위치 (행성 기준 상대 좌표)
 glm::vec3 moonpos = glm::vec3(50.0f / 3.0f, 0.0f, 0.0f);
+
+// 카메라 추가 위치 변수
+glm::vec3 additionalCameraPos = glm::vec3(0.0f, 0.0f, 0.0f);
 
 // 동적 회전축을 위한 전역 변수
 glm::vec3 current_xaxis;
@@ -420,6 +382,7 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	glutTimerFunc(25, TimerFunction, 1);
 
 	glutKeyboardFunc(Keyboard);
+	glutSpecialFunc(SpecialKeys); // 특수 키 콜백 함수 등록
 
 	glutMainLoop();
 	return 0;
@@ -494,7 +457,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	
 	// 카메라 설정
-	glm::vec3 cameraPos = glm::vec3(0.0f, 10.0f, 150.0f);
+	glm::vec3 cameraPos = glm::vec3(0.0f, 10.0f, 150.0f) + additionalCameraPos;
 	glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
 	glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 	
@@ -619,6 +582,26 @@ void TimerFunction(int value)
 void Motion(int x, int y) // 마우스 모션 콜백 함수
 {
 
+}
+
+void SpecialKeys(int key, int x, int y) // 특수 키(화살표 키) 콜백 함수
+{
+	switch (key) {
+	case GLUT_KEY_UP: // 위쪽 화살표
+		additionalCameraPos.y += 5.0f;
+		break;
+	case GLUT_KEY_DOWN: // 아래쪽 화살표
+		additionalCameraPos.y -= 5.0f;
+		break;
+	case GLUT_KEY_LEFT: // 왼쪽 화살표
+		additionalCameraPos.x -= 5.0f;
+		break;
+	case GLUT_KEY_RIGHT: // 오른쪽 화살표
+		additionalCameraPos.x += 5.0f;
+		break;
+	}
+	
+	glutPostRedisplay();
 }
 
 // 궤도와 행성/위를 그리는 함수

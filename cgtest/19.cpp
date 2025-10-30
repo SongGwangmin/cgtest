@@ -508,7 +508,15 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 	
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluPerspective(60.0, 1.0, 0.1, 300.0);
+	
+	if (projectiontoggle == 0) {
+		// 원근 투영
+		gluPerspective(60.0, 1.0, 0.1, 300.0);
+	}
+	else {
+		// 직교 투영
+		glOrtho(-100.0, 100.0, -100.0, 100.0, 0.1, 300.0);
+	}
 	
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
@@ -556,13 +564,9 @@ void Keyboard(unsigned char key, int x, int y) {
 	break;
 	case 'p': // 투영 모드 변경
 	{
-		if (projectiontoggle == 0) {
-			projectiontoggle = 1;
-		}
-		else {
-			projectiontoggle = 0;
-		}
+		projectiontoggle = !projectiontoggle;
 	}
+	break;
 	case 'h': // 은면제거 적용/해제
 	{
 		if (hidetoggle) {
@@ -619,12 +623,24 @@ void drawOrbitsAndPlanets(glm::vec3 cameraPos, glm::vec3 cameraTarget, glm::vec3
 	glUseProgram(shaderProgramID);
 	
 	// 투영 행렬 설정
-	glm::mat4 projection = glm::perspective(
-		(float)(pi / 3.0f),
-		1.0f,
-		0.1f,
-		300.0f
-	);
+	glm::mat4 projection;
+	if (projectiontoggle == 0) {
+		// 원근 투영 (Perspective)
+		projection = glm::perspective(
+			(float)(pi / 3.0f),
+			1.0f,
+			0.1f,
+			300.0f
+		);
+	}
+	else {
+		// 직교 투영 (Orthographic)
+		projection = glm::ortho(
+			-100.0f, 100.0f,  // left, right
+			-100.0f, 100.0f,  // bottom, top
+			0.1f, 300.0f      // near, far
+		);
+	}
 	unsigned int projectionLocation = glGetUniformLocation(shaderProgramID, "projectionTransform");
 	glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(projection));
 	
@@ -666,7 +682,15 @@ void drawOrbitsAndPlanets(glm::vec3 cameraPos, glm::vec3 cameraTarget, glm::vec3
 	
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluPerspective(60.0, 1.0, 0.1, 300.0);
+	
+	if (projectiontoggle == 0) {
+		// 원근 투영
+		gluPerspective(60.0, 1.0, 0.1, 300.0);
+	}
+	else {
+		// 직교 투영
+		glOrtho(-100.0, 100.0, -100.0, 100.0, 0.1, 300.0);
+	}
 	
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();

@@ -791,13 +791,17 @@ void Motion(int x, int y) // 마우스 모션 콜백 함수
 void SpecialKeys(int key, int x, int y) // 특수 키(화살표 키) 콜백 함수
 {
 	switch (key) {
-	case GLUT_KEY_UP: // 위쪽 화살표
+	case GLUT_KEY_UP: // 위쪽 화살표 - z축 음의 방향으로 이동
+		tank.move(glm::vec3(0.0f, 0.0f, -5.0f));
 		break;
-	case GLUT_KEY_DOWN: // 아래쪽 화살표
+	case GLUT_KEY_DOWN: // 아래쪽 화살표 - z축 양의 방향으로 이동
+		tank.move(glm::vec3(0.0f, 0.0f, 5.0f));
 		break;
-	case GLUT_KEY_LEFT: // 왼쪽 화살표
+	case GLUT_KEY_LEFT: // 왼쪽 화살표 - x축 음의 방향으로 이동
+		tank.move(glm::vec3(-5.0f, 0.0f, 0.0f));
 		break;
-	case GLUT_KEY_RIGHT: // 오른쪽 화살표
+	case GLUT_KEY_RIGHT: // 오른쪽 화살표 - x축 양의 방향으로 이동
+		tank.move(glm::vec3(5.0f, 0.0f, 0.0f));
 		break;
 	}
 

@@ -738,6 +738,26 @@ void Keyboard(unsigned char key, int x, int y) {
 		flagRotateToggle = !flagRotateToggle;
 	}
 	break;
+	case 'o': // 모든 토글 끄기
+	case 'O':
+	{
+		bodyRotateToggle = 0;
+		turretSwapToggle = 0;
+		barrelRotateToggle = 0;
+		flagRotateToggle = 0;
+	}
+	break;
+	case 'c': // 탱크 초기화
+	case 'C':
+	{
+		tank.setPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+		tank.setBodyAngle(0.0f);
+		tank.setTurretAngle(2.0f);
+		tank.setTurretPos(glm::vec3(18.0f, 0.0f, 0.0f));
+		tank.setFlagAngle(0.0f);
+		// flagUp은 Tank 클래스 private 멤버이므로 생성자에서 1로 초기화됨
+	}
+	break;
 	default:
 		break;
 	}

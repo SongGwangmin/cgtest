@@ -53,6 +53,17 @@ int hidetoggle = 1; // 1. 은면제거
 int wiretoggle = 0; // 0: 솔리드 모드, 1: 와이어프레임 모드
 int culltoggle = 0; // 1. 뒷면 컬링 모드
 
+// 탱크 애니메이션 토글 변수
+int bodyRotateToggle = 0;    // t: 중앙 몸체 y축 회전
+int turretSwapToggle = 0;    // l: 상부 몸체 위치 교환
+int barrelRotateToggle = 0;  // g: 포신 y축 회전 (양쪽 반대 방향)
+int flagRotateToggle = 0;    // p: 깃대 x축 회전 (양쪽 반대 방향)
+
+// 애니메이션 변수
+float turretSwapTime = 0.0f;           // 포탑 위치 교환 애니메이션 시간 (0~1)
+glm::vec3 turretSwapStartPos(0.0f);    // 포탑 위치 교환 시작 위치
+float mixstartpos = 18.0f;             // 선형보간 시작 위치
+float mixendpos = -18.0f;              // 선형보간 끝 위치
 
 // Forward declaration
 class polygon;
@@ -162,6 +173,147 @@ private:
 	}
 };
 
+// 탱크 클래스
+class Tank {
+private:
+	glm::vec3 position;      // 탱크의 좌표 (x, y, z)
+	float bodyAngle;         // 몸체의 각도 (y축 회전)
+	float turretAngle;       // 포탑의 각도 (y축 회전, 몸체 기준 상대 각도)
+	glm::vec3 turretpos;     // 포신의 위치 (x, y, z)
+	float flagAngle;         // 깃대의 각도 (z축 회전)
+	
+public:
+	// 생성자
+	Tank(glm::vec3 pos = glm::vec3(0.0f, 0.0f, 0.0f))
+		: position(pos), bodyAngle(0.0f), turretAngle(2.0f), 
+		  turretpos(glm::vec3(0.0f, 0.0f, 0.0f)), flagAngle(0.0f)
+	{
+	}
+	
+	// 탱크 좌표 설정
+	void setPosition(glm::vec3 pos) {
+		position = pos;
+	}
+	
+	// 탱크 좌표 가져오기
+	glm::vec3 getPosition() const {
+		return position;
+	}
+	
+	// 몸체 각도 설정
+	void setBodyAngle(float angle) {
+		bodyAngle = angle;
+	}
+	
+	// 몸체 각도 가져오기
+	float getBodyAngle() const {
+		return bodyAngle;
+	}
+	
+	// 포탑 각도 설정 (몸체 기준 상대 각도)
+	void setTurretAngle(float angle) {
+		turretAngle = angle;
+	}
+	
+	// 포탑 각도 가져오기
+	float getTurretAngle() const {
+		return turretAngle;
+	}
+	
+	// 포신 위치 설정
+	void setTurretPos(glm::vec3 pos) {
+		turretpos = pos;
+	}
+	
+	// 포신 위치 가져오기
+	glm::vec3 getTurretPos() const {
+		return turretpos;
+	}
+	
+	// 깃대 각도 설정
+	void setFlagAngle(float angle) {
+		flagAngle = angle;
+	}
+	
+	// 깃대 각도 가져오기
+	float getFlagAngle() const {
+		return flagAngle;
+	}
+	
+	// 탱크 이동
+	void move(glm::vec3 delta) {
+		position += delta;
+	}
+	
+	// 몸체 회전
+	void rotateBody(float delta) {
+		bodyAngle += delta;
+	}
+	
+	// 포탑 회전
+	void rotateTurret(float delta) {
+		turretAngle += delta;
+	}
+	
+	// 포신 위치 이동
+	void moveTurret(glm::vec3 delta) {
+		turretpos += delta;
+	}
+	
+	// 깃대 회전
+	void rotateFlag(float delta) {
+		flagAngle += delta;
+	}
+	
+	// 변환 행렬 반환 함수들
+	
+	// 탱크 위치 이동 행렬
+	glm::mat4 tankTranslate(int inverse) const {
+		return glm::translate(glm::mat4(1.0f), position);
+	}
+	
+	// 몸체 회전 행렬 (탱크 이동 포함)
+	glm::mat4 bodyRotate(int inverse) const {
+		glm::mat4 matr = glm::rotate(glm::mat4(1.0f), glm::radians(bodyAngle), glm::vec3(0.0f, 1.0f, 0.0f));
+		return tankTranslate(inverse) * matr;
+	}
+	
+	// 포탑 회전 및 이동 행렬 (몸체 회전 포함)
+	glm::mat4 turretRotateAndTranslate(int inverse) const {
+		glm::mat4 matr;
+		if (inverse) {
+			// 역변환: x값만 반대로 한 위치로 이동
+			glm::vec3 turretposInv = glm::vec3(-turretpos.x, turretpos.y, turretpos.z);
+			glm::mat4 rotationInv = glm::rotate(glm::mat4(1.0f), -glm::radians(turretAngle), glm::vec3(0.0f, 1.0f, 0.0f));
+			glm::mat4 translationInv = glm::translate(glm::mat4(1.0f), turretposInv);
+			matr = translationInv * rotationInv;
+		}
+		else {
+			// 정변환: 이동 -> 회전
+			glm::mat4 translation = glm::translate(glm::mat4(1.0f), turretpos);
+			glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), glm::radians(turretAngle), glm::vec3(0.0f, 1.0f, 0.0f));
+			matr = translation * rotation;
+		}
+		return bodyRotate(inverse) * matr;
+	}
+	
+	// 깃대 회전 행렬 (포탑 변환 포함)
+	glm::mat4 flagRotate(int inverse) const {
+		glm::mat4 matr;
+		if (inverse) {
+			matr = glm::rotate(glm::mat4(1.0f), -glm::radians(flagAngle), glm::vec3(1.0f, 0.0f, 0.0f));
+		}
+		else {
+			matr = glm::rotate(glm::mat4(1.0f), glm::radians(flagAngle), glm::vec3(1.0f, 0.0f, 0.0f));
+		}
+
+		matr = glm::translate(glm::mat4(1.0f), glm::vec3(0, -27, 0)); // 깃대 위치로 이동 (필요시 조정)
+
+		return turretRotateAndTranslate(inverse) * matr;
+	}
+};
+
+Tank tank(glm::vec3(0.0f, 0.0f, 0.0f)); // 첫 번째 탱크
 
 void Keyboard(unsigned char key, int x, int y);
 void SpecialKeys(int key, int x, int y); // 특수 키(화살표 키) 콜백 함수 선언
@@ -259,6 +411,82 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 		planeColor.r, planeColor.g, planeColor.b
 	});
 
+	// 육면체 생성 및 VBO에 추가
+	// x: -30~30, y: -50~-40, z: -15~15 (y축과 z축 교환)
+	Cube cube(
+		glm::vec3(-30.0f, -50.0f, -15.0f), // v0: 앞면 왼쪽 아래
+		glm::vec3( 30.0f, -50.0f, -15.0f), // v1: 앞면 오른쪽 아래
+		glm::vec3( 30.0f, -50.0f,  15.0f), // v2: 앞면 오른쪽 위
+		glm::vec3(-30.0f, -50.0f,  15.0f), // v3: 앞면 왼쪽 위
+		glm::vec3(-30.0f, -40.0f, -15.0f), // v4: 뒷면 왼쪽 아래
+		glm::vec3( 30.0f, -40.0f, -15.0f), // v5: 뒷면 오른쪽 아래
+		glm::vec3( 30.0f, -40.0f,  15.0f), // v6: 뒷면 오른쪽 위
+		glm::vec3(-30.0f, -40.0f,  15.0f), // v7: 뒷면 왼쪽 위
+		glm::vec3(180.0f / 255.0f, 180.0f / 255.0f, 180.0f / 255.0f) // RGB(180,180,180)
+	);
+	cube.sendVertexData(allVertices);
+
+	// 두 번째 육면체 생성 및 VBO에 추가
+	// x: -20~20, y: -40~-32, z: -13~13
+	Cube cube2(
+		glm::vec3(-20.0f, -40.0f, -13.0f), // v0: 앞면 왼쪽 아래
+		glm::vec3( 20.0f, -40.0f, -13.0f), // v1: 앞면 오른쪽 아래
+		glm::vec3( 20.0f, -40.0f,  13.0f), // v2: 앞면 오른쪽 위
+		glm::vec3(-20.0f, -40.0f,  13.0f), // v3: 앞면 왼쪽 위
+		glm::vec3(-20.0f, -32.0f, -13.0f), // v4: 뒷면 왼쪽 아래
+		glm::vec3( 20.0f, -32.0f, -13.0f), // v5: 뒷면 오른쪽 아래
+		glm::vec3( 20.0f, -32.0f,  13.0f), // v6: 뒷면 오른쪽 위
+		glm::vec3(-20.0f, -32.0f,  13.0f), // v7: 뒷면 왼쪽 위
+		glm::vec3(255.0f / 255.0f, 0.0f / 255.0f, 255.0f / 255.0f) // RGB(255,0,255) - 마젠타
+	);
+	cube2.sendVertexData(allVertices);
+
+	// 세 번째 육면체 생성 및 VBO에 추가
+	// x: -12~12, y: -33~-25, z: -15~15
+	Cube cube3(
+		glm::vec3(-12.0f, -33.0f, -15.0f), // v0: 앞면 왼쪽 아래
+		glm::vec3( 12.0f, -33.0f, -15.0f), // v1: 앞면 오른쪽 아래
+		glm::vec3( 12.0f, -33.0f,  15.0f), // v2: 앞면 오른쪽 위
+		glm::vec3(-12.0f, -33.0f,  15.0f), // v3: 앞면 왼쪽 위
+		glm::vec3(-12.0f, -25.0f, -15.0f), // v4: 뒷면 왼쪽 아래
+		glm::vec3( 12.0f, -25.0f, -15.0f), // v5: 뒷면 오른쪽 아래
+		glm::vec3( 12.0f, -25.0f,  15.0f), // v6: 뒷면 오른쪽 위
+		glm::vec3(-12.0f, -25.0f,  15.0f), // v7: 뒷면 왼쪽 위
+		glm::vec3(0.0f / 255.0f, 255.0f / 255.0f, 0.0f / 255.0f) // RGB(0,255,0) - 녹색
+	);
+	cube3.sendVertexData(allVertices);
+
+	// 네 번째 육면체 생성 및 VBO에 추가
+	// x: -3~3, y: -32~-26, z: 0~26
+	Cube cube4(
+		glm::vec3(-3.0f, -32.0f, 0.0f), // v0: 앞면 왼쪽 아래
+		glm::vec3( 3.0f, -32.0f, 0.0f), // v1: 앞면 오른쪽 아래
+		glm::vec3( 3.0f, -32.0f, 26.0f), // v2: 앞면 오른쪽 위
+		glm::vec3(-3.0f, -32.0f, 26.0f), // v3: 앞면 왼쪽 위
+		glm::vec3(-3.0f, -26.0f, 0.0f), // v4: 뒷면 왼쪽 아래
+		glm::vec3( 3.0f, -26.0f, 0.0f), // v5: 뒷면 오른쪽 아래
+		glm::vec3( 3.0f, -26.0f, 26.0f), // v6: 뒷면 오른쪽 위
+		glm::vec3(-3.0f, -26.0f, 26.0f), // v7: 뒷면 왼쪽 위
+		glm::vec3(255.0f / 255.0f, 255.0f / 255.0f, 0.0f / 255.0f) // RGB(255,255,0) - 노란색
+	);
+	cube4.sendVertexData(allVertices);
+
+	// 다섯 번째 육면체 생성 및 VBO에 추가
+	// x: -3~3, y: 0~18, z: -3~3
+	Cube cube5(
+		glm::vec3(-3.0f, 0.0f, -3.0f), // v0: 앞면 왼쪽 아래
+		glm::vec3( 3.0f, 0.0f, -3.0f), // v1: 앞면 오른쪽 아래
+		glm::vec3( 3.0f, 0.0f,  3.0f), // v2: 앞면 오른쪽 위
+		glm::vec3(-3.0f, 0.0f,  3.0f), // v3: 앞면 왼쪽 위
+		glm::vec3(-3.0f, 18.0f, -3.0f), // v4: 뒷면 왼쪽 아래
+		glm::vec3( 3.0f, 18.0f, -3.0f), // v5: 뒷면 오른쪽 아래
+		glm::vec3( 3.0f, 18.0f,  3.0f), // v6: 뒷면 오른쪽 위
+		glm::vec3(-3.0f, 18.0f,  3.0f), // v7: 뒷면 왼쪽 위
+		glm::vec3(180.0f / 255.0f, 180.0f / 255.0f, 0.0f / 255.0f) // RGB(180,180,0) - 올리브색
+	);
+	cube5.sendVertexData(allVertices);
+
+	tank.setTurretPos(glm::vec3(18.0f, 0.0f, 0.0f));
 
 	//--- 세이더 프로그램 만들기
 	glutDisplayFunc(drawScene); //--- 출력 콜백 함수
@@ -386,8 +614,41 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 		
 		// 전체 정점 개수 계산 (각 정점은 6개 float: xyz + rgb)
 		int vertexCount = allVertices.size() / 6;
-		glDrawArrays(GL_TRIANGLES, 0, vertexCount);
-		
+
+		// 바닥
+		int startIndex = 0;
+		glDrawArrays(GL_TRIANGLES, startIndex, 6);
+		startIndex += 6;
+
+		// 탱크 좌표
+		model = tank.tankTranslate(0);
+		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
+		glDrawArrays(GL_TRIANGLES, startIndex, 36);
+		startIndex += 36;
+
+		// 탱크 몸체
+		model = tank.bodyRotate(0);
+		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
+		glDrawArrays(GL_TRIANGLES, startIndex, 36);
+		startIndex += 36;
+
+		// 탱크 포탑
+		model = tank.turretRotateAndTranslate(0);
+		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
+		glDrawArrays(GL_TRIANGLES, startIndex, 36 * 2);
+		model = tank.turretRotateAndTranslate(1);
+		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
+		glDrawArrays(GL_TRIANGLES, startIndex, 36 * 2);
+		startIndex += 36 * 2;
+
+
+		// 탱크 깃대
+		model = tank.flagRotate(0);
+		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
+		glDrawArrays(GL_TRIANGLES, startIndex, 36);
+		model = tank.flagRotate(1);
+		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
+		glDrawArrays(GL_TRIANGLES, startIndex, 36);
 		glBindVertexArray(0);
 	}
 
@@ -447,6 +708,31 @@ void Keyboard(unsigned char key, int x, int y) {
 		}
 	}
 	break;
+	case 't': // 중앙 몸체 y축 회전 토글
+	{
+		bodyRotateToggle = !bodyRotateToggle;
+	}
+	break;
+	case 'l': // 상부 몸체 위치 교환 토글
+	{
+		if (!turretSwapToggle) {
+			// 애니메이션 시작: 현재 위치 저장
+			//turretSwapStartPos = tank.getTurretPos();
+			//turretSwapTime = 0.0f;
+		}
+		turretSwapToggle = !turretSwapToggle;
+	}
+	break;
+	case 'g': // 포신 y축 회전 토글
+	{
+		barrelRotateToggle = !barrelRotateToggle;
+	}
+	break;
+	case 'p': // 깃대 x축 회전 토글
+	{
+		flagRotateToggle = !flagRotateToggle;
+	}
+	break;
 	default:
 		break;
 	}
@@ -456,7 +742,32 @@ void Keyboard(unsigned char key, int x, int y) {
 
 void TimerFunction(int value)
 {
-	
+	// 몸체 회전 애니메이션
+	if (bodyRotateToggle) {
+		tank.rotateBody(1.0f); // 매 프레임마다 1도씩 회전
+	}
+
+	// 포탑 회전 애니메이션 (양쪽 반대 방향)
+	if (barrelRotateToggle) {
+		tank.rotateTurret(1.0f); // 매 프레임마다 1도씩 회전
+	}
+
+	// 포탑 위치 교환 애니메이션
+	if (turretSwapToggle) {
+		turretSwapTime += 0.02f; // 시간 증가
+		
+		if (turretSwapTime >= 1.0f) {
+			// 애니메이션 완료: mixstartpos와 mixendpos 둘 다 -1 곱하기
+			mixstartpos *= -1.0f;
+			mixendpos *= -1.0f;
+			turretSwapTime = 0.0f; // 리셋
+		}
+		else {
+			// mixstartpos에서 mixendpos로 선형보간
+			float x = glm::mix(mixstartpos, mixendpos, turretSwapTime);
+			tank.setTurretPos(glm::vec3(x, 0.0f, 0.0f));
+		}
+	}
 
 	glutPostRedisplay();
 	glutTimerFunc(25, TimerFunction, 1);

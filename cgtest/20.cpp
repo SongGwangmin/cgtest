@@ -65,6 +65,10 @@ glm::vec3 turretSwapStartPos(0.0f);    // 포탑 위치 교환 시작 위치
 float mixstartpos = 18.0f;             // 선형보간 시작 위치
 float mixendpos = -18.0f;              // 선형보간 끝 위치
 
+// 카메라 변수
+glm::vec3 cameraPos = glm::vec3(0.0f, 10.0f, 150.0f);      // 카메라 위치
+glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);      // 카메라 타겟
+
 // Forward declaration
 class polygon;
 int mouse_dest = -1; // 마우스로 선택된 polygon 인덱스 저장
@@ -575,8 +579,6 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	// 카메라 설정
-	glm::vec3 cameraPos = glm::vec3(0.0f, 10.0f, 150.0f);
-	glm::vec3 cameraTarget = glm::vec3(cameraPos.x, cameraPos.y - 10.0f, cameraPos.z - 150.0f);
 	glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
 	// 셰이더 사용

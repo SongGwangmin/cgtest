@@ -453,7 +453,7 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	// 세 번째 육면체 생성 및 VBO에 추가
 	// x: -12~12, y: -33~-25, z: -15~15
 	Cube cube3(
-		glm::vec3(-12.0f, -33.0f, -15.0f), // v0: 앞면 왼쪽 아래
+		glm::vec3(-12.0f, -33.0f, -15.0f), // v0: 앞면 왬쪽 아래
 		glm::vec3( 12.0f, -33.0f, -15.0f), // v1: 앞면 오른쪽 아래
 		glm::vec3( 12.0f, -33.0f,  15.0f), // v2: 앞면 오른쪽 위
 		glm::vec3(-12.0f, -33.0f,  15.0f), // v3: 앞면 왼쪽 위
@@ -468,7 +468,7 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	// 네 번째 육면체 생성 및 VBO에 추가
 	// x: -3~3, y: -32~-26, z: 0~26
 	Cube cube4(
-		glm::vec3(-3.0f, -32.0f, 0.0f), // v0: 앞면 왼쪽 아래
+		glm::vec3(-3.0f, -32.0f, 0.0f), // v0: 앞면 왬쪽 아래
 		glm::vec3( 3.0f, -32.0f, 0.0f), // v1: 앞면 오른쪽 아래
 		glm::vec3( 3.0f, -32.0f, 26.0f), // v2: 앞면 오른쪽 위
 		glm::vec3(-3.0f, -32.0f, 26.0f), // v3: 앞면 왼쪽 위
@@ -483,7 +483,7 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	// 다섯 번째 육면체 생성 및 VBO에 추가
 	// x: -3~3, y: 0~18, z: -3~3
 	Cube cube5(
-		glm::vec3(-3.0f, 0.0f, -3.0f), // v0: 앞면 왼쪽 아래
+		glm::vec3(-3.0f, 0.0f, -3.0f), // v0: 앞면 왬쪽 아래
 		glm::vec3( 3.0f, 0.0f, -3.0f), // v1: 앞면 오른쪽 아래
 		glm::vec3( 3.0f, 0.0f,  3.0f), // v2: 앞면 오른쪽 위
 		glm::vec3(-3.0f, 0.0f,  3.0f), // v3: 앞면 왼쪽 위
@@ -681,14 +681,82 @@ void Keyboard(unsigned char key, int x, int y) {
 		wiretoggle = !wiretoggle;
 	}
 	break;
-	case 'z': // z축 시계방향 회전
+	case 'z': // z축 양의 방향으로 카메라와 타겟 이동
 	{
-		
+		cameraPos.z += 5.0f;
+		cameraTarget.z += 5.0f;
 	}
 	break;
-	case 'Z': // z축 반시계방향 회전
+	case 'Z': // z축 음의 방향으로 카메라와 타겟 이동
 	{
+		cameraPos.z -= 5.0f;
+		cameraTarget.z -= 5.0f;
+	}
+	break;
+	case 'x': // x축 양의 방향으로 카메라와 타겟 이동
+	{
+		cameraPos.x += 5.0f;
+		cameraTarget.x += 5.0f;
+	}
+	break;
+	case 'X': // x축 음의 방향으로 카메라와 타겟 이동
+	{
+		cameraPos.x -= 5.0f;
+		cameraTarget.x -= 5.0f;
+	}
+	break;
+	case 'y': // y축 기준 양의 방향(반시계) 회전
+	{
+		// 카메라를 중심으로 타겟을 회전
+		glm::vec3 direction = cameraTarget - cameraPos;
+		float angle = glm::radians(5.0f); // 5도씩 회전
 		
+		// y축 회전 행렬 적용
+		glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0.0f, 1.0f, 0.0f));
+		glm::vec4 newDirection = rotation * glm::vec4(direction, 0.0f);
+		
+		cameraTarget = cameraPos + glm::vec3(newDirection);
+	}
+	break;
+	case 'Y': // y축 기준 음의 방향(시계) 회전
+	{
+		// 카메라를 중심으로 타겟을 회전
+		glm::vec3 direction = cameraTarget - cameraPos;
+		float angle = glm::radians(-5.0f); // -5도씩 회전
+		
+		// y축 회전 행렬 적용
+		glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0.0f, 1.0f, 0.0f));
+		glm::vec4 newDirection = rotation * glm::vec4(direction, 0.0f);
+		
+		cameraTarget = cameraPos + glm::vec3(newDirection);
+	}
+	break;
+	case 'r': // 화면 중심 y축에 대하여 카메라 공전 (반시계)
+	{
+		// 카메라와 타겟의 차이 벡터 저장
+		glm::vec3 delta = cameraTarget - cameraPos;
+		
+		// 원점을 중심으로 카메라를 회전
+		float angle = glm::radians(5.0f); // 5도씩 회전
+		glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0.0f, 1.0f, 0.0f));
+		glm::vec4 newCameraPos = rotation * glm::vec4(cameraPos, 1.0f);
+		
+		cameraPos = glm::vec3(newCameraPos);
+		cameraTarget = cameraPos + delta; // 카메라 위치 + delta = 타겟
+	}
+	break;
+	case 'R': // 화면 중심 y축에 대하여 카메라 공전 (시계)
+	{
+		// 카메라와 타겟의 차이 벡터 저장
+		glm::vec3 delta = cameraTarget - cameraPos;
+		
+		// 원점을 중심으로 카메라를 회전
+		float angle = glm::radians(-5.0f); // -5도씩 회전
+		glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0.0f, 1.0f, 0.0f));
+		glm::vec4 newCameraPos = rotation * glm::vec4(cameraPos, 1.0f);
+		
+		cameraPos = glm::vec3(newCameraPos);
+		cameraTarget = cameraPos + delta; // 카메라 위치 + delta = 타겟
 	}
 	break;
 	case 'h': // 은면제거 적용/해제

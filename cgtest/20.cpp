@@ -181,6 +181,7 @@ private:
 	float turretAngle;       // 포탑의 각도 (y축 회전, 몸체 기준 상대 각도)
 	glm::vec3 turretpos;     // 포신의 위치 (x, y, z)
 	float flagAngle;         // 깃대의 각도 (z축 회전)
+	int flagUp;            // 깃대가 올라가는 중인지 여부
 	
 public:
 	// 생성자
@@ -188,6 +189,7 @@ public:
 		: position(pos), bodyAngle(0.0f), turretAngle(2.0f), 
 		  turretpos(glm::vec3(0.0f, 0.0f, 0.0f)), flagAngle(0.0f)
 	{
+		flagUp = 1;
 	}
 	
 	// 탱크 좌표 설정
@@ -262,7 +264,10 @@ public:
 	
 	// 깃대 회전
 	void rotateFlag(float delta) {
-		flagAngle += delta;
+		if (flagAngle < -18.0f || 18.0f < flagAngle) {
+			flagUp = -flagUp;
+		}
+		flagAngle += delta * flagUp;
 	}
 	
 	// 변환 행렬 반환 함수들
@@ -306,10 +311,10 @@ public:
 		else {
 			matr = glm::rotate(glm::mat4(1.0f), glm::radians(flagAngle), glm::vec3(1.0f, 0.0f, 0.0f));
 		}
+		glm::mat4 matr2;
+		matr2 = glm::translate(glm::mat4(1.0f), glm::vec3(0, -27, 0)); // 깃대 위치로 이동 (필요시 조정)
 
-		matr = glm::translate(glm::mat4(1.0f), glm::vec3(0, -27, 0)); // 깃대 위치로 이동 (필요시 조정)
-
-		return turretRotateAndTranslate(inverse) * matr;
+		return turretRotateAndTranslate(inverse) * matr2 * matr;
 	}
 };
 
@@ -750,6 +755,11 @@ void TimerFunction(int value)
 	// 포탑 회전 애니메이션 (양쪽 반대 방향)
 	if (barrelRotateToggle) {
 		tank.rotateTurret(1.0f); // 매 프레임마다 1도씩 회전
+	}
+
+	// 깃대 회전 애니메이션 (양쪽 반대 방향)
+	if (flagRotateToggle) {
+		tank.rotateFlag(1.0f); // 매 프레임마다 1도씩 회전
 	}
 
 	// 포탑 위치 교환 애니메이션

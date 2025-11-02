@@ -58,6 +58,7 @@ int bodyRotateToggle = 0;    // t: 중앙 몸체 y축 회전
 int turretSwapToggle = 0;    // l: 상부 몸체 위치 교환
 int barrelRotateToggle = 0;  // g: 포신 y축 회전 (양쪽 반대 방향)
 int flagRotateToggle = 0;    // p: 깃대 x축 회전 (양쪽 반대 방향)
+int cameraRotateToggle = 0;  // a: 카메라 자동 공전
 
 // 애니메이션 변수
 float turretSwapTime = 0.0f;           // 포탑 위치 교환 애니메이션 시간 (0~1)
@@ -808,6 +809,11 @@ void Keyboard(unsigned char key, int x, int y) {
 		flagRotateToggle = !flagRotateToggle;
 	}
 	break;
+	case 'a': // 카메라 자동 공전 토글
+	{
+		cameraRotateToggle = !cameraRotateToggle;
+	}
+	break;
 	case 'o': // 모든 토글 끄기
 	case 'O':
 	{
@@ -815,6 +821,7 @@ void Keyboard(unsigned char key, int x, int y) {
 		turretSwapToggle = 0;
 		barrelRotateToggle = 0;
 		flagRotateToggle = 0;
+		cameraRotateToggle = 0;
 	}
 	break;
 	case 'c': // 탱크 초기화
@@ -825,7 +832,8 @@ void Keyboard(unsigned char key, int x, int y) {
 		tank.setTurretAngle(2.0f);
 		tank.setTurretPos(glm::vec3(18.0f, 0.0f, 0.0f));
 		tank.setFlagAngle(0.0f);
-		// flagUp은 Tank 클래스 private 멤버이므로 생성자에서 1로 초기화됨
+		cameraPos = glm::vec3(0.0f, 10.0f, 150.0f);
+		cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
 	}
 	break;
 	default:
@@ -867,6 +875,16 @@ void TimerFunction(int value)
 			float x = glm::mix(mixstartpos, mixendpos, turretSwapTime);
 			tank.setTurretPos(glm::vec3(x, 0.0f, 0.0f));
 		}
+	}
+
+	// 카메라 자동 공전
+	if (cameraRotateToggle) {
+		float angle = glm::radians(1.0f); // 1도씩 회전
+		
+		// y축 회전 행렬 적용
+		glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0.0f, 1.0f, 0.0f));
+		cameraPos = rotation * glm::vec4(cameraPos, 0.0f);
+		
 	}
 
 	glutPostRedisplay();

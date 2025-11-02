@@ -21,6 +21,7 @@
 #define pentagon 4
 #define spherelevel 15
 #define pi 3.14159265358979323846
+#define PLATESIZE 150 // 평면 크기
 
 std::random_device rd;
 
@@ -60,7 +61,106 @@ std::vector<float> allVertices;
 
 float angle = 0.0f; // 회전 각도
 
-
+// 육면체 클래스
+class Cube {
+private:
+	glm::vec3 vertices[8]; // 8개의 꼭지점
+	glm::vec3 color;       // 색상
+	
+public:
+	// 생성자: 8개의 점을 받아서 육면체 생성
+	Cube(glm::vec3 v0, glm::vec3 v1, glm::vec3 v2, glm::vec3 v3,
+		 glm::vec3 v4, glm::vec3 v5, glm::vec3 v6, glm::vec3 v7,
+		 glm::vec3 col = glm::vec3(1.0f, 1.0f, 1.0f))
+		: color(col)
+	{
+		vertices[0] = v0;
+		vertices[1] = v1;
+		vertices[2] = v2;
+		vertices[3] = v3;
+		vertices[4] = v4;
+		vertices[5] = v5;
+		vertices[6] = v6;
+		vertices[7] = v7;
+	}
+	
+	// 육면체의 정점 데이터를 VBO에 추가하는 함수
+	void sendVertexData(std::vector<float>& vbo) {
+		// 육면체는 6개의 면으로 구성되며, 각 면은 2개의 삼각형으로 구성
+		// 면의 인덱스 순서 (반시계방향)
+		int faceIndices[6][4] = {
+			{0, 1, 2, 3}, // 앞면
+			{4, 5, 6, 7}, // 뒷면
+			{0, 1, 5, 4}, // 아랫면
+			{2, 3, 7, 6}, // 윗면
+			{0, 3, 7, 4}, // 왼쪽면
+			{1, 2, 6, 5}  // 오른쪽면
+		};
+		
+		// 각 면을 2개의 삼각형으로 분할하여 VBO에 추가
+		for (int face = 0; face < 6; ++face) {
+			int* indices = faceIndices[face];
+			
+			// 첫 번째 삼각형 (0, 1, 2)
+			addTriangle(vbo, 
+				vertices[indices[0]], 
+				vertices[indices[1]], 
+				vertices[indices[2]]);
+			
+			// 두 번째 삼각형 (0, 2, 3)
+			addTriangle(vbo, 
+				vertices[indices[0]], 
+				vertices[indices[2]], 
+				vertices[indices[3]]);
+		}
+	}
+	
+	// 색상 설정
+	void setColor(glm::vec3 col) {
+		color = col;
+	}
+	
+	// 특정 꼭지점 가져오기
+	glm::vec3 getVertex(int index) const {
+		if (index >= 0 && index < 8) {
+			return vertices[index];
+		}
+		return glm::vec3(0.0f);
+	}
+	
+	// 특정 꼭지점 설정
+	void setVertex(int index, glm::vec3 v) {
+		if (index >= 0 && index < 8) {
+			vertices[index] = v;
+		}
+	}
+	
+private:
+	// 삼각형 데이터를 VBO에 추가하는 헬퍼 함수
+	void addTriangle(std::vector<float>& vbo, 
+		const glm::vec3& v0, 
+		const glm::vec3& v1, 
+		const glm::vec3& v2) 
+	{
+		// 정점 0
+		vbo.insert(vbo.end(), {
+			v0.x, v0.y, v0.z,
+			color.r, color.g, color.b
+		});
+		
+		// 정점 1
+		vbo.insert(vbo.end(), {
+			v1.x, v1.y, v1.z,
+			color.r, color.g, color.b
+		});
+		
+		// 정점 2
+		vbo.insert(vbo.end(), {
+			v2.x, v2.y, v2.z,
+			color.r, color.g, color.b
+		});
+	}
+};
 
 
 void Keyboard(unsigned char key, int x, int y);
@@ -125,29 +225,39 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	// 버퍼 설정
 	setupBuffers();
 	glEnable(GL_DEPTH_TEST);
-	allVertices.clear();
+	
 
-
-
-	// 원을 그리기 위한 점들 생성 (0, 0, -50)을 y축으로 회전
-	int circleSegments = 100; // 원을 구성할 선분 개수
-	float radius = 50.0f; // 반지름
-	glm::vec3 startPoint(0.0f, 0.0f, -radius); // 시작점
-
-	for (int i = 0; i <= circleSegments; ++i) {
-		float angle = (2.0f * pi * i) / circleSegments; // 0 ~ 2π
-
-		// y축 회전 행렬 적용
-		glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0.0f, 1.0f, 0.0f));
-		glm::vec4 rotatedPoint = rotationMatrix * glm::vec4(startPoint, 1.0f);
-
-		// 점 추가
-		allVertices.insert(allVertices.end(), {
-			rotatedPoint.x, rotatedPoint.y, rotatedPoint.z,
-			0.0f, 0.0f, 0.0f // 검은색
-			});
-	}
-
+	// y=-50 평면에 회색 사각형 추가
+	float planeY = -50.0f;
+	glm::vec3 planeColor = glm::vec3(100.0f / 255.0f, 100.0f / 255.0f, 100.0f / 255.0f); // RGB(100,100,100)
+	
+	// 첫 번째 삼각형
+	allVertices.insert(allVertices.end(), {
+		-PLATESIZE, planeY, -PLATESIZE,
+		planeColor.r, planeColor.g, planeColor.b
+	});
+	allVertices.insert(allVertices.end(), {
+		PLATESIZE, planeY, -PLATESIZE,
+		planeColor.r, planeColor.g, planeColor.b
+	});
+	allVertices.insert(allVertices.end(), {
+		PLATESIZE, planeY, PLATESIZE,
+		planeColor.r, planeColor.g, planeColor.b
+	});
+	
+	// 두 번째 삼각형
+	allVertices.insert(allVertices.end(), {
+		-PLATESIZE, planeY, -PLATESIZE,
+		planeColor.r, planeColor.g, planeColor.b
+	});
+	allVertices.insert(allVertices.end(), {
+		PLATESIZE, planeY, PLATESIZE,
+		planeColor.r, planeColor.g, planeColor.b
+	});
+	allVertices.insert(allVertices.end(), {
+		-PLATESIZE, planeY, PLATESIZE,
+		planeColor.r, planeColor.g, planeColor.b
+	});
 
 
 	//--- 세이더 프로그램 만들기
@@ -236,10 +346,50 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 	glm::vec3 cameraTarget = glm::vec3(cameraPos.x, cameraPos.y - 10.0f, cameraPos.z - 150.0f);
 	glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
+	// 셰이더 사용
+	glUseProgram(shaderProgramID);
 	
-
-
+	// 투영 행렬 설정
+	glm::mat4 projection = glm::perspective(
+		glm::radians(60.0f),
+		(float)width / (float)height,
+		0.1f,
+		300.0f
+	);
+	unsigned int projectionLocation = glGetUniformLocation(shaderProgramID, "projectionTransform");
+	glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(projection));
 	
+	// 뷰 행렬 설정
+	glm::mat4 view = glm::lookAt(cameraPos, cameraTarget, cameraUp);
+	unsigned int viewLocation = glGetUniformLocation(shaderProgramID, "viewTransform");
+	glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(view));
+	
+	// 모델 행렬 설정
+	glm::mat4 model = glm::mat4(1.0f);
+	unsigned int modelLocation = glGetUniformLocation(shaderProgramID, "modelTransform");
+	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
+	
+	// VBO 데이터 바인딩 및 그리기
+	if (!allVertices.empty()) {
+		glBindVertexArray(VAO);
+		glBindBuffer(GL_ARRAY_BUFFER, VBO);
+		glBufferData(GL_ARRAY_BUFFER, allVertices.size() * sizeof(float),
+			allVertices.data(), GL_STATIC_DRAW);
+		
+		// 와이어프레임 모드 설정
+		if (wiretoggle) {
+			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		}
+		else {
+			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		}
+		
+		// 전체 정점 개수 계산 (각 정점은 6개 float: xyz + rgb)
+		int vertexCount = allVertices.size() / 6;
+		glDrawArrays(GL_TRIANGLES, 0, vertexCount);
+		
+		glBindVertexArray(0);
+	}
 
 	glutSwapBuffers(); // 화면에 출력하기
 }

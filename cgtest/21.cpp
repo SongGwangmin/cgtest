@@ -88,6 +88,7 @@ std::vector<float> allVertices;
 
 float angle = 0.0f; // 회전 각도 (전역 변수)
 float openangle = 0.0f; // EnRjd 각도 (전역 변수)
+float yangle = 0.0f; // Y축 회전 각도 (전역 변수)
 
 // 구의 위치 저장 (5개)
 glm::vec3 spherePositions[5];
@@ -123,7 +124,7 @@ public:
 		int faceIndices[6][4] = {
 			{0, 1, 2, 3}, // 앞면
 			{4, 7, 6, 5}, // 뒷면
-			{0, 1, 5, 4}, // 아랫면      
+			{0, 4, 5, 1}, // 아랫면      
 			{2, 6, 7, 3}, // 윗면
 			{0, 3, 7, 4}, // 왼쪽면
 			{1, 5, 6, 2}  // 오른쪽면
@@ -561,7 +562,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 		int startVertex = 0;
 
 		// AntiCube 그리기 (z축 회전 추가)
-		
+		glm::mat4 yrote = glm::rotate(glm::mat4(1.0f), yangle, glm::vec3(0.0f, 1.0f, 0.0f));
 		
 		glm::mat4 gototheorigin = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 30.0f, 30.0f));
 
@@ -570,6 +571,8 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 		glm::mat4 backtotheorigin = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -30.0f, -30.0f));
 		
 		glm::mat4 model = glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0.0f, 0.0f, 1.0f));
+
+		model = yrote * model;
 
 		glm::mat4 firstmodel = model * backtotheorigin * rotatetoorigin * gototheorigin;
 		
@@ -590,21 +593,21 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 		// Cube1 그리기 (x축 이동 후 z축 회전)
 		model = glm::translate(glm::mat4(1.0f), glm::vec3(cubepos[0].nowxpos + 30.0f, cubepos[0].nowypos, 0.0f));
 		glm::mat4 rotmodel = glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0.0f, 0.0f, 1.0f));
-		model = rotmodel * model;
+		model = yrote * rotmodel * model;
 		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
 		glDrawArrays(GL_TRIANGLES, startVertex, 36);
 		startVertex += 36;
 
 		// Cube2 그리기 (x축 이동 후 z축 회전)
 		model = glm::translate(glm::mat4(1.0f), glm::vec3(cubepos[1].nowxpos + 30.0f, cubepos[1].nowypos, 0.0f));
-		model = rotmodel * model;
+		model = yrote * rotmodel * model;
 		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
 		glDrawArrays(GL_TRIANGLES, startVertex, 36);
 		startVertex += 36;
 
 		// Cube3 그리기 (x축 이동 후 z축 회전)
 		model = glm::translate(glm::mat4(1.0f), glm::vec3(cubepos[2].nowxpos + 30.0f, cubepos[2].nowypos, 0.0f));
-		model = rotmodel * model;
+		model = yrote * rotmodel * model;
 		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
 		glDrawArrays(GL_TRIANGLES, startVertex, 36);
 
@@ -634,6 +637,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 	
 	// z축 회전 적용 (모든 구에 공통)
 	glRotatef(glm::degrees(angle), 0.0f, 0.0f, 1.0f);
+	glRotatef(glm::degrees(yangle), 0.0f, 1.0f, 0.0f);
 	
 	// 5개의 구 그리기
 	for (int i = 0; i < 5; ++i) {
@@ -644,7 +648,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 		
 		// 랜덤한 색상 설정 (저장된 위치를 시드로 사용)
 		float r = 0.0f;
-		float g = 0.0f;
+		float g = 1.0f;
 		float b = 1.0f;
 		glColor3f(r, g, b);
 		
@@ -681,20 +685,23 @@ void Keyboard(unsigned char key, int x, int y) {
 	break;
 	case 'z': // z축 양의 방향으로 카메라와 타겟 이동
 	{
+		cameraPos = glm::vec3(0.0f, 0.0f, cameraPos.z + 1);      // 카메라 위치
 	}
 	break;
 	case 'Z': // z축 음의 방향으로 카메라와 타겟 이동
 	{
+		cameraPos = glm::vec3(0.0f, 0.0f, cameraPos.z - 1);      // 카메라 위치
 	}
 	break;
 	case 'y': // y축 기준 양의 방향(반시계) 회전
 	{
-		
+		yangle += 0.1f;
 	}
 	break;
 	case 'Y': // y축 기준 음의 방향(시계) 회전
 	{
 
+		yangle -= 0.1f;
 	}
 	break;
 	case 'b':
@@ -737,6 +744,7 @@ void Keyboard(unsigned char key, int x, int y) {
 	{
 		opentoggle = 1;
 	}
+	break;
 	case '*':
 	{
 		if (culltoggle == 0) {

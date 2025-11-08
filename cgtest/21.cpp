@@ -511,12 +511,10 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 	unsigned int viewLocation = glGetUniformLocation(shaderProgramID, "viewTransform");
 	glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(view));
 
-	// 모델 행렬 설정
-	glm::mat4 model = glm::mat4(1.0f);
+	// 모델 행렬 위치
 	unsigned int modelLocation = glGetUniformLocation(shaderProgramID, "modelTransform");
-	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
 
-	// VBO 데이터 바인딩 및 그리기
+	// VBO 데이터 바인딩
 	if (!allVertices.empty()) {
 		glBindVertexArray(VAO);
 		glBindBuffer(GL_ARRAY_BUFFER, VBO);
@@ -531,12 +529,31 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		}
 
-		// 전체 정점 개수 계산 (각 정점은 6개 float: xyz + rgb)
-		int vertexCount = allVertices.size() / 6;
-		
-		// 모든 정점 그리기
-		glDrawArrays(GL_TRIANGLES, 0, vertexCount);
-		
+		int startVertex = 0;
+
+		// AntiCube 그리기 (변환 없음)
+		glm::mat4 model = glm::mat4(1.0f);
+		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
+		glDrawArrays(GL_TRIANGLES, startVertex, 36); // 6면 * 2삼각형 * 3정점 = 36
+		startVertex += 36;
+
+		// Cube1 그리기 (nowxpos + 30.0f 만큼 x축 이동)
+		model = glm::translate(glm::mat4(1.0f), glm::vec3(cubepos[0].nowxpos + 30.0f, 0.0f, 0.0f));
+		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
+		glDrawArrays(GL_TRIANGLES, startVertex, 36);
+		startVertex += 36;
+
+		// Cube2 그리기 (nowxpos + 30.0f 만큼 x축 이동)
+		model = glm::translate(glm::mat4(1.0f), glm::vec3(cubepos[1].nowxpos + 30.0f, 0.0f, 0.0f));
+		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
+		glDrawArrays(GL_TRIANGLES, startVertex, 36);
+		startVertex += 36;
+
+		// Cube3 그리기 (nowxpos + 30.0f 만큼 x축 이동)
+		model = glm::translate(glm::mat4(1.0f), glm::vec3(cubepos[2].nowxpos + 30.0f, 0.0f, 0.0f));
+		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
+		glDrawArrays(GL_TRIANGLES, startVertex, 36);
+
 		glBindVertexArray(0);
 	}
 
@@ -687,11 +704,23 @@ void SpecialKeys(int key, int x, int y) // 특수 키(화살표 키) 콜백 함수
 	case GLUT_KEY_DOWN: // 아래쪽 화살표 - z축 양의 방향으로 이동
 		
 		break;
-	case GLUT_KEY_LEFT: // 왼쪽 화살표 - x축 음의 방향으로 이동
-		
+	case GLUT_KEY_LEFT: // 왼쪽 화살표 - 모든 큐브를 왼쪽으로 이동
+		for (int i = 0; i < 3; ++i) {
+			cubepos[i].nowxpos -= 2.0f;
+			// xStart 범위를 벗어나지 않도록 제한
+			if (cubepos[i].nowxpos < cubepos[i].xStart) {
+				cubepos[i].nowxpos = cubepos[i].xStart;
+			}
+		}
 		break;
-	case GLUT_KEY_RIGHT: // 오른쪽 화살표 - x축 양의 방향으로 이동
-		
+	case GLUT_KEY_RIGHT: // 오른쪽 화살표 - 모든 큐브를 오른쪽으로 이동
+		for (int i = 0; i < 3; ++i) {
+			cubepos[i].nowxpos += 2.0f;
+			// xend 범위를 벗어나지 않도록 제한
+			if (cubepos[i].nowxpos > cubepos[i].xend) {
+				cubepos[i].nowxpos = cubepos[i].xend;
+			}
+		}
 		break;
 	}
 

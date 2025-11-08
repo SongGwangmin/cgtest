@@ -76,9 +76,9 @@ struct CubePos {
 
 // 3개의 큐브 정보 저장
 CubePos cubepos[3] = {
-	{-30.0f, 10.0f, 30.0f - 10.0f, -30.0f},   // cube1: x시작 -30, 크기 10
-	{-30.0f, 15.0f, 30.0f - 15.0f, -30.0f},   // cube2: x시작 -30, 크기 15
-	{-30.0f, 20.0f, 30.0f - 20.0f, -30.0f}    // cube3: x시작 -30, 크기 20
+	{-30.0f, 10.0f, 30.0f - 10.0f, -30.0f, 0.0f},   // cube1: x시작 -30, 크기 10
+	{-30.0f, 15.0f, 30.0f - 15.0f, -30.0f, 0.0f},   // cube2: x시작 -30, 크기 15
+	{-30.0f, 20.0f, 30.0f - 20.0f, -30.0f, 0.0f}    // cube3: x시작 -30, 크기 20
 };
 
 // Forward declaration
@@ -588,7 +588,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 		
 
 		// Cube1 그리기 (x축 이동 후 z축 회전)
-		model = glm::translate(glm::mat4(1.0f), glm::vec3(cubepos[0].nowxpos + 30.0f, 0.0f, 0.0f));
+		model = glm::translate(glm::mat4(1.0f), glm::vec3(cubepos[0].nowxpos + 30.0f, cubepos[0].nowypos, 0.0f));
 		glm::mat4 rotmodel = glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0.0f, 0.0f, 1.0f));
 		model = rotmodel * model;
 		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
@@ -596,14 +596,14 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 		startVertex += 36;
 
 		// Cube2 그리기 (x축 이동 후 z축 회전)
-		model = glm::translate(glm::mat4(1.0f), glm::vec3(cubepos[1].nowxpos + 30.0f, 0.0f, 0.0f));
+		model = glm::translate(glm::mat4(1.0f), glm::vec3(cubepos[1].nowxpos + 30.0f, cubepos[1].nowypos, 0.0f));
 		model = rotmodel * model;
 		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
 		glDrawArrays(GL_TRIANGLES, startVertex, 36);
 		startVertex += 36;
 
 		// Cube3 그리기 (x축 이동 후 z축 회전)
-		model = glm::translate(glm::mat4(1.0f), glm::vec3(cubepos[2].nowxpos + 30.0f, 0.0f, 0.0f));
+		model = glm::translate(glm::mat4(1.0f), glm::vec3(cubepos[2].nowxpos + 30.0f, cubepos[2].nowypos, 0.0f));
 		model = rotmodel * model;
 		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
 		glDrawArrays(GL_TRIANGLES, startVertex, 36);
@@ -743,13 +743,25 @@ void TimerFunction(int value)
 		
 		// -1 ~ 1을 0 ~ 1로 변환: (sinValue + 1) / 2
 		// 0 ~ 1을 xStart ~ xend로 변환
-		cubepos[i].nowxpos += sinValue;
+		cubepos[i].nowxpos += sinValue / 2;
 
-		if(cubepos[i].nowxpos > cubepos[i].xend) {
+		if(cubepos[i].nowxpos > cubepos[i].xend && cubepos[i].nowypos > cubepos[i].size * -1) {
 			cubepos[i].nowxpos = cubepos[i].xend;
 		}
-		if(cubepos[i].nowxpos < cubepos[i].xStart) {
+		if(cubepos[i].nowxpos < cubepos[i].xStart && cubepos[i].nowypos > cubepos[i].size * -1) {
 			cubepos[i].nowxpos = cubepos[i].xStart;
+		}
+	}
+
+	if (opentoggle) {
+		for (int i = 0; i < 3; ++i) {
+
+			float sinValue = cos(angle) * -1;  // -1 ~ 1
+
+			// -1 ~ 1을 0 ~ 1로 변환: (sinValue + 1) / 2
+			// 0 ~ 1을 xStart ~ xend로 변환
+			cubepos[i].nowypos += sinValue / 2;
+
 		}
 	}
 
@@ -785,7 +797,7 @@ void TimerFunction(int value)
 		openangle += 0.02f;;
 		if (openangle >= glm::radians(90.0f)) {
 			openangle = glm::radians(90.0f);
-			opentoggle = false;
+			
 		}
 	}
 

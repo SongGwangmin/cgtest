@@ -94,6 +94,8 @@ float yangle = 0.0f; // Y축 회전 각도 (전역 변수)
 glm::vec3 spherePositions[5];
 glm::vec3 spheredelta[5];
 
+int xmouse = 400;
+
 // 육면체 클래스
 class Cube {
 private:
@@ -290,9 +292,23 @@ private:
 
 
 void Keyboard(unsigned char key, int x, int y);
+void rotatetimer(int value);
 void SpecialKeys(int key, int x, int y); // 특수 키(화살표 키) 콜백 함수 선언
-void Mouse(int button, int state, int x, int y);
-void Motion(int x, int y); // 마우스 모션 콜백 함수 선언
+void Mouse(int button, int state, int x, int y) {
+	if (button == GLUT_LEFT_BUTTON) {
+		if (state == GLUT_DOWN) {
+			// 마우스 버튼을 누를 때 현재 위치 저장
+			xmouse = x;
+		}
+	}
+}
+void Motion(int x, int y) { // 마우스 모션 콜백 함수 선언
+	
+
+}
+void Mousemove(int x, int y) {
+	xmouse = x;
+}
 
 char* filetobuf(const char* file)
 {
@@ -444,13 +460,19 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	glutReshapeFunc(Reshape);
 
 	glutTimerFunc(25, TimerFunction, 1);
+	glutTimerFunc(100, rotatetimer, 2);
 
 	glutKeyboardFunc(Keyboard);
 	glutSpecialFunc(SpecialKeys); // 특수 키 콜백 함수 등록
+	glutMouseFunc(Mouse);
+	glutMotionFunc(Motion); // 마우스 모션 콜백 함수 등록
+	glutPassiveMotionFunc(Mousemove); // 마우스 이동 콜백 함수 등록 (버튼 누르지 않고 이동)
 
 	glutMainLoop();
 	return 0;
 }
+
+
 
 void make_vertexShaders()
 {
@@ -741,6 +763,7 @@ void Keyboard(unsigned char key, int x, int y) {
 	}
 	break;
 	case 'o':
+	case 'O':
 	{
 		opentoggle = 1;
 	}
@@ -833,13 +856,59 @@ void TimerFunction(int value)
 		}
 	}
 
+
+	
+
+
 	glutPostRedisplay();
 	glutTimerFunc(25, TimerFunction, 1);
 }
 
-void Motion(int x, int y) // 마우스 모션 콜백 함수
-{
+void rotatetimer(int value) {
+	if (xmouse < 200) {
+		angle -= 0.1f;
+		if (angle <= -pi / 3) angle = -pi / 3;
+		else {
+			// 각 구의 위치를 z축 기준으로 0.1f만큼 회전
+			for (int i = 0; i < 5; ++i) {
+				glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), 0.1f, glm::vec3(0.0f, 0.0f, 1.0f));
+				glm::vec4 rotatedPos = rotationMatrix * glm::vec4(spherePositions[i], 1.0f);
+				spherePositions[i] = glm::vec3(rotatedPos);
 
+				// 범위 제한 적용
+
+
+				if (spherePositions[i].x < minBound) spherePositions[i].x = minBound;
+				if (spherePositions[i].x > maxBound) spherePositions[i].x = maxBound;
+				if (spherePositions[i].y < minBound) spherePositions[i].y = minBound;
+				if (spherePositions[i].y > maxBound) spherePositions[i].y = maxBound;
+				if (spherePositions[i].z < minBound) spherePositions[i].z = minBound;
+				if (spherePositions[i].z > maxBound) spherePositions[i].z = maxBound;
+			}
+		}
+	}
+	else if (xmouse > (width - 200)) {
+		angle += 0.1f;
+		if (angle >= pi / 3) angle = pi / 3;
+		else {
+			// 각 구의 위치를 z축 기준으로 0.1f만큼 회전
+			for (int i = 0; i < 5; ++i) {
+				glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), -0.1f, glm::vec3(0.0f, 0.0f, 1.0f));
+				glm::vec4 rotatedPos = rotationMatrix * glm::vec4(spherePositions[i], 1.0f);
+				spherePositions[i] = glm::vec3(rotatedPos);
+				// 범위 제한 적용
+				if (spherePositions[i].x < minBound) spherePositions[i].x = minBound;
+				if (spherePositions[i].x > maxBound) spherePositions[i].x = maxBound;
+				if (spherePositions[i].y < minBound) spherePositions[i].y = minBound;
+				if (spherePositions[i].y > maxBound) spherePositions[i].y = maxBound;
+				if (spherePositions[i].z < minBound) spherePositions[i].z = minBound;
+				if (spherePositions[i].z > maxBound) spherePositions[i].z = maxBound;
+			}
+		}
+	}
+
+	glutPostRedisplay();
+	glutTimerFunc(25, rotatetimer, 2);
 }
 
 void SpecialKeys(int key, int x, int y) // 특수 키(화살표 키) 콜백 함수

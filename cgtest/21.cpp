@@ -52,6 +52,7 @@ GLuint VAO, VBO; //--- 버텍스 배열 객체, 버텍스 버퍼 객체
 int hidetoggle = 1; // 1. 은면제거
 int wiretoggle = 0; // 0: 솔리드 모드, 1: 와이어프레임 모드
 int culltoggle = 0; // 1. 뒷면 컬링 모드
+int opentoggle = 0; // 0: 문 닫힘, 1: 문 열림
 
 
 // 카메라 변수
@@ -708,6 +709,10 @@ void Keyboard(unsigned char key, int x, int y) {
 		}
 	}
 	break;
+	case 'o':
+	{
+		opentoggle = 1;
+	}
 	case '*':
 	{
 		if (culltoggle == 0) {
@@ -776,7 +781,13 @@ void TimerFunction(int value)
 		
 	}
 
-	openangle += 0.002f;;
+	if (opentoggle) {
+		openangle += 0.02f;;
+		if (openangle >= glm::radians(90.0f)) {
+			openangle = glm::radians(90.0f);
+			opentoggle = false;
+		}
+	}
 
 	glutPostRedisplay();
 	glutTimerFunc(25, TimerFunction, 1);

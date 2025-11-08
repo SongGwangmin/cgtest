@@ -697,6 +697,30 @@ void Keyboard(unsigned char key, int x, int y) {
 
 	}
 	break;
+	case 'b':
+	case 'B':
+	{
+		std::uniform_real_distribution<float> posDis(-ANTICUBE_HALF + 3, ANTICUBE_HALF - 3);
+		std::uniform_real_distribution<float> angleDis(0.0f, 2.0f * pi);
+
+		for (int i = 0; i < 5; ++i) {
+			// 랜덤한 위치 생성 (AntiCube 범위 내)
+			spherePositions[i] = glm::vec3(
+				posDis(gen),
+				posDis(gen),
+				posDis(gen)
+			);
+
+			// 랜덤한 각도로 이동 방향 설정
+			float dirangle = angleDis(gen);
+			spheredelta[i] = glm::vec3(
+				cos(dirangle),
+				sin(dirangle),
+				0.0f
+			);
+		}
+	}
+	break;
 	case 'h': // 은면제거 적용/해제
 	{
 		if (hidetoggle) {

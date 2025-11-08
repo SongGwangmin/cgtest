@@ -61,6 +61,8 @@ glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);      // 카메라 타겟
 // AntiCube 크기 상수
 const float ANTICUBE_SIZE = 60.0f;  // 한 변의 길이
 const float ANTICUBE_HALF = ANTICUBE_SIZE / 2.0f;  // 반지름 (중심에서 면까지의 거리)
+const float minBound = -ANTICUBE_HALF + 3.0f;
+const float maxBound = ANTICUBE_HALF - 3.0f;
 
 // Cube 위치와 크기를 저장하는 구조체
 struct CubePos {
@@ -86,6 +88,7 @@ float angle = 0.0f; // 회전 각도 (전역 변수)
 
 // 구의 위치 저장 (5개)
 glm::vec3 spherePositions[5];
+glm::vec3 spheredelta[5];
 
 // 육면체 클래스
 class Cube {
@@ -412,6 +415,7 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 
 	// AntiCube 범위 내에서 랜덤한 5개 점 생성
 	std::uniform_real_distribution<float> posDis(-ANTICUBE_HALF + 3, ANTICUBE_HALF - 3);
+	std::uniform_real_distribution<float> angleDis(0.0f, 2.0f * pi);
 	
 	for (int i = 0; i < 5; ++i) {
 		// 랜덤한 위치 생성 (AntiCube 범위 내)
@@ -420,8 +424,15 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 			posDis(gen),
 			posDis(gen)
 		);
+		
+		// 랜덤한 각도로 이동 방향 설정
+		float dirangle = angleDis(gen);
+		spheredelta[i] = glm::vec3(
+			cos(dirangle),
+			sin(dirangle),
+			0.0f
+		);
 	}
-
 	
 
 	//--- 세이더 프로그램 만들기
@@ -774,6 +785,34 @@ void TimerFunction(int value)
 		}
 	}
 
+	// 구들의 위치 업데이트 및 충돌 처리
+	for (int i = 0; i < 5; ++i) {
+		// delta 값을 더하여 위치 이동
+		spherePositions[i] += spheredelta[i];
+		
+		// x축 벽과의 충돌 처리
+		if (spherePositions[i].x < minBound) {
+			spherePositions[i].x = minBound;
+			spheredelta[i].x *= -1.0f;  // x 방향 반전
+		}
+		else if (spherePositions[i].x > maxBound) {
+			spherePositions[i].x = maxBound;
+			spheredelta[i].x *= -1.0f;  // x 방향 반전
+		}
+		
+		// y축 벽과의 충돌 처리
+		if (spherePositions[i].y < minBound) {
+			spherePositions[i].y = minBound;
+			spheredelta[i].y *= -1.0f;  // y 방향 반전
+		}
+		else if (spherePositions[i].y > maxBound) {
+			spherePositions[i].y = maxBound;
+			spheredelta[i].y *= -1.0f;  // y 방향 반전
+		}
+		
+		
+	}
+
 	glutPostRedisplay();
 	glutTimerFunc(25, TimerFunction, 1);
 }
@@ -803,8 +842,7 @@ void SpecialKeys(int key, int x, int y) // 특수 키(화살표 키) 콜백 함수
 				spherePositions[i] = glm::vec3(rotatedPos);
 				
 				// 범위 제한 적용
-				const float minBound = -ANTICUBE_HALF + 3.0f;
-				const float maxBound = ANTICUBE_HALF - 3.0f;
+				
 				
 				if (spherePositions[i].x < minBound) spherePositions[i].x = minBound;
 				if (spherePositions[i].x > maxBound) spherePositions[i].x = maxBound;
@@ -827,9 +865,7 @@ void SpecialKeys(int key, int x, int y) // 특수 키(화살표 키) 콜백 함수
 				spherePositions[i] = glm::vec3(rotatedPos);
 				
 				// 범위 제한 적용
-				const float minBound = -ANTICUBE_HALF + 3.0f;
-				const float maxBound = ANTICUBE_HALF - 3.0f;
-				
+
 				if (spherePositions[i].x < minBound) spherePositions[i].x = minBound;
 				if (spherePositions[i].x > maxBound) spherePositions[i].x = maxBound;
 				if (spherePositions[i].y < minBound) spherePositions[i].y = minBound;

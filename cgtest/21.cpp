@@ -534,8 +534,15 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 		// AntiCube 그리기 (z축 회전 추가)
 		glm::mat4 model = glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0.0f, 0.0f, 1.0f));
 		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
-		glDrawArrays(GL_TRIANGLES, startVertex, 36); // 6면 * 2삼각형 * 3정점 = 36
-		startVertex += 36;
+		
+		glDrawArrays(GL_TRIANGLES, startVertex, 6); // 6면 * 2삼각형 * 3정점 = 36
+		startVertex += 6;
+		for (int i = 0; i < 5; ++i) {
+			glDrawArrays(GL_TRIANGLES, startVertex, 6); // 6면 * 2삼각형 * 3정점 = 36
+			startVertex += 6;
+		}
+
+		
 
 		// Cube1 그리기 (x축 이동 후 z축 회전)
 		model = glm::translate(glm::mat4(1.0f), glm::vec3(cubepos[0].nowxpos + 30.0f, 0.0f, 0.0f));

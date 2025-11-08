@@ -70,6 +70,7 @@ struct CubePos {
 	float size;        // 한 변의 길이
 	float xend;
 	float nowxpos;
+	float nowypos;
 };
 
 // 3개의 큐브 정보 저장
@@ -85,6 +86,7 @@ int mouse_dest = -1; // 마우스로 선택된 polygon 인덱스 저장
 std::vector<float> allVertices;
 
 float angle = 0.0f; // 회전 각도 (전역 변수)
+float openangle = 0.0f; // EnRjd 각도 (전역 변수)
 
 // 구의 위치 저장 (5개)
 glm::vec3 spherePositions[5];
@@ -558,11 +560,25 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 		int startVertex = 0;
 
 		// AntiCube 그리기 (z축 회전 추가)
+		
+		
+		glm::mat4 gototheorigin = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 30.0f, 30.0f));
+
+		glm::mat4 rotatetoorigin = glm::rotate(glm::mat4(1.0f), openangle, glm::vec3(1.0f, 0.0f, 0.0f));
+
+		glm::mat4 backtotheorigin = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -30.0f, -30.0f));
+		
 		glm::mat4 model = glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0.0f, 0.0f, 1.0f));
+
+		model = model * backtotheorigin * rotatetoorigin * gototheorigin;
+		
+		
 		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
 		
-		glDrawArrays(GL_TRIANGLES, startVertex, 6); // 6면 * 2삼각형 * 3정점 = 36
+		glDrawArrays(GL_TRIANGLES, startVertex, 6); // qkekr
 		startVertex += 6;
+
+
 		for (int i = 0; i < 5; ++i) {
 			glDrawArrays(GL_TRIANGLES, startVertex, 6); // 6면 * 2삼각형 * 3정점 = 36
 			startVertex += 6;

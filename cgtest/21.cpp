@@ -82,7 +82,7 @@ class polygon;
 int mouse_dest = -1; // 마우스로 선택된 polygon 인덱스 저장
 std::vector<float> allVertices;
 
-float angle = 0.0f; // 회전 각도
+float angle = 0.0f; // 회전 각도 (전역 변수)
 
 // 육면체 클래스
 class Cube {
@@ -531,26 +531,30 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 
 		int startVertex = 0;
 
-		// AntiCube 그리기 (변환 없음)
-		glm::mat4 model = glm::mat4(1.0f);
+		// AntiCube 그리기 (z축 회전 추가)
+		glm::mat4 model = glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0.0f, 0.0f, 1.0f));
 		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
 		glDrawArrays(GL_TRIANGLES, startVertex, 36); // 6면 * 2삼각형 * 3정점 = 36
 		startVertex += 36;
 
-		// Cube1 그리기 (nowxpos + 30.0f 만큼 x축 이동)
+		// Cube1 그리기 (x축 이동 후 z축 회전)
 		model = glm::translate(glm::mat4(1.0f), glm::vec3(cubepos[0].nowxpos + 30.0f, 0.0f, 0.0f));
+		glm::mat4 rotmodel = glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0.0f, 0.0f, 1.0f));
+		model = rotmodel * model;
 		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
 		glDrawArrays(GL_TRIANGLES, startVertex, 36);
 		startVertex += 36;
 
-		// Cube2 그리기 (nowxpos + 30.0f 만큼 x축 이동)
+		// Cube2 그리기 (x축 이동 후 z축 회전)
 		model = glm::translate(glm::mat4(1.0f), glm::vec3(cubepos[1].nowxpos + 30.0f, 0.0f, 0.0f));
+		model = rotmodel * model;
 		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
 		glDrawArrays(GL_TRIANGLES, startVertex, 36);
 		startVertex += 36;
 
-		// Cube3 그리기 (nowxpos + 30.0f 만큼 x축 이동)
+		// Cube3 그리기 (x축 이동 후 z축 회전)
 		model = glm::translate(glm::mat4(1.0f), glm::vec3(cubepos[2].nowxpos + 30.0f, 0.0f, 0.0f));
+		model = rotmodel * model;
 		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
 		glDrawArrays(GL_TRIANGLES, startVertex, 36);
 
@@ -684,7 +688,23 @@ void Keyboard(unsigned char key, int x, int y) {
 
 void TimerFunction(int value)
 {
-	
+	// angle에 따라 각 큐브의 nowxpos를 sin 함수로 업데이트
+	for (int i = 0; i < 3; ++i) {
+		// sin(angle)의 범위는 -1 ~ 1
+		
+		float sinValue = sin(angle) * -1;  // -1 ~ 1
+		
+		// -1 ~ 1을 0 ~ 1로 변환: (sinValue + 1) / 2
+		// 0 ~ 1을 xStart ~ xend로 변환
+		cubepos[i].nowxpos += sinValue;
+
+		if(cubepos[i].nowxpos > cubepos[i].xend) {
+			cubepos[i].nowxpos = cubepos[i].xend;
+		}
+		if(cubepos[i].nowxpos < cubepos[i].xStart) {
+			cubepos[i].nowxpos = cubepos[i].xStart;
+		}
+	}
 
 	glutPostRedisplay();
 	glutTimerFunc(25, TimerFunction, 1);
@@ -704,23 +724,14 @@ void SpecialKeys(int key, int x, int y) // 특수 키(화살표 키) 콜백 함수
 	case GLUT_KEY_DOWN: // 아래쪽 화살표 - z축 양의 방향으로 이동
 		
 		break;
-	case GLUT_KEY_LEFT: // 왼쪽 화살표 - 모든 큐브를 왼쪽으로 이동
-		for (int i = 0; i < 3; ++i) {
-			cubepos[i].nowxpos -= 2.0f;
-			// xStart 범위를 벗어나지 않도록 제한
-			if (cubepos[i].nowxpos < cubepos[i].xStart) {
-				cubepos[i].nowxpos = cubepos[i].xStart;
-			}
-		}
+	case GLUT_KEY_LEFT: // 왼쪽 화살표 - angle 감소
+		angle -= 0.1f;
+		if (angle < -pi / 3) angle = -pi / 3;
+		
 		break;
-	case GLUT_KEY_RIGHT: // 오른쪽 화살표 - 모든 큐브를 오른쪽으로 이동
-		for (int i = 0; i < 3; ++i) {
-			cubepos[i].nowxpos += 2.0f;
-			// xend 범위를 벗어나지 않도록 제한
-			if (cubepos[i].nowxpos > cubepos[i].xend) {
-				cubepos[i].nowxpos = cubepos[i].xend;
-			}
-		}
+	case GLUT_KEY_RIGHT: // 오른쪽 화살표 - angle 증가
+		angle += 0.1f;
+		if (angle > pi / 3) angle = pi / 3;
 		break;
 	}
 

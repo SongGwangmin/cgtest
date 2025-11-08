@@ -306,6 +306,22 @@ public:
 		}
 		return bodyRotate(inverse) * matr;
 	}
+
+	glm::mat4 turretTranslate(int inverse) const {
+		glm::mat4 matr;
+		if (inverse) {
+			// 역변환: x값만 반대로 한 위치로 이동
+			glm::vec3 turretposInv = glm::vec3(-turretpos.x, turretpos.y, turretpos.z);
+			glm::mat4 translationInv = glm::translate(glm::mat4(1.0f), turretposInv);
+			matr = translationInv;
+		}
+		else {
+			// 정변환: 이동 -> 회전
+			glm::mat4 translation = glm::translate(glm::mat4(1.0f), turretpos);
+			matr = translation;
+		}
+		return bodyRotate(inverse) * matr;
+	}
 	
 	// 깃대 회전 행렬 (포탑 변환 포함)
 	glm::mat4 flagRotate(int inverse) const {
@@ -319,7 +335,7 @@ public:
 		glm::mat4 matr2;
 		matr2 = glm::translate(glm::mat4(1.0f), glm::vec3(0, -27, 0)); // 깃대 위치로 이동 (필요시 조정)
 
-		return turretRotateAndTranslate(inverse) * matr2 * matr;
+		return turretTranslate(inverse) * matr2 * matr;
 	}
 };
 
@@ -641,13 +657,22 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 		startIndex += 36;
 
 		// 탱크 포탑
+		model = tank.turretTranslate(0);
+		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
+		glDrawArrays(GL_TRIANGLES, startIndex, 36);
+		model = tank.turretTranslate(1);
+		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
+		glDrawArrays(GL_TRIANGLES, startIndex, 36);
+		startIndex += 36;
+		
+		
 		model = tank.turretRotateAndTranslate(0);
 		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
-		glDrawArrays(GL_TRIANGLES, startIndex, 36 * 2);
+		glDrawArrays(GL_TRIANGLES, startIndex, 36);
 		model = tank.turretRotateAndTranslate(1);
 		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
-		glDrawArrays(GL_TRIANGLES, startIndex, 36 * 2);
-		startIndex += 36 * 2;
+		glDrawArrays(GL_TRIANGLES, startIndex, 36);
+		startIndex += 36;
 
 
 		// 탱크 깃대

@@ -84,6 +84,9 @@ std::vector<float> allVertices;
 
 float angle = 0.0f; // 회전 각도 (전역 변수)
 
+// 구의 위치 저장 (5개)
+glm::vec3 spherePositions[5];
+
 // 육면체 클래스
 class Cube {
 private:
@@ -407,6 +410,18 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	);
 	cube3.sendVertexData(allVertices);
 
+	// AntiCube 범위 내에서 랜덤한 5개 점 생성
+	std::uniform_real_distribution<float> posDis(-ANTICUBE_HALF, ANTICUBE_HALF);
+	
+	for (int i = 0; i < 5; ++i) {
+		// 랜덤한 위치 생성 (AntiCube 범위 내)
+		spherePositions[i] = glm::vec3(
+			posDis(gen),
+			posDis(gen),
+			posDis(gen)
+		);
+	}
+
 	
 
 	//--- 세이더 프로그램 만들기
@@ -567,6 +582,52 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 
 		glBindVertexArray(0);
 	}
+
+	// GLUquadric을 사용하여 구 그리기
+	// 셰이더를 비활성화하고 고정 파이프라인 사용
+	glUseProgram(0);
+	
+	// GLUquadric 객체 생성
+	GLUquadric* qobj = gluNewQuadric();
+	gluQuadricDrawStyle(qobj, GLU_FILL);
+	gluQuadricNormals(qobj, GLU_SMOOTH);
+	
+	// 투영 및 뷰 행렬 적용 (한 번만)
+	glMatrixMode(GL_PROJECTION);
+	glLoadMatrixf(glm::value_ptr(glm::perspective(
+		glm::radians(45.0f),
+		(float)width / (float)height,
+		0.1f,
+		300.0f
+	)));
+	
+	glMatrixMode(GL_MODELVIEW);
+	glLoadMatrixf(glm::value_ptr(glm::lookAt(cameraPos, cameraTarget, glm::vec3(0.0f, 1.0f, 0.0f))));
+	
+	// z축 회전 적용 (모든 구에 공통)
+	glRotatef(glm::degrees(angle), 0.0f, 0.0f, 1.0f);
+	
+	// 5개의 구 그리기
+	for (int i = 0; i < 5; ++i) {
+		glPushMatrix();
+		
+		// 구의 위치로 이동 (회전이 이미 적용된 상태)
+		glTranslatef(spherePositions[i].x, spherePositions[i].y, spherePositions[i].z);
+		
+		// 랜덤한 색상 설정 (저장된 위치를 시드로 사용)
+		float r = fabs(sin(spherePositions[i].x));
+		float g = fabs(sin(spherePositions[i].y));
+		float b = fabs(sin(spherePositions[i].z));
+		glColor3f(r, g, b);
+		
+		// 반지름 3인 구 그리기
+		gluSphere(qobj, 3.0, 20, 20);
+		
+		glPopMatrix();
+	}
+	
+	// GLUquadric 객체 삭제
+	gluDeleteQuadric(qobj);
 
 	glutSwapBuffers(); // 화면에 출력하기
 }
@@ -731,14 +792,29 @@ void SpecialKeys(int key, int x, int y) // 특수 키(화살표 키) 콜백 함수
 	case GLUT_KEY_DOWN: // 아래쪽 화살표 - z축 양의 방향으로 이동
 		
 		break;
-	case GLUT_KEY_LEFT: // 왼쪽 화살표 - angle 감소
+	case GLUT_KEY_LEFT: // 왼쪽 화살표 - angle 감소 및 구 위치 회전
 		angle -= 0.1f;
 		if (angle < -pi / 3) angle = -pi / 3;
+
+		// 각 구의 위치를 z축 기준으로 0.1f만큼 회전
+		for (int i = 0; i < 5; ++i) {
+			glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), 0.1f, glm::vec3(0.0f, 0.0f, 1.0f));
+			glm::vec4 rotatedPos = rotationMatrix * glm::vec4(spherePositions[i], 1.0f);
+			spherePositions[i] = glm::vec3(rotatedPos);
+		}
 		
 		break;
-	case GLUT_KEY_RIGHT: // 오른쪽 화살표 - angle 증가
+	case GLUT_KEY_RIGHT: // 오른쪽 화살표 - angle 증가 및 구 위치 회전
 		angle += 0.1f;
 		if (angle > pi / 3) angle = pi / 3;
+		
+		// 각 구의 위치를 z축 기준으로 0.1f만큼 회전
+		for (int i = 0; i < 5; ++i) {
+			glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), -0.1f, glm::vec3(0.0f, 0.0f, 1.0f));
+			glm::vec4 rotatedPos = rotationMatrix * glm::vec4(spherePositions[i], 1.0f);
+			spherePositions[i] = glm::vec3(rotatedPos);
+		}
+		
 		break;
 	}
 

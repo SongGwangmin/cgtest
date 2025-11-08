@@ -411,7 +411,7 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	cube3.sendVertexData(allVertices);
 
 	// AntiCube 범위 내에서 랜덤한 5개 점 생성
-	std::uniform_real_distribution<float> posDis(-ANTICUBE_HALF, ANTICUBE_HALF);
+	std::uniform_real_distribution<float> posDis(-ANTICUBE_HALF + 3, ANTICUBE_HALF - 3);
 	
 	for (int i = 0; i < 5; ++i) {
 		// 랜덤한 위치 생성 (AntiCube 범위 내)
@@ -615,9 +615,9 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 		glTranslatef(spherePositions[i].x, spherePositions[i].y, spherePositions[i].z);
 		
 		// 랜덤한 색상 설정 (저장된 위치를 시드로 사용)
-		float r = fabs(sin(spherePositions[i].x));
-		float g = fabs(sin(spherePositions[i].y));
-		float b = fabs(sin(spherePositions[i].z));
+		float r = 0.0f;
+		float g = 0.0f;
+		float b = 1.0f;
 		glColor3f(r, g, b);
 		
 		// 반지름 3인 구 그리기
@@ -794,25 +794,49 @@ void SpecialKeys(int key, int x, int y) // 특수 키(화살표 키) 콜백 함수
 		break;
 	case GLUT_KEY_LEFT: // 왼쪽 화살표 - angle 감소 및 구 위치 회전
 		angle -= 0.1f;
-		if (angle < -pi / 3) angle = -pi / 3;
-
-		// 각 구의 위치를 z축 기준으로 0.1f만큼 회전
-		for (int i = 0; i < 5; ++i) {
-			glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), 0.1f, glm::vec3(0.0f, 0.0f, 1.0f));
-			glm::vec4 rotatedPos = rotationMatrix * glm::vec4(spherePositions[i], 1.0f);
-			spherePositions[i] = glm::vec3(rotatedPos);
+		if (angle <= -pi / 3) angle = -pi / 3;
+		else {
+			// 각 구의 위치를 z축 기준으로 0.1f만큼 회전
+			for (int i = 0; i < 5; ++i) {
+				glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), 0.1f, glm::vec3(0.0f, 0.0f, 1.0f));
+				glm::vec4 rotatedPos = rotationMatrix * glm::vec4(spherePositions[i], 1.0f);
+				spherePositions[i] = glm::vec3(rotatedPos);
+				
+				// 범위 제한 적용
+				const float minBound = -ANTICUBE_HALF + 3.0f;
+				const float maxBound = ANTICUBE_HALF - 3.0f;
+				
+				if (spherePositions[i].x < minBound) spherePositions[i].x = minBound;
+				if (spherePositions[i].x > maxBound) spherePositions[i].x = maxBound;
+				if (spherePositions[i].y < minBound) spherePositions[i].y = minBound;
+				if (spherePositions[i].y > maxBound) spherePositions[i].y = maxBound;
+				if (spherePositions[i].z < minBound) spherePositions[i].z = minBound;
+				if (spherePositions[i].z > maxBound) spherePositions[i].z = maxBound;
+			}
 		}
 		
 		break;
 	case GLUT_KEY_RIGHT: // 오른쪽 화살표 - angle 증가 및 구 위치 회전
 		angle += 0.1f;
-		if (angle > pi / 3) angle = pi / 3;
-		
-		// 각 구의 위치를 z축 기준으로 0.1f만큼 회전
-		for (int i = 0; i < 5; ++i) {
-			glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), -0.1f, glm::vec3(0.0f, 0.0f, 1.0f));
-			glm::vec4 rotatedPos = rotationMatrix * glm::vec4(spherePositions[i], 1.0f);
-			spherePositions[i] = glm::vec3(rotatedPos);
+		if (angle >= pi / 3) angle = pi / 3;
+		else {
+			// 각 구의 위치를 z축 기준으로 0.1f만큼 회전
+			for (int i = 0; i < 5; ++i) {
+				glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), -0.1f, glm::vec3(0.0f, 0.0f, 1.0f));
+				glm::vec4 rotatedPos = rotationMatrix * glm::vec4(spherePositions[i], 1.0f);
+				spherePositions[i] = glm::vec3(rotatedPos);
+				
+				// 범위 제한 적용
+				const float minBound = -ANTICUBE_HALF + 3.0f;
+				const float maxBound = ANTICUBE_HALF - 3.0f;
+				
+				if (spherePositions[i].x < minBound) spherePositions[i].x = minBound;
+				if (spherePositions[i].x > maxBound) spherePositions[i].x = maxBound;
+				if (spherePositions[i].y < minBound) spherePositions[i].y = minBound;
+				if (spherePositions[i].y > maxBound) spherePositions[i].y = maxBound;
+				if (spherePositions[i].z < minBound) spherePositions[i].z = minBound;
+				if (spherePositions[i].z > maxBound) spherePositions[i].z = maxBound;
+			}
 		}
 		
 		break;

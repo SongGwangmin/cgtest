@@ -570,15 +570,15 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 		
 		glm::mat4 model = glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0.0f, 0.0f, 1.0f));
 
-		model = model * backtotheorigin * rotatetoorigin * gototheorigin;
+		glm::mat4 firstmodel = model * backtotheorigin * rotatetoorigin * gototheorigin;
 		
 		
-		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
+		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(firstmodel));
 		
 		glDrawArrays(GL_TRIANGLES, startVertex, 6); // qkekr
 		startVertex += 6;
 
-
+		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
 		for (int i = 0; i < 5; ++i) {
 			glDrawArrays(GL_TRIANGLES, startVertex, 6); // 6면 * 2삼각형 * 3정점 = 36
 			startVertex += 6;
@@ -686,14 +686,6 @@ void Keyboard(unsigned char key, int x, int y) {
 	{
 	}
 	break;
-	case 'x': // x축 양의 방향으로 카메라와 타겟 이동
-	{
-	}
-	break;
-	case 'X': // x축 음의 방향으로 카메라와 타겟 이동
-	{
-	}
-	break;
 	case 'y': // y축 기준 양의 방향(반시계) 회전
 	{
 		
@@ -702,16 +694,6 @@ void Keyboard(unsigned char key, int x, int y) {
 	case 'Y': // y축 기준 음의 방향(시계) 회전
 	{
 
-	}
-	break;
-	case 'r': // 화면 중심 y축에 대하여 카메라 공전 (반시계)
-	{
-	
-	}
-	break;
-	case 'R': // 화면 중심 y축에 대하여 카메라 공전 (시계)
-	{
-	
 	}
 	break;
 	case 'h': // 은면제거 적용/해제
@@ -738,42 +720,7 @@ void Keyboard(unsigned char key, int x, int y) {
 		}
 	}
 	break;
-	case 't': // 중앙 몸체 y축 회전 토글
-	{
-		
-	}
-	break;
-	case 'l': // 상부 몸체 위치 교환 토글
-	{
-	}
-	break;
-	case 'g': // 포신 y축 회전 토글
-	{
-		
-	}
-	break;
-	case 'p': // 깃대 x축 회전 토글
-	{
-		
-	}
-	break;
-	case 'a': // 카메라 자동 공전 토글
-	{
-		
-	}
-	break;
-	case 'o': // 모든 토글 끄기
-	case 'O':
-	{
-		
-	}
-	break;
-	case 'c': // 탱크 초기화
-	case 'C':
-	{
-		
-	}
-	break;
+	
 	default:
 		break;
 	}
@@ -828,6 +775,8 @@ void TimerFunction(int value)
 		
 		
 	}
+
+	openangle += 0.002f;;
 
 	glutPostRedisplay();
 	glutTimerFunc(25, TimerFunction, 1);

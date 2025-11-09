@@ -865,49 +865,54 @@ void TimerFunction(int value)
 	// 바닥이나 큐브와 충돌하지 않으면 중력 적용
 	bool onGround = false;
 	
-	// 3. 중력 적용 (바닥이나 큐브 위에 있지 않으면)
-
-	
-
-	
-	player.centerPos += player.velocity;
-
+	// 중력 적용
 	player.velocity.y -= GRAVITY;  // 중력 가속도
 
 	if(player.velocity.y < -2.0f) {
 		player.velocity.y = -2.0f; // 최대 낙하 속도 제한
 	}
 
-	// 1. 바닥 충돌 체크
+	// 위치 업데이트 시도
+	glm::vec3 newPos = player.centerPos + player.velocity;
 	
-	
-	
+	// 새로운 위치에서의 AABB 계산
+	AABB newAABB;
+	newAABB.min = newPos - player.size / 2.0f;
+	newAABB.max = newPos + player.size / 2.0f;
 
-	// 2. Cube들과의 충돌 체크
+	// Cube들과의 충돌 체크
 	for (int i = 0; i < 3; i++) {
 		// XZ 평면에서 겹치는지 먼저 확인
-		if (checkAABBCollisionXZ(playerAABB, cubeAABB[i])) {
+		if (checkAABBCollisionXZ(newAABB, cubeAABB[i])) {
 			// Y축 충돌 체크
-			if (checkAABBCollisionY(playerAABB, cubeAABB[i])) {
+			if (checkAABBCollisionY(newAABB, cubeAABB[i])) {
 				// 아래로 떨어지는 중인 경우 (velocity.y < 0)
 				if (player.velocity.y <= 0.0f) {
 					// 큐브 위에 착지
-					if (cubeAABB[i].max.y - (player.centerPos.y - player.size.y / 2.0f) < 2.5f) {
-						player.centerPos.y = cubeAABB[i].max.y + player.size.y / 2.0f;
+					if (cubeAABB[i].max.y - (newAABB.min.y) < 2.5f) {
+						newPos.y = cubeAABB[i].max.y + player.size.y / 2.0f;
 						player.velocity.y = 0.0f;
 						player.isOnGround = true;
 						onGround = true;
 						std::cout << "Player landed on Cube " << (i + 1) << "!" << std::endl;
-						break;
 					}
+					else {
+						// 옆면 충돌 - 속도 반전하고 위치는 충돌 전으로 유지
+						player.velocity.x *= -1.0f;
+						player.velocity.z *= -1.0f;
+						newPos = player.centerPos;  // 원래 위치로 되돌림
+						std::cout << "Hit side of Cube " << (i + 1) << "!" << std::endl;
+					}
+					break;
 				}
 			}
 		}
 	}
 	
+	// 위치 업데이트
+	player.centerPos = newPos;
 	
-	
-	// 5. 바닥 아래로 떨어지지 않도록 제한
+	// 바닥 아래로 떨어지지 않도록 제한
 	playerAABB = player.getAABB();
 	if (playerAABB.min.y < GROUND_Y) {
 		player.centerPos.y = GROUND_Y + player.size.y / 2.0f;
@@ -915,18 +920,23 @@ void TimerFunction(int value)
 		player.isOnGround = true;
 	}
 
+	// AntiCube 경계 체크 및 속도 반전
 	if (playerAABB.min.x <= -ANTICUBE_HALF) {
 		player.velocity.x = cubeSpeed;
+		player.centerPos.x = -ANTICUBE_HALF + player.size.x / 2.0f;  // 경계 밖으로 나가지 않도록
 	}
 	else if (playerAABB.max.x >= ANTICUBE_HALF) {
 		player.velocity.x = -cubeSpeed;
+		player.centerPos.x = ANTICUBE_HALF - player.size.x / 2.0f;
 	}
 
 	if (playerAABB.min.z <= -ANTICUBE_HALF) {
 		player.velocity.z = cubeSpeed;
+		player.centerPos.z = -ANTICUBE_HALF + player.size.z / 2.0f;
 	}
 	else if (playerAABB.max.z >= ANTICUBE_HALF) {
 		player.velocity.z = -cubeSpeed;
+		player.centerPos.z = ANTICUBE_HALF - player.size.z / 2.0f;
 	}
 
 	// angle에 따라 각 큐브의 nowxpos를 sin 함수로 업데이트
@@ -943,7 +953,6 @@ void TimerFunction(int value)
 	glutPostRedisplay();
 	glutTimerFunc(25, TimerFunction, 1);
 }
-
 
 
 void SpecialKeys(int key, int x, int y) // 특수 키(화살표 키) 콜백 함수

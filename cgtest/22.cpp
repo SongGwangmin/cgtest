@@ -1001,13 +1001,13 @@ void TimerFunction(int value)
 {
 	
 	if (armup) {
-		armangle += 0.02f;
+		armangle += cubeSpeed * 0.2f;
 		if (armangle >= maxarmangle) {
 			armup = false;
 		}
 	}
 	else {
-		armangle -= 0.02f;
+		armangle -= cubeSpeed * 0.2f;
 		if (armangle <= -maxarmangle) {
 			armup = true;
 		}

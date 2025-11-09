@@ -810,7 +810,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 		headscale = glm::scale(glm::mat4(1.0f), glm::vec3(0.15f, 1.0f, 0.15f));
 		headmodel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.0f, 2.5f));
 
-		stickmodel = glm::rotate(glm::mat4(1.0f), armangle, glm::vec3(0.0f, 0.0f, 1.0f));
+		stickmodel = glm::rotate(glm::mat4(1.0f), -armangle, glm::vec3(0.0f, 0.0f, 1.0f));
 
 		model = glm::mat4(1.0f);
 		model = glm::translate(model, player.centerPos);  // Player 중심 위치로 이동
@@ -823,7 +823,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 		model = glm::mat4(1.0f);
 		model = glm::translate(model, player.centerPos);  // Player 중심 위치로 이동
 
-		stickmodel = glm::rotate(glm::mat4(1.0f), -armangle, glm::vec3(0.0f, 0.0f, 1.0f));
+		stickmodel = glm::rotate(glm::mat4(1.0f), armangle, glm::vec3(0.0f, 0.0f, 1.0f));
 
 		//model = yrote * model;  // Y축 회전 적용
 		model = yrote * model * dir * headmodel * stickmodel * headscale;  // Y축 회전 적용

@@ -83,7 +83,6 @@ CubePos cubepos[3] = {
 
 // Forward declaration
 class polygon;
-int mouse_dest = -1; // 마우스로 선택된 polygon 인덱스 저장
 std::vector<float> allVertices;
 
 float angle = 0.0f; // 회전 각도 (전역 변수)
@@ -391,6 +390,46 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	);
 	antiCube.sendVertexData(allVertices);
 
+	Cube cube1(
+		glm::vec3(-30.0f, -30.0f, 20.0f), // v0: 앞면 왼쪽 아래
+		glm::vec3(-20.0f, -30.0f, 20.0f), // v1: 앞면 오른쪽 아래
+		glm::vec3(-20.0f, -30.0f, 30.0f), // v2: 앞면 오른쪽 위
+		glm::vec3(-30.0f, -30.0f, 30.0f), // v3: 앞면 왼쪽 위
+		glm::vec3(-30.0f, -20.0f, 20.0f), // v4: 뒷면 왼쪽 아래
+		glm::vec3(-20.0f, -20.0f, 20.0f), // v5: 뒷면 오른쪽 아래
+		glm::vec3(-20.0f, -20.0f, 30.0f), // v6: 뒷면 오른쪽 위
+		glm::vec3(-30.0f, -20.0f, 30.0f), // v7: 뒷면 왼쪽 위
+		glm::vec3(0.0f, 0.0f, 1.0f) // 파랑색
+	);
+	cube1.sendVertexData(allVertices);
+
+	// 두 번째 Cube: 한 변의 길이 15, z = 0, 빨강색
+	Cube cube2(
+		glm::vec3(-30.0f, -30.0f, 0.0f),   // v0: 앞면 왼쪽 아래
+		glm::vec3(-15.0f, -30.0f, 0.0f),   // v1: 앞면 오른쪽 아래
+		glm::vec3(-15.0f, -30.0f, 15.0f),  // v2: 앞면 오른쪽 위
+		glm::vec3(-30.0f, -30.0f, 15.0f),  // v3: 앞면 왼쪽 위
+		glm::vec3(-30.0f, -15.0f, 0.0f),   // v4: 뒷면 왼쪽 아래
+		glm::vec3(-15.0f, -15.0f, 0.0f),   // v5: 뒷면 오른쪽 아래
+		glm::vec3(-15.0f, -15.0f, 15.0f),  // v6: 뒷면 오른쪽 위
+		glm::vec3(-30.0f, -15.0f, 15.0f),  // v7: 뒷면 왼쪽 위
+		glm::vec3(1.0f, 0.0f, 0.0f) // 빨강색
+	);
+	cube2.sendVertexData(allVertices);
+
+	// 세 번째 Cube: 한 변의 길이 20, z = -20, 짙은 회색
+	Cube cube3(
+		glm::vec3(-30.0f, -30.0f, -20.0f),  // v0: 앞면 왼쪽 아래
+		glm::vec3(-10.0f, -30.0f, -20.0f),  // v1: 앞면 오른쪽 아래
+		glm::vec3(-10.0f, -30.0f, 0.0f),  // v2: 앞면 오른쪽 위
+		glm::vec3(-30.0f, -30.0f, 0.0f),  // v3: 앞면 왼쪽 위
+		glm::vec3(-30.0f, -10.0f, -20.0f),  // v4: 뒷면 왼쪽 아래
+		glm::vec3(-10.0f, -10.0f, -20.0f),  // v5: 뒷면 오른쪽 아래
+		glm::vec3(-10.0f, -10.0f, 0.0f),  // v6: 뒷면 오른쪽 위
+		glm::vec3(-30.0f, -10.0f, 0.0f),  // v7: 뒷면 왼쪽 위
+		glm::vec3(0.3f, 0.3f, 0.3f) // 짙은 회색 (RGB: 76, 76, 76)
+	);
+	cube3.sendVertexData(allVertices);
 
 	//--- 세이더 프로그램 만들기
 	glutDisplayFunc(drawScene); //--- 출력 콜백 함수
@@ -551,7 +590,25 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 		glDrawArrays(GL_TRIANGLES, startVertex, 6); // 6면 * 2삼각형 * 3정점 = 36
 		startVertex += 6;
 
+		model = glm::translate(glm::mat4(1.0f), glm::vec3(cubepos[0].nowxpos + 30.0f, cubepos[0].nowypos, 0.0f));
+		glm::mat4 rotmodel = glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0.0f, 0.0f, 1.0f));
+		model = yrote * rotmodel * model;
+		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
+		glDrawArrays(GL_TRIANGLES, startVertex, 36);
+		startVertex += 36;
 
+		// Cube2 그리기 (x축 이동 후 z축 회전)
+		model = glm::translate(glm::mat4(1.0f), glm::vec3(cubepos[1].nowxpos + 30.0f, cubepos[1].nowypos, 0.0f));
+		model = yrote * rotmodel * model;
+		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
+		glDrawArrays(GL_TRIANGLES, startVertex, 36);
+		startVertex += 36;
+
+		// Cube3 그리기 (x축 이동 후 z축 회전)
+		model = glm::translate(glm::mat4(1.0f), glm::vec3(cubepos[2].nowxpos + 30.0f, cubepos[2].nowypos, 0.0f));
+		model = yrote * rotmodel * model;
+		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
+		glDrawArrays(GL_TRIANGLES, startVertex, 36);
 
 
 		glBindVertexArray(0);

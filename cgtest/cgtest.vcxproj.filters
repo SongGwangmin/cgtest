@@ -72,6 +72,9 @@
     <ClCompile Include="22.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="23.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="vertex.glsl">

@@ -44,7 +44,7 @@ void drawOrbitsAndPlanets(glm::vec3 cameraPos, glm::vec3 cameraTarget, glm::vec3
 void renderScene(); // 장면 렌더링 함수 추가
 
 //--- 필요한 변수 선언
-GLint width = 800, height = 800;
+GLint width = 1200, height = 800;
 GLuint shaderProgramID; //--- 세이더 프로그램 이름
 GLuint vertexShader; //--- 버텍스 세이더 객체
 GLuint fragmentShader; //--- 프래그먼트 세이더 객체
@@ -53,7 +53,7 @@ GLuint VAO, VBO; //--- 버텍스 배열 객체, 버텍스 버퍼 객체
 int hidetoggle = 1; // 1. 은면제거
 int wiretoggle = 0; // 0: 솔리드 모드, 1: 와이어프레임 모드
 int culltoggle = 0; // 1. 뒷면 컬링 모드
-int multiViewportToggle = 0; // 0: 단일 뷰포트, 1: 4분할 뷰포트
+int multiViewportToggle = 1; // 0: 단일 뷰포트, 1: 3분할 뷰포트 (기본값을 1로 변경)
 
 // 탱크 애니메이션 토글 변수
 int bodyRotateToggle = 0;    // t: 중앙 몸체 y축 회전
@@ -135,13 +135,13 @@ public:
 
 	// 색상 설정
 	void setColor(glm::vec3 col) {
-		color = col;
+	 color = col;
 	}
 
 	// 특정 꼭지점 가져오기
 	glm::vec3 getVertex(int index) const {
 		if (index >= 0 && index < 8) {
-			return vertices[index];
+		 return vertices[index];
 		}
 		return glm::vec3(0.0f);
 	}
@@ -149,7 +149,7 @@ public:
 	// 특정 꼭지점 설정
 	void setVertex(int index, glm::vec3 v) {
 		if (index >= 0 && index < 8) {
-			vertices[index] = v;
+		 vertices[index] = v;
 		}
 	}
 
@@ -604,10 +604,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 	glUseProgram(shaderProgramID);
 
 	if (multiViewportToggle) {
-		// 4분할 뷰포트 모드
-		int halfWidth = width / 2;
-		int halfHeight = height / 2;
-
+		// 3분할 뷰포트 모드
 		// 와이어프레임 모드 설정
 		if (wiretoggle) {
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -616,58 +613,67 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		}
 
-		// 투영 행렬 설정 (공통)
-		glm::mat4 projection = glm::perspective(
-			glm::radians(60.0f),
-			(float)halfWidth / (float)halfHeight,
-			0.1f,
-			300.0f
-		);
 		unsigned int projectionLocation = glGetUniformLocation(shaderProgramID, "projectionTransform");
-		glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(projection));
+		unsigned int viewLocation = glGetUniformLocation(shaderProgramID, "viewTransform");
 
-		// 1. 왼쪽 위 뷰포트 - 정면 뷰 (카메라 정면)
-		glViewport(0, halfHeight, halfWidth, halfHeight);
-		glScissor(0, halfHeight, halfWidth, halfHeight);
+		// 1. 왼쪽 뷰포트 (0,0) ~ (800,800) - Perspective 투영
+		glViewport(0, 0, 800, 800);
+		glScissor(0, 0, 800, 800);
 		glEnable(GL_SCISSOR_TEST);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		
-		glm::vec3 frontCameraPos = glm::vec3(0.0f, 10.0f, 150.0f);
-		glm::vec3 frontCameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
-		glm::mat4 frontView = glm::lookAt(frontCameraPos, frontCameraTarget, cameraUp);
-		unsigned int viewLocation = glGetUniformLocation(shaderProgramID, "viewTransform");
-		glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(frontView));
+		// Perspective 투영
+		glm::mat4 perspectiveProj = glm::perspective(
+			glm::radians(60.0f),
+			800.0f / 800.0f,  // 1:1 비율
+			0.1f,
+			300.0f
+		);
+		glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(perspectiveProj));
+		
+		// 현재 카메라 시점
+		glm::mat4 view = glm::lookAt(cameraPos, cameraTarget, cameraUp);
+		glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(view));
 		renderScene();
 
-		// 2. 오른쪽 위 뷰포트 - 위에서 본 뷰 (탑 뷰)
-		glViewport(halfWidth, halfHeight, halfWidth, halfHeight);
-		glScissor(halfWidth, halfHeight, halfWidth, halfHeight);
+		// 2. 오른쪽 아래 뷰포트 (800,0) ~ (1200,400) - Ortho 투영
+		glViewport(800, 0, 400, 400);
+		glScissor(800, 0, 400, 400);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		
-		glm::vec3 topCameraPos = glm::vec3(0.0f, 200.0f, 0.1f);
+		// Ortho 투영 (perspective와 동일한 영역을 보도록 설정)
+		float orthoSize = 100.0f; // 보이는 영역의 크기
+		glm::mat4 orthoProj = glm::ortho(
+			-orthoSize, orthoSize,   // left, right
+			-orthoSize, orthoSize,   // bottom, top
+			0.1f, 300.0f             // near, far
+		);
+		glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(orthoProj));
+		
+		// 동일한 카메라 시점 사용
+		glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(view));
+		renderScene();
+
+		// 3. 오른쪽 위 뷰포트 (800,400) ~ (1200,800) - Perspective 투영 (위에서 내려다보기)
+		glViewport(800, 400, 400, 400);
+		glScissor(800, 400, 400, 400);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		
+		// Perspective 투영
+		glm::mat4 topPerspectiveProj = glm::perspective(
+			glm::radians(60.0f),
+			400.0f / 400.0f,  // 1:1 비율
+			0.1f,
+			300.0f
+		);
+		glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(topPerspectiveProj));
+		
+		// 위에서 내려다보는 카메라 시점
+		glm::vec3 topCameraPos = glm::vec3(0.0f, 150.0f, 0.0f);
 		glm::vec3 topCameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
-		glm::mat4 topView = glm::lookAt(topCameraPos, topCameraTarget, glm::vec3(0.0f, 0.0f, -1.0f));
+		glm::vec3 topCameraUp = glm::vec3(0.0f, 0.0f, -1.0f);  // z축 음의 방향이 위쪽
+		glm::mat4 topView = glm::lookAt(topCameraPos, topCameraTarget, topCameraUp);
 		glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(topView));
-		renderScene();
-
-		// 3. 왼쪽 아래 뷰포트 - 옆면 뷰 (사이드 뷰)
-		glViewport(0, 0, halfWidth, halfHeight);
-		glScissor(0, 0, halfWidth, halfHeight);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		
-		glm::vec3 sideCameraPos = glm::vec3(150.0f, 10.0f, 0.0f);
-		glm::vec3 sideCameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
-		glm::mat4 sideView = glm::lookAt(sideCameraPos, sideCameraTarget, cameraUp);
-		glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(sideView));
-		renderScene();
-
-		// 4. 오른쪽 아래 뷰포트 - 현재 카메라 위치 (자유 시점)
-		glViewport(halfWidth, 0, halfWidth, halfHeight);
-		glScissor(halfWidth, 0, halfWidth, halfHeight);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		
-		glm::mat4 freeView = glm::lookAt(cameraPos, cameraTarget, cameraUp);
-		glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(freeView));
 		renderScene();
 
 		glDisable(GL_SCISSOR_TEST);
@@ -687,16 +693,16 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 		glLineWidth(2.0f);
 		glColor3f(0.0f, 0.0f, 0.0f);
 
-		// 수직선
+		// 세로 경계선 (x=800)
 		glBegin(GL_LINES);
-		glVertex2f(halfWidth, 0);
-		glVertex2f(halfWidth, height);
+		glVertex2f(800, 0);
+		glVertex2f(800, height);
 		glEnd();
 
-		// 수평선
+		// 가로 경계선 (y=400)
 		glBegin(GL_LINES);
-		glVertex2f(0, halfHeight);
-		glVertex2f(width, halfHeight);
+		glVertex2f(800, 400);
+		glVertex2f(width, 400);
 		glEnd();
 
 		glEnable(GL_DEPTH_TEST);
@@ -1017,7 +1023,7 @@ void TimerFunction(int value)
 		}
 		else {
 			// mixstartpos에서 mixendpos로 선형보간
-			float x = glm::mix(mixstartpos, mixendpos, turretSwapTime);
+		 float x = glm::mix(mixstartpos, mixendpos, turretSwapTime);
 			tank.setTurretPos(glm::vec3(x, 0.0f, 0.0f));
 		}
 	}

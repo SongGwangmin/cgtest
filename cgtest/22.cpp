@@ -903,12 +903,22 @@ void Keyboard(unsigned char key, int x, int y) {
 	break;
 	case 'z': // z축 양의 방향으로 카메라와 타겟 이동
 	{
-		cameraPos = glm::vec3(0.0f, 0.0f, cameraPos.z + 1);      // 카메라 위치
+		cameraPos = glm::vec3(cameraPos.x, 0.0f, cameraPos.z + 1);      // 카메라 위치
 	}
 	break;
 	case 'Z': // z축 음의 방향으로 카메라와 타겟 이동
 	{
-		cameraPos = glm::vec3(0.0f, 0.0f, cameraPos.z - 1);      // 카메라 위치
+		cameraPos = glm::vec3(cameraPos.x, 0.0f, cameraPos.z - 1);      // 카메라 위치
+	}
+	break;
+	case 'x': // z축 양의 방향으로 카메라와 타겟 이동
+	{
+		cameraPos = glm::vec3(cameraPos.x + 1, 0.0f, cameraPos.z);      // 카메라 위치
+	}
+	break;
+	case 'X': // z축 음의 방향으로 카메라와 타겟 이동
+	{
+		cameraPos = glm::vec3(cameraPos.x - 1, 0.0f, cameraPos.z);      // 카메라 위치
 	}
 	break;
 	case 'y': // y축 기준 양의 방향(반시계) 회전

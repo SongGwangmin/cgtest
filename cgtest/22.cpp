@@ -540,6 +540,19 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	);
 	playerCube.sendVertexData(allVertices);
 
+	Cube playerbodyCube(
+		glm::vec3(-4.0f, -4.0f, -4.0f), // v0: 앞면 왼쪽 아래
+		glm::vec3(4.0f, -4.0f, -4.0f),  // v1: 앞면 오른쪽 아래
+		glm::vec3(4.0f, -4.0f, 4.0f),   // v2: 앞면 오른쪽 위
+		glm::vec3(-4.0f, -4.0f, 4.0f),  // v3: 앞면 왼쪽 위
+		glm::vec3(-4.0f, 4.0f, -4.0f),  // v4: 뒷면 왼쪽 아래
+		glm::vec3(4.0f, 4.0f, -4.0f),   // v5: 뒷면 오른쪽 아래
+		glm::vec3(4.0f, 4.0f, 4.0f),    // v6: 뒷면 오른쪽 위
+		glm::vec3(-4.0f, 4.0f, 4.0f),   // v7: 뒷면 왼쪽 위
+		glm::vec3(0.0f, 1.0f, 0.0f)     // 초록
+	);
+	playerbodyCube.sendVertexData(allVertices);
+
 	//--- 세이더 프로그램 만들기
 
 	glutDisplayFunc(drawScene); //--- 출력 콜백 함수
@@ -724,11 +737,28 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 
 		// Player Cube 그리기 (중심 위치로 이동)
 		model = glm::mat4(1.0f);
+
+		glm::mat4 headscale = glm::scale(glm::mat4(1.0f), glm::vec3(0.30f, 0.3f, 0.3f));
+		glm::mat4 headmodel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.8f, 0.0f));
+
 		model = glm::translate(model, player.centerPos);  // Player 중심 위치로 이동
-		model = yrote * model;  // Y축 회전 적용
+		model = yrote * model * headmodel * headscale;  // Y축 회전 적용
+		//model = yrote * model
 		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
 		glDrawArrays(GL_TRIANGLES, startVertex, 36);
 
+		startVertex += 36;
+
+		headscale = glm::scale(glm::mat4(1.0f), glm::vec3(0.50f, 0.5f, 0.5f));
+		headmodel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+
+
+		model = glm::mat4(1.0f);
+		model = glm::translate(model, player.centerPos);  // Player 중심 위치로 이동
+		//model = yrote * model;  // Y축 회전 적용
+		model = yrote * model * headmodel * headscale;  // Y축 회전 적용
+		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
+		glDrawArrays(GL_TRIANGLES, startVertex, 36);
 
 		glBindVertexArray(0);
 	}

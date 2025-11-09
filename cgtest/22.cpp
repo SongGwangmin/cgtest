@@ -109,6 +109,25 @@ CubePos cubepos[3] = {
 // 3개의 큐브 AABB 정보 저장
 AABB cubeAABB[3];
 
+// Player 구조체 정의
+struct Player {
+	glm::vec3 centerPos;     // 중심 좌표
+	glm::vec3 size;          // 크기 (폭, 높이, 깊이)
+	glm::vec3 velocity;      // 속도 (물리 시스템용)
+	bool isOnGround;         // 바닥에 있는지 여부
+	
+	// AABB 계산 함수
+	AABB getAABB() const {
+		AABB box;
+		box.min = centerPos - size / 2.0f;  // 중심에서 반 크기만큼 뺌
+		box.max = centerPos + size / 2.0f;  // 중심에서 반 크기만큼 더함
+		return box;
+	}
+};
+
+// Player 전역 변수
+Player player;
+
 // Forward declaration
 class polygon;
 std::vector<float> allVertices;
@@ -499,6 +518,26 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	cubeAABB[2].min = glm::vec3(cube3StartX, -30.0f, cube3StartZ);
 	cubeAABB[2].max = glm::vec3(cube3StartX + 20.0f, -10.0f, cube3StartZ + 20.0f);
 
+	// Player 초기화 (0, 0, 0 중심에 한 변의 길이 8인 정육면체)
+	player.centerPos = glm::vec3(0.0f, 0.0f, 0.0f);
+	player.size = glm::vec3(8.0f, 8.0f, 8.0f);
+	player.velocity = glm::vec3(0.0f, 0.0f, 0.0f);
+	player.isOnGround = false;
+
+	// Player Cube 생성 (중심이 0,0,0이고 한 변의 길이가 8)
+	Cube playerCube(
+		glm::vec3(-4.0f, -4.0f, -4.0f), // v0: 앞면 왼쪽 아래
+		glm::vec3(4.0f, -4.0f, -4.0f),  // v1: 앞면 오른쪽 아래
+		glm::vec3(4.0f, -4.0f, 4.0f),   // v2: 앞면 오른쪽 위
+		glm::vec3(-4.0f, -4.0f, 4.0f),  // v3: 앞면 왼쪽 위
+		glm::vec3(-4.0f, 4.0f, -4.0f),  // v4: 뒷면 왼쪽 아래
+		glm::vec3(4.0f, 4.0f, -4.0f),   // v5: 뒷면 오른쪽 아래
+		glm::vec3(4.0f, 4.0f, 4.0f),    // v6: 뒷면 오른쪽 위
+		glm::vec3(-4.0f, 4.0f, 4.0f),   // v7: 뒷면 왼쪽 위
+		glm::vec3(1.0f, 1.0f, 0.0f)     // 노란색
+	);
+	playerCube.sendVertexData(allVertices);
+
 	//--- 세이더 프로그램 만들기
 
 	glutDisplayFunc(drawScene); //--- 출력 콜백 함수
@@ -649,7 +688,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 		startVertex += 6;
 
 		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(firstmodel));
-		glDrawArrays(GL_TRIANGLES, startVertex, 6); // qkekr
+		//glDrawArrays(GL_TRIANGLES, startVertex, 6); // qkekr
 		startVertex += 6;
 
 		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
@@ -679,6 +718,15 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
 		glDrawArrays(GL_TRIANGLES, startVertex, 36);
 
+		startVertex += 36;
+
+		// Player Cube 그리기 (중심 위치로 이동)
+		model = glm::mat4(1.0f);
+		model = glm::translate(model, player.centerPos);  // Player 중심 위치로 이동
+		model = yrote * model;  // Y축 회전 적용
+		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
+		glDrawArrays(GL_TRIANGLES, startVertex, 36);
+
 
 		glBindVertexArray(0);
 	}
@@ -702,6 +750,15 @@ void Keyboard(unsigned char key, int x, int y) {
 	case 'Q': // 프로그램 종료
 		glutLeaveMainLoop();
 		break;
+	case ' ': // 스페이스바 - 점프
+	{
+		if (player.isOnGround) {
+			player.velocity.y = 1.0f;  // 점프 속도 설정
+			player.isOnGround = false;
+			std::cout << "Jump!" << std::endl;
+		}
+	}
+	break;
 	case 'w': // 와이어프레임 모드 적용/해제
 	{
 		wiretoggle = !wiretoggle;
@@ -777,6 +834,63 @@ void Keyboard(unsigned char key, int x, int y) {
 
 void TimerFunction(int value)
 {
+	// 물리 시스템 - 중력 적용
+	const float GRAVITY = 0.05f;
+	const float GROUND_Y = -30.0f;
+	
+	// Player의 현재 AABB 계산
+	AABB playerAABB = player.getAABB();
+	
+	// 바닥이나 큐브와 충돌하지 않으면 중력 적용
+	bool onGround = false;
+	
+	// 1. 바닥 충돌 체크
+	if (playerAABB.min.y <= GROUND_Y) {
+		onGround = true;
+		player.centerPos.y = GROUND_Y + player.size.y / 2.0f;  // 바닥에 정확히 위치
+		player.velocity.y = 0.0f;
+		player.isOnGround = true;
+	}
+	
+	// 2. Cube들과의 충돌 체크
+	if (!onGround) {
+		for (int i = 0; i < 3; i++) {
+			// XZ 평면에서 겹치는지 먼저 확인
+			if (checkAABBCollisionXZ(playerAABB, cubeAABB[i])) {
+				// Y축 충돌 체크
+				if (checkAABBCollisionY(playerAABB, cubeAABB[i])) {
+					// 아래로 떨어지는 중인 경우 (velocity.y < 0)
+					if (player.velocity.y <= 0.0f) {
+						// 큐브 위에 착지
+						player.centerPos.y = cubeAABB[i].max.y + player.size.y / 2.0f;
+						player.velocity.y = 0.0f;
+						player.isOnGround = true;
+						onGround = true;
+						std::cout << "Player landed on Cube " << (i + 1) << "!" << std::endl;
+						break;
+					}
+				}
+			}
+		}
+	}
+	
+	// 3. 중력 적용 (바닥이나 큐브 위에 있지 않으면)
+	if (!onGround) {
+		player.velocity.y -= GRAVITY;  // 중력 가속도
+		player.isOnGround = false;
+	}
+	
+	// 4. 속도를 위치에 적용
+	player.centerPos.y += player.velocity.y;
+	
+	// 5. 바닥 아래로 떨어지지 않도록 제한
+	playerAABB = player.getAABB();
+	if (playerAABB.min.y < GROUND_Y) {
+		player.centerPos.y = GROUND_Y + player.size.y / 2.0f;
+		player.velocity.y = 0.0f;
+		player.isOnGround = true;
+	}
+
 	// angle에 따라 각 큐브의 nowxpos를 sin 함수로 업데이트
 	
 
@@ -784,8 +898,6 @@ void TimerFunction(int value)
 		openangle += 1.0f;;
 		
 	}
-
-
 
 
 

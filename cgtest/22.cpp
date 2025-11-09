@@ -64,7 +64,7 @@ const float ANTICUBE_SIZE = 60.0f;  // 한 변의 길이
 const float ANTICUBE_HALF = ANTICUBE_SIZE / 2.0f;  // 반지름 (중심에서 면까지의 거리)
 const float minBound = -ANTICUBE_HALF + 3.0f;
 const float maxBound = ANTICUBE_HALF - 3.0f;
-const float cubeSpeed = 0.1f; // 큐브 이동 속도
+float cubeSpeed = 0.1f; // 큐브 이동 속도
 
 // AABB 구조체 정의
 struct AABB {
@@ -977,6 +977,7 @@ void Keyboard(unsigned char key, int x, int y) {
 			maxarmangle += 0.1f;
 			player.velocity.x *= 1.3f;
 			player.velocity.z *= 1.3f;
+			cubeSpeed *= 1.3f;
 		}
 	}
 	break;
@@ -986,6 +987,7 @@ void Keyboard(unsigned char key, int x, int y) {
 			maxarmangle -= 0.1f;
 			player.velocity.x /= 1.3f;
 			player.velocity.z /= 1.3f;
+			cubeSpeed /= 1.3f;
 		}
 	}
 	default:

@@ -522,17 +522,13 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 		// AntiCube 그리기 (z축 회전 추가)
 		glm::mat4 yrote = glm::rotate(glm::mat4(1.0f), yangle, glm::vec3(0.0f, 1.0f, 0.0f));
 
-		glm::mat4 gototheorigin = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 30.0f, 30.0f));
+		glm::mat4 gototheorigin = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, openangle, 0.0f));
 
-		glm::mat4 rotatetoorigin = glm::rotate(glm::mat4(1.0f), openangle, glm::vec3(1.0f, 0.0f, 0.0f));
-
-		glm::mat4 backtotheorigin = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -30.0f, -30.0f));
-
-		glm::mat4 model = glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0.0f, 0.0f, 1.0f));
+		glm::mat4 model = glm::mat4(1.0f);
 
 		model = yrote * model;
 
-		glm::mat4 firstmodel = model * backtotheorigin * rotatetoorigin * gototheorigin;
+		glm::mat4 firstmodel = model * gototheorigin;
 
 
 		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
@@ -674,11 +670,8 @@ void TimerFunction(int value)
 	
 
 	if (opentoggle) {
-		openangle += 0.02f;;
-		if (openangle >= glm::radians(90.0f)) {
-			openangle = glm::radians(90.0f);
-
-		}
+		openangle += 1.0f;;
+		
 	}
 
 

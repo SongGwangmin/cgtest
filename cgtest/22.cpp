@@ -64,6 +64,7 @@ const float ANTICUBE_SIZE = 60.0f;  // 한 변의 길이
 const float ANTICUBE_HALF = ANTICUBE_SIZE / 2.0f;  // 반지름 (중심에서 면까지의 거리)
 const float minBound = -ANTICUBE_HALF + 3.0f;
 const float maxBound = ANTICUBE_HALF - 3.0f;
+const float cubeSpeed = 0.1f; // 큐브 이동 속도
 
 // AABB 구조체 정의
 struct AABB {
@@ -124,6 +125,7 @@ struct Player {
 		return box;
 	}
 };
+
 
 // Player 전역 변수
 Player player;
@@ -334,7 +336,7 @@ private:
 			});
 	}
 };
-
+	
 
 
 void Keyboard(unsigned char key, int x, int y);
@@ -521,7 +523,7 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	// Player 초기화 (0, 0, 0 중심에 한 변의 길이 8인 정육면체)
 	player.centerPos = glm::vec3(0.0f, 0.0f, 0.0f);
 	player.size = glm::vec3(8.0f, 8.0f, 8.0f);
-	player.velocity = glm::vec3(0.0f, 0.0f, 0.0f);
+	player.velocity = glm::vec3(cubeSpeed, 0.0f, 0.0f);  // x축 방향으로 초기 속도 0.2 설정
 	player.isOnGround = false;
 
 	// Player Cube 생성 (중심이 0,0,0이고 한 변의 길이가 8)
@@ -761,7 +763,26 @@ void Keyboard(unsigned char key, int x, int y) {
 	break;
 	case 'w': // 와이어프레임 모드 적용/해제
 	{
-		wiretoggle = !wiretoggle;
+		player.velocity.z = -cubeSpeed;
+		player.velocity.x = 0.0f;
+	}
+	break;
+	case 'a': // 와이어프레임 모드 적용/해제
+	{
+		player.velocity.x = -cubeSpeed;
+		player.velocity.z = 0.0f;
+	}
+	break;
+	case 's': // 와이어프레임 모드 적용/해제
+	{
+		player.velocity.z = cubeSpeed;
+		player.velocity.x = 0.0f;
+	}
+	break;
+	case 'd': // 와이어프레임 모드 적용/해제
+	{
+		player.velocity.x = cubeSpeed;
+		player.velocity.z = 0.0f;
 	}
 	break;
 	case 'z': // z축 양의 방향으로 카메라와 타겟 이동
@@ -849,9 +870,13 @@ void TimerFunction(int value)
 	
 
 	
-	player.centerPos.y += player.velocity.y;
+	player.centerPos += player.velocity;
 
 	player.velocity.y -= GRAVITY;  // 중력 가속도
+
+	if(player.velocity.y < -2.0f) {
+		player.velocity.y = -2.0f; // 최대 낙하 속도 제한
+	}
 
 	// 1. 바닥 충돌 체크
 	
@@ -867,12 +892,14 @@ void TimerFunction(int value)
 				// 아래로 떨어지는 중인 경우 (velocity.y < 0)
 				if (player.velocity.y <= 0.0f) {
 					// 큐브 위에 착지
-					player.centerPos.y = cubeAABB[i].max.y + player.size.y / 2.0f;
-					player.velocity.y = 0.0f;
-					player.isOnGround = true;
-					onGround = true;
-					std::cout << "Player landed on Cube " << (i + 1) << "!" << std::endl;
-					break;
+					if (cubeAABB[i].max.y - (player.centerPos.y - player.size.y / 2.0f) < 2.5f) {
+						player.centerPos.y = cubeAABB[i].max.y + player.size.y / 2.0f;
+						player.velocity.y = 0.0f;
+						player.isOnGround = true;
+						onGround = true;
+						std::cout << "Player landed on Cube " << (i + 1) << "!" << std::endl;
+						break;
+					}
 				}
 			}
 		}
@@ -888,6 +915,20 @@ void TimerFunction(int value)
 		player.isOnGround = true;
 	}
 
+	if (playerAABB.min.x <= -ANTICUBE_HALF) {
+		player.velocity.x = cubeSpeed;
+	}
+	else if (playerAABB.max.x >= ANTICUBE_HALF) {
+		player.velocity.x = -cubeSpeed;
+	}
+
+	if (playerAABB.min.z <= -ANTICUBE_HALF) {
+		player.velocity.z = cubeSpeed;
+	}
+	else if (playerAABB.max.z >= ANTICUBE_HALF) {
+		player.velocity.z = -cubeSpeed;
+	}
+
 	// angle에 따라 각 큐브의 nowxpos를 sin 함수로 업데이트
 	
 
@@ -895,6 +936,7 @@ void TimerFunction(int value)
 		openangle += 1.0f;;
 		
 	}
+
 
 
 

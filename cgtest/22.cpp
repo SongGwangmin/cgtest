@@ -137,6 +137,7 @@ std::vector<float> allVertices;
 float angle = 0.0f; // 회전 각도 (전역 변수)
 float openangle = 0.0f; // EnRjd 각도 (전역 변수)
 float yangle = 0.0f; // Y축 회전 각도 (전역 변수)
+float armangle = 0.0f; // 팔 회전 각도 (전역 변수)
 
 // 구의 위치 저장 (5개)
 glm::vec3 spherePositions[5];
@@ -553,6 +554,19 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	);
 	playerbodyCube.sendVertexData(allVertices);
 
+	Cube stickCube(
+		glm::vec3(-4.0f, -4.0f, -4.0f), // v0: 앞면 왼쪽 아래
+		glm::vec3(4.0f, -4.0f, -4.0f),  // v1: 앞면 오른쪽 아래
+		glm::vec3(4.0f, -4.0f, 4.0f),   // v2: 앞면 오른쪽 위
+		glm::vec3(-4.0f, -4.0f, 4.0f),  // v3: 앞면 왼쪽 위
+		glm::vec3(-4.0f, 0.0f, -4.0f),  // v4: 뒷면 왼쪽 아래
+		glm::vec3(4.0f, 0.0f, -4.0f),   // v5: 뒷면 오른쪽 아래
+		glm::vec3(4.0f, 0.0f, 4.0f),    // v6: 뒷면 오른쪽 위
+		glm::vec3(-4.0f, 0.0f, 4.0f),   // v7: 뒷면 왼쪽 위
+		glm::vec3(0.5f, 0.0f, 0.0f)     // 초록
+	);
+	stickCube.sendVertexData(allVertices);
+
 	//--- 세이더 프로그램 만들기
 
 	glutDisplayFunc(drawScene); //--- 출력 콜백 함수
@@ -760,6 +774,70 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
 		glDrawArrays(GL_TRIANGLES, startVertex, 36);
 
+		startVertex += 36;
+
+
+
+		//다리
+		headscale = glm::scale(glm::mat4(1.0f), glm::vec3(0.15f, 1.0f, 0.15f));
+		headmodel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 1.38f));
+
+		glm::mat4 stickmodel = glm::rotate(glm::mat4(1.0f), armangle, glm::vec3(0.0f, 0.0f, 1.0f));
+
+		model = glm::mat4(1.0f);
+		model = glm::translate(model, player.centerPos);  // Player 중심 위치로 이동
+		//model = yrote * model;  // Y축 회전 적용
+		model = yrote * model * stickmodel * headmodel * headscale;  // Y축 회전 적용
+		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
+		glDrawArrays(GL_TRIANGLES, startVertex, 36);
+
+		headmodel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -1.38f));
+		model = glm::mat4(1.0f);
+		model = glm::translate(model, player.centerPos);  // Player 중심 위치로 이동
+
+		stickmodel = glm::rotate(glm::mat4(1.0f), -armangle, glm::vec3(0.0f, 0.0f, 1.0f));
+
+		//model = yrote * model;  // Y축 회전 적용
+		model = yrote * model * stickmodel * headmodel * headscale;  // Y축 회전 적용
+		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
+		glDrawArrays(GL_TRIANGLES, startVertex, 36);
+
+		//팔
+		headscale = glm::scale(glm::mat4(1.0f), glm::vec3(0.15f, 1.0f, 0.15f));
+		headmodel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.0f, 2.5f));
+
+		stickmodel = glm::rotate(glm::mat4(1.0f), armangle, glm::vec3(0.0f, 0.0f, 1.0f));
+
+		model = glm::mat4(1.0f);
+		model = glm::translate(model, player.centerPos);  // Player 중심 위치로 이동
+		//model = yrote * model;  // Y축 회전 적용
+		model = yrote * model * headmodel * stickmodel * headscale;  // Y축 회전 적용
+		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
+		glDrawArrays(GL_TRIANGLES, startVertex, 36);
+
+		headmodel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.0f, -2.5f));
+		model = glm::mat4(1.0f);
+		model = glm::translate(model, player.centerPos);  // Player 중심 위치로 이동
+
+		stickmodel = glm::rotate(glm::mat4(1.0f), -armangle, glm::vec3(0.0f, 0.0f, 1.0f));
+
+		//model = yrote * model;  // Y축 회전 적용
+		model = yrote * model * headmodel * stickmodel * headscale;  // Y축 회전 적용
+		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
+		glDrawArrays(GL_TRIANGLES, startVertex, 36);
+
+		//zh
+		headmodel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.0f, -2.5f));
+		model = glm::mat4(1.0f);
+		model = glm::translate(model, player.centerPos);  // Player 중심 위치로 이동
+
+		stickmodel = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+
+		//model = yrote * model;  // Y축 회전 적용
+		model = yrote * model * headmodel * stickmodel * headscale;  // Y축 회전 적용
+		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
+		glDrawArrays(GL_TRIANGLES, startVertex, 36);
+
 		glBindVertexArray(0);
 	}
 
@@ -885,6 +963,8 @@ void Keyboard(unsigned char key, int x, int y) {
 
 void TimerFunction(int value)
 {
+	armangle += 0.1f;
+
 	// 물리 시스템 - 중력 적용
 	const float GRAVITY = 0.05f;
 	const float GROUND_Y = -30.0f;

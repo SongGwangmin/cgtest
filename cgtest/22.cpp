@@ -990,6 +990,20 @@ void Keyboard(unsigned char key, int x, int y) {
 			cubeSpeed /= 1.3f;
 		}
 	}
+	break;
+	case 'i':
+	{
+		opentoggle = 0;
+		openangle = 0.0f;
+		dir = glm::mat4(1.0f);
+		cubeSpeed = 0.1f;
+		player.velocity = glm::vec3(cubeSpeed, 0.0f, 0.0f);
+		yangle = 0.0f;
+		armangle = 0.0f;
+		player.centerPos = glm::vec3(0.0f, 0.0f, 0.0f);
+		maxarmangle = 0.5f;
+	}
+	break;
 	default:
 		break;
 	}

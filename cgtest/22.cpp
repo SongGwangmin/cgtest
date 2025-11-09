@@ -71,7 +71,7 @@ struct CubePos {
 	float size;        // 한 변의 길이
 	float xend;
 	float nowxpos;
-	float nowypos;
+	float nowzpos;
 };
 
 // 3개의 큐브 정보 저장
@@ -390,48 +390,77 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	);
 	antiCube.sendVertexData(allVertices);
 
+	// 큐브들의 랜덤한 시작 위치 설정
+	std::uniform_real_distribution<float> cube1XDis(-30.0f, 30.0f - 10.0f);  // cube1: 크기 10
+	std::uniform_real_distribution<float> cube1ZDis(-30.0f, 30.0f - 10.0f);
+	
+	std::uniform_real_distribution<float> cube2XDis(-30.0f, 30.0f - 15.0f);  // cube2: 크기 15
+	std::uniform_real_distribution<float> cube2ZDis(-30.0f, 30.0f - 15.0f);
+	
+	std::uniform_real_distribution<float> cube3XDis(-30.0f, 30.0f - 20.0f);  // cube3: 크기 20
+	std::uniform_real_distribution<float> cube3ZDis(-30.0f, 30.0f - 20.0f);
+
+	// Cube1의 랜덤 시작점 계산
+	float cube1StartX = cube1XDis(gen);
+	float cube1StartZ = cube1ZDis(gen);
+	cubepos[0].nowxpos = cube1StartX;
+	cubepos[0].nowzpos = cube1StartZ;
+
 	Cube cube1(
-		glm::vec3(-30.0f, -30.0f, 20.0f), // v0: 앞면 왼쪽 아래
-		glm::vec3(-20.0f, -30.0f, 20.0f), // v1: 앞면 오른쪽 아래
-		glm::vec3(-20.0f, -30.0f, 30.0f), // v2: 앞면 오른쪽 위
-		glm::vec3(-30.0f, -30.0f, 30.0f), // v3: 앞면 왼쪽 위
-		glm::vec3(-30.0f, -20.0f, 20.0f), // v4: 뒷면 왼쪽 아래
-		glm::vec3(-20.0f, -20.0f, 20.0f), // v5: 뒷면 오른쪽 아래
-		glm::vec3(-20.0f, -20.0f, 30.0f), // v6: 뒷면 오른쪽 위
-		glm::vec3(-30.0f, -20.0f, 30.0f), // v7: 뒷면 왼쪽 위
+		glm::vec3(cube1StartX, -30.0f, cube1StartZ), // v0: 앞면 왼쪽 아래
+		glm::vec3(cube1StartX + 10.0f, -30.0f, cube1StartZ), // v1: 앞면 오른쪽 아래
+		glm::vec3(cube1StartX + 10.0f, -30.0f, cube1StartZ + 10.0f), // v2: 앞면 오른쪽 위
+		glm::vec3(cube1StartX, -30.0f, cube1StartZ + 10.0f), // v3: 앞면 왼쪽 위
+		glm::vec3(cube1StartX, -20.0f, cube1StartZ), // v4: 뒷면 왼쪽 아래
+		glm::vec3(cube1StartX + 10.0f, -20.0f, cube1StartZ), // v5: 뒷면 오른쪽 아래
+		glm::vec3(cube1StartX + 10.0f, -20.0f, cube1StartZ + 10.0f), // v6: 뒷면 오른쪽 위
+		glm::vec3(cube1StartX, -20.0f, cube1StartZ + 10.0f), // v7: 뒷면 왼쪽 위
 		glm::vec3(0.0f, 0.0f, 1.0f) // 파랑색
 	);
 	cube1.sendVertexData(allVertices);
 
-	// 두 번째 Cube: 한 변의 길이 15, z = 0, 빨강색
+	// Cube2의 랜덤 시작점 계산
+	float cube2StartX = cube2XDis(gen);
+	float cube2StartZ = cube2ZDis(gen);
+	cubepos[1].nowxpos = cube2StartX;
+	cubepos[1].nowzpos = cube2StartZ;
+
+	// 두 번째 Cube: 한 변의 길이 15, 빨강색
 	Cube cube2(
-		glm::vec3(-30.0f, -30.0f, 0.0f),   // v0: 앞면 왼쪽 아래
-		glm::vec3(-15.0f, -30.0f, 0.0f),   // v1: 앞면 오른쪽 아래
-		glm::vec3(-15.0f, -30.0f, 15.0f),  // v2: 앞면 오른쪽 위
-		glm::vec3(-30.0f, -30.0f, 15.0f),  // v3: 앞면 왼쪽 위
-		glm::vec3(-30.0f, -15.0f, 0.0f),   // v4: 뒷면 왼쪽 아래
-		glm::vec3(-15.0f, -15.0f, 0.0f),   // v5: 뒷면 오른쪽 아래
-		glm::vec3(-15.0f, -15.0f, 15.0f),  // v6: 뒷면 오른쪽 위
-		glm::vec3(-30.0f, -15.0f, 15.0f),  // v7: 뒷면 왼쪽 위
+		glm::vec3(cube2StartX, -30.0f, cube2StartZ),   // v0: 앞면 왼쪽 아래
+		glm::vec3(cube2StartX + 15.0f, -30.0f, cube2StartZ),   // v1: 앞면 오른쪽 아래
+		glm::vec3(cube2StartX + 15.0f, -30.0f, cube2StartZ + 15.0f),  // v2: 앞면 오른쪽 위
+		glm::vec3(cube2StartX, -30.0f, cube2StartZ + 15.0f),  // v3: 앞면 왼쪽 위
+		glm::vec3(cube2StartX, -15.0f, cube2StartZ),   // v4: 뒷면 왼쪽 아래
+		glm::vec3(cube2StartX + 15.0f, -15.0f, cube2StartZ),   // v5: 뒷면 오른쪽 아래
+		glm::vec3(cube2StartX + 15.0f, -15.0f, cube2StartZ + 15.0f),  // v6: 뒷면 오른쪽 위
+		glm::vec3(cube2StartX, -15.0f, cube2StartZ + 15.0f),  // v7: 뒷면 왼쪽 위
 		glm::vec3(1.0f, 0.0f, 0.0f) // 빨강색
 	);
 	cube2.sendVertexData(allVertices);
 
-	// 세 번째 Cube: 한 변의 길이 20, z = -20, 짙은 회색
+	// Cube3의 랜덤 시작점 계산
+	float cube3StartX = cube3XDis(gen);
+	float cube3StartZ = cube3ZDis(gen);
+	cubepos[2].nowxpos = cube3StartX;
+	cubepos[2].nowzpos = cube3StartZ;
+
+	// 세 번째 Cube: 한 변의 길이 20, 짙은 회색
 	Cube cube3(
-		glm::vec3(-30.0f, -30.0f, -20.0f),  // v0: 앞면 왼쪽 아래
-		glm::vec3(-10.0f, -30.0f, -20.0f),  // v1: 앞면 오른쪽 아래
-		glm::vec3(-10.0f, -30.0f, 0.0f),  // v2: 앞면 오른쪽 위
-		glm::vec3(-30.0f, -30.0f, 0.0f),  // v3: 앞면 왼쪽 위
-		glm::vec3(-30.0f, -10.0f, -20.0f),  // v4: 뒷면 왼쪽 아래
-		glm::vec3(-10.0f, -10.0f, -20.0f),  // v5: 뒷면 오른쪽 아래
-		glm::vec3(-10.0f, -10.0f, 0.0f),  // v6: 뒷면 오른쪽 위
-		glm::vec3(-30.0f, -10.0f, 0.0f),  // v7: 뒷면 왼쪽 위
+		glm::vec3(cube3StartX, -30.0f, cube3StartZ),  // v0: 앞면 왼쪽 아래
+		glm::vec3(cube3StartX + 20.0f, -30.0f, cube3StartZ),  // v1: 앞면 오른쪽 아래
+		glm::vec3(cube3StartX + 20.0f, -30.0f, cube3StartZ + 20.0f),  // v2: 앞면 오른쪽 위
+		glm::vec3(cube3StartX, -30.0f, cube3StartZ + 20.0f),  // v3: 앞면 왼쪽 위
+		glm::vec3(cube3StartX, -10.0f, cube3StartZ),  // v4: 뒷면 왼쪽 아래
+		glm::vec3(cube3StartX + 20.0f, -10.0f, cube3StartZ),  // v5: 뒷면 오른쪽 아래
+		glm::vec3(cube3StartX + 20.0f, -10.0f, cube3StartZ + 20.0f),  // v6: 뒷면 오른쪽 위
+		glm::vec3(cube3StartX, -10.0f, cube3StartZ + 20.0f),  // v7: 뒷면 왼쪽 위
 		glm::vec3(0.3f, 0.3f, 0.3f) // 짙은 회색 (RGB: 76, 76, 76)
 	);
 	cube3.sendVertexData(allVertices);
 
 	//--- 세이더 프로그램 만들기
+
 	glutDisplayFunc(drawScene); //--- 출력 콜백 함수
 	glutReshapeFunc(Reshape);
 
@@ -590,7 +619,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 		glDrawArrays(GL_TRIANGLES, startVertex, 6); // 6면 * 2삼각형 * 3정점 = 36
 		startVertex += 6;
 
-		model = glm::translate(glm::mat4(1.0f), glm::vec3(cubepos[0].nowxpos + 30.0f, cubepos[0].nowypos, 0.0f));
+		model = glm::mat4(1.0f);
 		glm::mat4 rotmodel = glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0.0f, 0.0f, 1.0f));
 		model = yrote * rotmodel * model;
 		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
@@ -598,14 +627,14 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 		startVertex += 36;
 
 		// Cube2 그리기 (x축 이동 후 z축 회전)
-		model = glm::translate(glm::mat4(1.0f), glm::vec3(cubepos[1].nowxpos + 30.0f, cubepos[1].nowypos, 0.0f));
+		model = glm::mat4(1.0f);
 		model = yrote * rotmodel * model;
 		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
 		glDrawArrays(GL_TRIANGLES, startVertex, 36);
 		startVertex += 36;
 
 		// Cube3 그리기 (x축 이동 후 z축 회전)
-		model = glm::translate(glm::mat4(1.0f), glm::vec3(cubepos[2].nowxpos + 30.0f, cubepos[2].nowypos, 0.0f));
+		model = glm::mat4(1.0f);
 		model = yrote * rotmodel * model;
 		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
 		glDrawArrays(GL_TRIANGLES, startVertex, 36);
@@ -665,24 +694,9 @@ void Keyboard(unsigned char key, int x, int y) {
 		std::uniform_real_distribution<float> posDis(-ANTICUBE_HALF + 3, ANTICUBE_HALF - 3);
 		std::uniform_real_distribution<float> angleDis(0.0f, 2.0f * pi);
 
-		for (int i = 0; i < 5; ++i) {
-			// 랜덤한 위치 생성 (AntiCube 범위 내)
-			spherePositions[i] = glm::vec3(
-				posDis(gen),
-				posDis(gen),
-				posDis(gen)
-			);
-
-			// 랜덤한 각도로 이동 방향 설정
-			float dirangle = angleDis(gen);
-			spheredelta[i] = glm::vec3(
-				cos(dirangle),
-				sin(dirangle),
-				0.0f
-			);
-		}
 	}
 	break;
+	
 	case 'h': // 은면제거 적용/해제
 	{
 		if (hidetoggle) {

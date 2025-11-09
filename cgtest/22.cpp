@@ -875,28 +875,28 @@ void Keyboard(unsigned char key, int x, int y) {
 	break;
 	case 'w': // 와이어프레임 모드 적용/해제
 	{
-		player.velocity.z *= -1;
+		player.velocity.z = -cubeSpeed;
 		player.velocity.x = 0.0f;
 		dir = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	}
 	break;
 	case 'a': // 와이어프레임 모드 적용/해제
 	{
-		player.velocity.x *= -1;
+		player.velocity.x = -cubeSpeed;
 		player.velocity.z = 0.0f;
 		dir = glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	}
 	break;
 	case 's': // 와이어프레임 모드 적용/해제
 	{
-		player.velocity.z *= -1;
+		player.velocity.z = cubeSpeed;
 		player.velocity.x = 0.0f;
 		dir = glm::rotate(glm::mat4(1.0f), -glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	}
 	break;
 	case 'd': // 와이어프레임 모드 적용/해제
 	{
-		player.velocity.x *= -1;
+		player.velocity.x = cubeSpeed;
 		player.velocity.z = 0.0f;
 		dir = glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	}

@@ -54,7 +54,7 @@ int wiretoggle = 0; // 0: 솔리드 모드, 1: 와이어프레임 모드
 int culltoggle = 0; // 1. 뒷면 컬링 모드
 int opentoggle = 0; // 0: 문 닫힘, 1: 문 열림
 
-
+glm::mat4 dir;
 // 카메라 변수
 glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 150.0f);      // 카메라 위치
 glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);      // 카메라 타겟
@@ -138,6 +138,8 @@ float angle = 0.0f; // 회전 각도 (전역 변수)
 float openangle = 0.0f; // EnRjd 각도 (전역 변수)
 float yangle = 0.0f; // Y축 회전 각도 (전역 변수)
 float armangle = 0.0f; // 팔 회전 각도 (전역 변수)
+float maxarmangle = 0.5f;
+int armup = 1; // 팔 올림 내림 토글
 
 // 구의 위치 저장 (5개)
 glm::vec3 spherePositions[5];
@@ -567,6 +569,8 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	);
 	stickCube.sendVertexData(allVertices);
 
+	dir = glm::rotate(glm::mat4(1.0f), 0.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+
 	//--- 세이더 프로그램 만들기
 
 	glutDisplayFunc(drawScene); //--- 출력 콜백 함수
@@ -787,7 +791,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 		model = glm::mat4(1.0f);
 		model = glm::translate(model, player.centerPos);  // Player 중심 위치로 이동
 		//model = yrote * model;  // Y축 회전 적용
-		model = yrote * model * stickmodel * headmodel * headscale;  // Y축 회전 적용
+		model = yrote * model * dir * headmodel * stickmodel * headscale;  // Y축 회전 적용
 		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
 		glDrawArrays(GL_TRIANGLES, startVertex, 36);
 
@@ -798,7 +802,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 		stickmodel = glm::rotate(glm::mat4(1.0f), -armangle, glm::vec3(0.0f, 0.0f, 1.0f));
 
 		//model = yrote * model;  // Y축 회전 적용
-		model = yrote * model * stickmodel * headmodel * headscale;  // Y축 회전 적용
+		model = yrote * model * dir * headmodel * stickmodel * headscale;  // Y축 회전 적용
 		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
 		glDrawArrays(GL_TRIANGLES, startVertex, 36);
 
@@ -811,7 +815,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 		model = glm::mat4(1.0f);
 		model = glm::translate(model, player.centerPos);  // Player 중심 위치로 이동
 		//model = yrote * model;  // Y축 회전 적용
-		model = yrote * model * headmodel * stickmodel * headscale;  // Y축 회전 적용
+		model = yrote * model * dir * headmodel * stickmodel * headscale;  // Y축 회전 적용
 		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
 		glDrawArrays(GL_TRIANGLES, startVertex, 36);
 
@@ -822,19 +826,19 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 		stickmodel = glm::rotate(glm::mat4(1.0f), -armangle, glm::vec3(0.0f, 0.0f, 1.0f));
 
 		//model = yrote * model;  // Y축 회전 적용
-		model = yrote * model * headmodel * stickmodel * headscale;  // Y축 회전 적용
+		model = yrote * model * dir * headmodel * stickmodel * headscale;  // Y축 회전 적용
 		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
 		glDrawArrays(GL_TRIANGLES, startVertex, 36);
 
 		//zh
-		headmodel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.0f, -2.5f));
+		headmodel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.0f, 0.0f));
 		model = glm::mat4(1.0f);
 		model = glm::translate(model, player.centerPos);  // Player 중심 위치로 이동
 
 		stickmodel = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 
 		//model = yrote * model;  // Y축 회전 적용
-		model = yrote * model * headmodel * stickmodel * headscale;  // Y축 회전 적용
+		model = yrote * model * dir * headmodel * stickmodel * headscale;  // Y축 회전 적용
 		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
 		glDrawArrays(GL_TRIANGLES, startVertex, 36);
 
@@ -873,24 +877,28 @@ void Keyboard(unsigned char key, int x, int y) {
 	{
 		player.velocity.z = -cubeSpeed;
 		player.velocity.x = 0.0f;
+		dir = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	}
 	break;
 	case 'a': // 와이어프레임 모드 적용/해제
 	{
 		player.velocity.x = -cubeSpeed;
 		player.velocity.z = 0.0f;
+		dir = glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	}
 	break;
 	case 's': // 와이어프레임 모드 적용/해제
 	{
 		player.velocity.z = cubeSpeed;
 		player.velocity.x = 0.0f;
+		dir = glm::rotate(glm::mat4(1.0f), -glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	}
 	break;
 	case 'd': // 와이어프레임 모드 적용/해제
 	{
 		player.velocity.x = cubeSpeed;
 		player.velocity.z = 0.0f;
+		dir = glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	}
 	break;
 	case 'z': // z축 양의 방향으로 카메라와 타겟 이동
@@ -953,7 +961,23 @@ void Keyboard(unsigned char key, int x, int y) {
 		}
 	}
 	break;
-
+	case '+':
+	{
+		if (maxarmangle < 1.0f) {
+			maxarmangle += 0.1f;
+			player.velocity.x *= 1.3f;
+			player.velocity.z *= 1.3f;
+		}
+	}
+	break;
+	case '-':
+	{
+		if (maxarmangle > 0.1f) {
+			maxarmangle -= 0.1f;
+			player.velocity.x /= 1.3f;
+			player.velocity.z /= 1.3f;
+		}
+	}
 	default:
 		break;
 	}
@@ -963,8 +987,19 @@ void Keyboard(unsigned char key, int x, int y) {
 
 void TimerFunction(int value)
 {
-	armangle += 0.1f;
-
+	
+	if (armup) {
+		armangle += 0.02f;
+		if (armangle >= maxarmangle) {
+			armup = false;
+		}
+	}
+	else {
+		armangle -= 0.02f;
+		if (armangle <= -maxarmangle) {
+			armup = true;
+		}
+	}
 	// 물리 시스템 - 중력 적용
 	const float GRAVITY = 0.05f;
 	const float GROUND_Y = -30.0f;
@@ -1012,8 +1047,8 @@ void TimerFunction(int value)
 						player.velocity.z *= -1.0f;
 						newPos = player.centerPos;  // 원래 위치로 되돌림
 						std::cout << "Hit side of Cube " << (i + 1) << "!" << std::endl;
+						dir = glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f)) * dir;
 					}
-					break;
 				}
 			}
 		}
@@ -1032,21 +1067,30 @@ void TimerFunction(int value)
 
 	// AntiCube 경계 체크 및 속도 반전
 	if (playerAABB.min.x <= -ANTICUBE_HALF) {
-		player.velocity.x = cubeSpeed;
+		player.velocity.x *= -1;
 		player.centerPos.x = -ANTICUBE_HALF + player.size.x / 2.0f;  // 경계 밖으로 나가지 않도록
+		dir = glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f)) * dir;
+
+
 	}
 	else if (playerAABB.max.x >= ANTICUBE_HALF) {
-		player.velocity.x = -cubeSpeed;
+		player.velocity.x *= -1;
 		player.centerPos.x = ANTICUBE_HALF - player.size.x / 2.0f;
+		dir = glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f)) * dir;
+
 	}
 
 	if (playerAABB.min.z <= -ANTICUBE_HALF) {
-		player.velocity.z = cubeSpeed;
+		player.velocity.z *= -1;
 		player.centerPos.z = -ANTICUBE_HALF + player.size.z / 2.0f;
+		dir = glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f)) * dir;
+
 	}
 	else if (playerAABB.max.z >= ANTICUBE_HALF) {
-		player.velocity.z = -cubeSpeed;
+		player.velocity.z *= -1;
 		player.centerPos.z = ANTICUBE_HALF - player.size.z / 2.0f;
+		dir = glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f)) * dir;
+
 	}
 
 	// angle에 따라 각 큐브의 nowxpos를 sin 함수로 업데이트

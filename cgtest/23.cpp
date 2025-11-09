@@ -41,6 +41,7 @@ GLvoid Reshape(int w, int h);
 void setupBuffers();
 void TimerFunction(int value);
 void drawOrbitsAndPlanets(glm::vec3 cameraPos, glm::vec3 cameraTarget, glm::vec3 cameraUp, float rotationAngle);
+void renderScene(); // 장면 렌더링 함수 추가
 
 //--- 필요한 변수 선언
 GLint width = 800, height = 800;
@@ -52,6 +53,7 @@ GLuint VAO, VBO; //--- 버텍스 배열 객체, 버텍스 버퍼 객체
 int hidetoggle = 1; // 1. 은면제거
 int wiretoggle = 0; // 0: 솔리드 모드, 1: 와이어프레임 모드
 int culltoggle = 0; // 1. 뒷면 컬링 모드
+int multiViewportToggle = 0; // 0: 단일 뷰포트, 1: 4분할 뷰포트
 
 // 탱크 애니메이션 토글 변수
 int bodyRotateToggle = 0;    // t: 중앙 몸체 y축 회전
@@ -601,32 +603,10 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 	// 셰이더 사용
 	glUseProgram(shaderProgramID);
 
-	// 투영 행렬 설정
-	glm::mat4 projection = glm::perspective(
-		glm::radians(60.0f),
-		(float)width / (float)height,
-		0.1f,
-		300.0f
-	);
-	unsigned int projectionLocation = glGetUniformLocation(shaderProgramID, "projectionTransform");
-	glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(projection));
-
-	// 뷰 행렬 설정
-	glm::mat4 view = glm::lookAt(cameraPos, cameraTarget, cameraUp);
-	unsigned int viewLocation = glGetUniformLocation(shaderProgramID, "viewTransform");
-	glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(view));
-
-	// 모델 행렬 설정
-	glm::mat4 model = glm::mat4(1.0f);
-	unsigned int modelLocation = glGetUniformLocation(shaderProgramID, "modelTransform");
-	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
-
-	// VBO 데이터 바인딩 및 그리기
-	if (!allVertices.empty()) {
-		glBindVertexArray(VAO);
-		glBindBuffer(GL_ARRAY_BUFFER, VBO);
-		glBufferData(GL_ARRAY_BUFFER, allVertices.size() * sizeof(float),
-			allVertices.data(), GL_STATIC_DRAW);
+	if (multiViewportToggle) {
+		// 4분할 뷰포트 모드
+		int halfWidth = width / 2;
+		int halfHeight = height / 2;
 
 		// 와이어프레임 모드 설정
 		if (wiretoggle) {
@@ -636,11 +616,148 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		}
 
+		// 투영 행렬 설정 (공통)
+		glm::mat4 projection = glm::perspective(
+			glm::radians(60.0f),
+			(float)halfWidth / (float)halfHeight,
+			0.1f,
+			300.0f
+		);
+		unsigned int projectionLocation = glGetUniformLocation(shaderProgramID, "projectionTransform");
+		glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(projection));
+
+		// 1. 왼쪽 위 뷰포트 - 정면 뷰 (카메라 정면)
+		glViewport(0, halfHeight, halfWidth, halfHeight);
+		glScissor(0, halfHeight, halfWidth, halfHeight);
+		glEnable(GL_SCISSOR_TEST);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		
+		glm::vec3 frontCameraPos = glm::vec3(0.0f, 10.0f, 150.0f);
+		glm::vec3 frontCameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
+		glm::mat4 frontView = glm::lookAt(frontCameraPos, frontCameraTarget, cameraUp);
+		unsigned int viewLocation = glGetUniformLocation(shaderProgramID, "viewTransform");
+		glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(frontView));
+		renderScene();
+
+		// 2. 오른쪽 위 뷰포트 - 위에서 본 뷰 (탑 뷰)
+		glViewport(halfWidth, halfHeight, halfWidth, halfHeight);
+		glScissor(halfWidth, halfHeight, halfWidth, halfHeight);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		
+		glm::vec3 topCameraPos = glm::vec3(0.0f, 200.0f, 0.1f);
+		glm::vec3 topCameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
+		glm::mat4 topView = glm::lookAt(topCameraPos, topCameraTarget, glm::vec3(0.0f, 0.0f, -1.0f));
+		glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(topView));
+		renderScene();
+
+		// 3. 왼쪽 아래 뷰포트 - 옆면 뷰 (사이드 뷰)
+		glViewport(0, 0, halfWidth, halfHeight);
+		glScissor(0, 0, halfWidth, halfHeight);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		
+		glm::vec3 sideCameraPos = glm::vec3(150.0f, 10.0f, 0.0f);
+		glm::vec3 sideCameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
+		glm::mat4 sideView = glm::lookAt(sideCameraPos, sideCameraTarget, cameraUp);
+		glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(sideView));
+		renderScene();
+
+		// 4. 오른쪽 아래 뷰포트 - 현재 카메라 위치 (자유 시점)
+		glViewport(halfWidth, 0, halfWidth, halfHeight);
+		glScissor(halfWidth, 0, halfWidth, halfHeight);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		
+		glm::mat4 freeView = glm::lookAt(cameraPos, cameraTarget, cameraUp);
+		glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(freeView));
+		renderScene();
+
+		glDisable(GL_SCISSOR_TEST);
+
+		// 뷰포트 경계선 그리기
+		glViewport(0, 0, width, height);
+		glMatrixMode(GL_PROJECTION);
+		glPushMatrix();
+		glLoadIdentity();
+		glOrtho(0, width, 0, height, -1, 1);
+		glMatrixMode(GL_MODELVIEW);
+		glPushMatrix();
+		glLoadIdentity();
+
+		glDisable(GL_DEPTH_TEST);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		glLineWidth(2.0f);
+		glColor3f(0.0f, 0.0f, 0.0f);
+
+		// 수직선
+		glBegin(GL_LINES);
+		glVertex2f(halfWidth, 0);
+		glVertex2f(halfWidth, height);
+		glEnd();
+
+		// 수평선
+		glBegin(GL_LINES);
+		glVertex2f(0, halfHeight);
+		glVertex2f(width, halfHeight);
+		glEnd();
+
+		glEnable(GL_DEPTH_TEST);
+		glLineWidth(1.0f);
+
+		glPopMatrix();
+		glMatrixMode(GL_PROJECTION);
+		glPopMatrix();
+		glMatrixMode(GL_MODELVIEW);
+	}
+	else {
+		// 단일 뷰포트 모드 (기존 코드)
+		glViewport(0, 0, width, height);
+
+		// 투영 행렬 설정
+		glm::mat4 projection = glm::perspective(
+			glm::radians(60.0f),
+			(float)width / (float)height,
+			0.1f,
+			300.0f
+		);
+		unsigned int projectionLocation = glGetUniformLocation(shaderProgramID, "projectionTransform");
+		glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(projection));
+
+		// 뷰 행렬 설정
+		glm::mat4 view = glm::lookAt(cameraPos, cameraTarget, cameraUp);
+		unsigned int viewLocation = glGetUniformLocation(shaderProgramID, "viewTransform");
+		glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(view));
+
+		// 와이어프레임 모드 설정
+		if (wiretoggle) {
+			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		}
+		else {
+			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		}
+
+		renderScene();
+	}
+
+	glutSwapBuffers(); // 화면에 출력하기
+}
+
+// 장면 렌더링 함수 (공통)
+void renderScene() {
+	unsigned int modelLocation = glGetUniformLocation(shaderProgramID, "modelTransform");
+
+	// VBO 데이터 바인딩
+	if (!allVertices.empty()) {
+		glBindVertexArray(VAO);
+		glBindBuffer(GL_ARRAY_BUFFER, VBO);
+		glBufferData(GL_ARRAY_BUFFER, allVertices.size() * sizeof(float),
+			allVertices.data(), GL_STATIC_DRAW);
+
 		// 전체 정점 개수 계산 (각 정점은 6개 float: xyz + rgb)
 		int vertexCount = allVertices.size() / 6;
 
 		// 바닥
 		int startIndex = 0;
+		glm::mat4 model = glm::mat4(1.0f);
+		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
 		glDrawArrays(GL_TRIANGLES, startIndex, 6);
 		startIndex += 6;
 
@@ -665,7 +782,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 		glDrawArrays(GL_TRIANGLES, startIndex, 36);
 		startIndex += 36;
 
-
+		// 탱크 포탑 회전
 		model = tank.turretRotateAndTranslate(0);
 		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
 		glDrawArrays(GL_TRIANGLES, startIndex, 36);
@@ -673,7 +790,6 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
 		glDrawArrays(GL_TRIANGLES, startIndex, 36);
 		startIndex += 36;
-
 
 		// 탱크 깃대
 		model = tank.flagRotate(0);
@@ -684,8 +800,6 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 		glDrawArrays(GL_TRIANGLES, startIndex, 36);
 		glBindVertexArray(0);
 	}
-
-	glutSwapBuffers(); // 화면에 출력하기
 }
 
 //--- 다시그리기 콜백 함수
@@ -705,6 +819,12 @@ void Keyboard(unsigned char key, int x, int y) {
 	case 'w': // 와이어프레임 모드 적용/해제
 	{
 		wiretoggle = !wiretoggle;
+	}
+	break;
+	case 'v': // 멀티 뷰포트 토글
+	case 'V':
+	{
+		multiViewportToggle = !multiViewportToggle;
 	}
 	break;
 	case 'z': // z축 양의 방향으로 카메라와 타겟 이동

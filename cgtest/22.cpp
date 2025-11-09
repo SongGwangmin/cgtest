@@ -65,6 +65,31 @@ const float ANTICUBE_HALF = ANTICUBE_SIZE / 2.0f;  // 반지름 (중심에서 면까지의 
 const float minBound = -ANTICUBE_HALF + 3.0f;
 const float maxBound = ANTICUBE_HALF - 3.0f;
 
+// AABB 구조체 정의
+struct AABB {
+	glm::vec3 min;  // 최소 좌표 (왼쪽 아래 뒤)
+	glm::vec3 max;  // 최대 좌표 (오른쪽 위 앞)
+};
+
+// 전체 3D AABB 충돌 체크
+bool checkAABBCollision(const AABB& a, const AABB& b) {
+	return (a.min.x <= b.max.x && a.max.x >= b.min.x) &&
+		   (a.min.y <= b.max.y && a.max.y >= b.min.y) &&
+		   (a.min.z <= b.max.z && a.max.z >= b.min.z);
+}
+
+// X, Z축만 충돌 체크 (Y축 제외)
+bool checkAABBCollisionXZ(const AABB& a, const AABB& b) {
+	return (a.min.x <= b.max.x && a.max.x >= b.min.x) &&
+		   (a.min.z <= b.max.z && a.max.z >= b.min.z);
+}
+
+// Y축만 충돌 체크
+bool checkAABBCollisionY(const AABB& a, const AABB& b) {
+	return (a.min.y <= b.max.y && a.max.y >= b.min.y);
+}
+
+
 // Cube 위치와 크기를 저장하는 구조체
 struct CubePos {
 	float xStart;      // x 시작 좌표
@@ -80,6 +105,9 @@ CubePos cubepos[3] = {
 	{-30.0f, 15.0f, 30.0f - 15.0f, -30.0f, 0.0f},   // cube2: x시작 -30, 크기 15
 	{-30.0f, 20.0f, 30.0f - 20.0f, -30.0f, 0.0f}    // cube3: x시작 -30, 크기 20
 };
+
+// 3개의 큐브 AABB 정보 저장
+AABB cubeAABB[3];
 
 // Forward declaration
 class polygon;
@@ -419,6 +447,10 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	);
 	cube1.sendVertexData(allVertices);
 
+	// Cube1의 AABB 정보 저장
+	cubeAABB[0].min = glm::vec3(cube1StartX, -30.0f, cube1StartZ);
+	cubeAABB[0].max = glm::vec3(cube1StartX + 10.0f, -20.0f, cube1StartZ + 10.0f);
+
 	// Cube2의 랜덤 시작점 계산
 	float cube2StartX = cube2XDis(gen);
 	float cube2StartZ = cube2ZDis(gen);
@@ -439,6 +471,10 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	);
 	cube2.sendVertexData(allVertices);
 
+	// Cube2의 AABB 정보 저장
+	cubeAABB[1].min = glm::vec3(cube2StartX, -30.0f, cube2StartZ);
+	cubeAABB[1].max = glm::vec3(cube2StartX + 15.0f, -15.0f, cube2StartZ + 15.0f);
+
 	// Cube3의 랜덤 시작점 계산
 	float cube3StartX = cube3XDis(gen);
 	float cube3StartZ = cube3ZDis(gen);
@@ -458,6 +494,10 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 		glm::vec3(0.3f, 0.3f, 0.3f) // 짙은 회색 (RGB: 76, 76, 76)
 	);
 	cube3.sendVertexData(allVertices);
+
+	// Cube3의 AABB 정보 저장
+	cubeAABB[2].min = glm::vec3(cube3StartX, -30.0f, cube3StartZ);
+	cubeAABB[2].max = glm::vec3(cube3StartX + 20.0f, -10.0f, cube3StartZ + 20.0f);
 
 	//--- 세이더 프로그램 만들기
 

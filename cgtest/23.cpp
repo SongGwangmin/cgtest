@@ -637,8 +637,8 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 		renderScene();
 
 		// 2. 오른쪽 아래 뷰포트 (800,0) ~ (1200,400) - Ortho 투영
-		glViewport(800, 0, 400, 400);
-		glScissor(800, 0, 400, 400);
+		glViewport(800, 400, 400, 400);
+		glScissor(800, 400, 400, 400);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		
 		// Ortho 투영 (perspective와 동일한 영역을 보도록 설정)
@@ -655,8 +655,8 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 		renderScene();
 
 		// 3. 오른쪽 위 뷰포트 (800,400) ~ (1200,800) - Perspective 투영 (위에서 내려다보기)
-		glViewport(800, 400, 400, 400);
-		glScissor(800, 400, 400, 400);
+		glViewport(800, 0, 400, 400);
+		glScissor(800, 0, 400, 400);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		
 		// Perspective 투영

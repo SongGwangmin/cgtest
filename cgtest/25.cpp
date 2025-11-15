@@ -442,7 +442,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 	unsigned int objectColorLocation = glGetUniformLocation(shaderProgramID, "objectColor");
 
 	// 임시 값들로 설정
-	glm::vec3 lightPos(1.2f, 0.0f, 0.0f);
+	glm::vec3 lightPos(2.0f, 2.0f, 0.0f);
 	glm::vec3 viewPos(2.2f, 2.2f, 2.2f); // 카메라 위치와 동일하게
 	glm::vec3 lightColor(1.0f, 2.0f, 1.0f); // 흰색 조명
 	glm::vec3 objectColor(1.0f, 0.5f, 0.31f); // 주황색 객체
@@ -466,7 +466,21 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 	// 축은 변환 없이 그리기 (단위 행렬 적용)
 	glm::mat4 identityMatrix = glm::mat4(1.0f);
 	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(identityMatrix));
-	glDrawArrays(GL_LINES, 0, 6);
+
+	objectColor = glm::vec3(1.0f, 0.0f, 0.0f); // 빨간 x축
+	glUniform3fv(objectColorLocation, 1, glm::value_ptr(objectColor));
+	glDrawArrays(GL_LINES, 0, 2);
+
+	objectColor = glm::vec3(0.0f, 1.0f, 0.0f); // 초록 y축
+	glUniform3fv(objectColorLocation, 1, glm::value_ptr(objectColor));
+	glDrawArrays(GL_LINES, 2, 2);
+	objectColor = glm::vec3(0.0f, 0.0f, 1.0f); // 파란 z축
+	glUniform3fv(objectColorLocation, 1, glm::value_ptr(objectColor));
+	glDrawArrays(GL_LINES, 4, 2);
+
+	objectColor = glm::vec3(1.0f, 0.5f, 0.31f); // 주황색 객체
+	glUniform3fv(objectColorLocation, 1, glm::value_ptr(objectColor));
+	
 
 	// polygon들은 변환 행렬 적용해서 그리기
 	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));

@@ -239,115 +239,47 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	glEnable(GL_DEPTH_TEST);
 	allVertices.clear();
 
-	//polygonmap.emplace_back(polygon(400 - 150, 400 + 150, 400 + 150, 400 + 300, 3));
+	// 구 만들기
+	float phi = (1.0f + sqrt(5.0f)) * 0.5f;
+	float a = 1.0f;
+	float b = 1.0f / phi;
 
-	pointment p1{ 0.5,0.5,0.5 };
-	pointment p2{ 0.5,0.5,-0.5 };
-	pointment p3{ -0.5,0.5,-0.5 };
-	pointment p4{ -0.5,0.5,0.5 };
-	pointment p5{ 0.5,-0.5,0.5 };
-	pointment p6{ 0.5,-0.5,-0.5 };
-	pointment p7{ -0.5,-0.5,-0.5 };
-	pointment p8{ -0.5,-0.5,0.5 };
-	pointment p9{ 0, 0.5 ,0 };
+	// 정이십면체 12개 꼭짓점 정의
+	pointment vertices[12] = {
+		{ -b, a, 0 },{ b, a, 0 },{ -b, -a, 0 },{ b, -a, 0 },
+		{ 0, -b, a },{ 0, b, a },{ 0, -b, -a },{ 0, b, -a },
+		{ a, 0, -b },{ a, 0, b },{ -a, 0, -b },{ -a, 0, b }
+	};
 
-	// glm::vec4로 축 좌표 정의 (회전 없이 기본 축)
-	glm::vec4 xaxis1(10, 0, 0, 1);
-	glm::vec4 xaxis2(-10, 0, 0, 1);
-	glm::vec4 yaxis1(0, 10, 0, 1);
-	glm::vec4 yaxis2(0, -10, 0, 1);
-	glm::vec4 zaxis1(0, 0, 10, 1);
-	glm::vec4 zaxis2(0, 0, -10, 1);
+	// 정이십면체 20개 삼각형 면 정의
+	polygonmap.emplace_back(vertices[0], vertices[11], vertices[5], 1.0, 0.0, 0.0);
+	polygonmap.emplace_back(vertices[0], vertices[5], vertices[1], 1.0, 0.0, 0.0);
+	polygonmap.emplace_back(vertices[0], vertices[1], vertices[7], 1.0, 0.0, 0.0);
+	polygonmap.emplace_back(vertices[0], vertices[7], vertices[10], 1.0, 0.0, 0.0);
+	polygonmap.emplace_back(vertices[0], vertices[10], vertices[11], 1.0, 0.0, 0.0);
 
-	// 축 데이터를 allVertices에 추가 (vec4의 x, y, z 멤버 사용)
-	// 축은 노말 벡터가 필요없으므로 (0,0,0)으로 설정
-	allVertices.insert(allVertices.end(), {
-					xaxis1.x, xaxis1.y, xaxis1.z,
-					1.0f, 0.0f, 0.0f }); // 위치 + 노말
-	allVertices.insert(allVertices.end(), {
-					xaxis2.x, xaxis2.y, xaxis2.z,
-					1.0f, 0.0f, 0.0f });
+	polygonmap.emplace_back(vertices[1], vertices[5], vertices[9], 0.0, 1.0, 0.0);
+	polygonmap.emplace_back(vertices[5], vertices[11], vertices[4], 0.0, 1.0, 0.0);
+	polygonmap.emplace_back(vertices[11], vertices[10], vertices[2], 0.0, 1.0, 0.0);
+	polygonmap.emplace_back(vertices[10], vertices[7], vertices[6], 0.0, 1.0, 0.0);
+	polygonmap.emplace_back(vertices[7], vertices[1], vertices[8], 0.0, 1.0, 0.0);
 
-	allVertices.insert(allVertices.end(), {
-					yaxis1.x, yaxis1.y, yaxis1.z,
-					1.0f, 0.0f, 0.0f });
-	allVertices.insert(allVertices.end(), {
-					yaxis2.x, yaxis2.y, yaxis2.z,
-					1.0f, 0.0f, 0.0f });
+	polygonmap.emplace_back(vertices[3], vertices[9], vertices[4], 0.0, 0.0, 1.0);
+	polygonmap.emplace_back(vertices[3], vertices[4], vertices[2], 0.0, 0.0, 1.0);
+	polygonmap.emplace_back(vertices[3], vertices[2], vertices[6], 0.0, 0.0, 1.0);
+	polygonmap.emplace_back(vertices[3], vertices[6], vertices[8], 0.0, 0.0, 1.0);
+	polygonmap.emplace_back(vertices[3], vertices[8], vertices[9], 0.0, 0.0, 1.0);
 
-	allVertices.insert(allVertices.end(), {
-					zaxis1.x, zaxis1.y, zaxis1.z,
-					1.0f, 0.0f, 0.0f });
-	allVertices.insert(allVertices.end(), {
-					zaxis2.x, zaxis2.y, zaxis2.z,
-					1.0f, 0.0f, 0.0f });
-
-	// 현재 축 벡터들 계산 (기본 축 사용)
-	current_xaxis = glm::vec3(1.0f, 0.0f, 0.0f);
-	current_yaxis = glm::vec3(0.0f, 1.0f, 0.0f);
-	current_zaxis = glm::vec3(0.0f, 0.0f, 1.0f);
-
-	// 육면체 면들 (외부를 향하도록 반시계방향 정점 순서)
-	// 위 면 (y = 0.5) - 위에서 아래를 볼 때 반시계
-	polygonmap.emplace_back(polygon(p1, p2, p3, p4, 1, 0, 0));
-
-	// 아래 면 (y = -0.5) - 아래에서 위를 볼 때 반시계
-	polygonmap.emplace_back(polygon(p5, p6, p7, p8, 1, 1, 0));
-
-	// 앞 면 (z = 0.5) - 앞에서 뒤를 볼 때 반시계
-	polygonmap.emplace_back(polygon(p1, p4, p8, p5, 0, 0, 1));
-
-	// 뒷 면 (z = -0.5) - 뒤에서 앞을 볼 때 반시계
-	polygonmap.emplace_back(polygon(p2, p6, p7, p3, 1, 0, 1));
-
-	// 왼쪽 면 (x = -0.5) - 왼쪽에서 오른쪽을 볼 때 반시계
-	polygonmap.emplace_back(polygon(p4, p3, p7, p8, 0, 1, 0));
-
-	// 오른쪽 면 (x = 0.5) - 오른쪽에서 왼쪽을 볼 때 반시계
-	polygonmap.emplace_back(polygon(p1, p5, p6, p2, 0, 1, 1));
-
-	// 피라미드 면들 (외부를 향하도록 반시계방향)
-	// 앞 면 (z = 0.5 쪽)
-	polygonmap.emplace_back(polygon(p5, p6, p9, 1, 0, 0));
-
-	// 오른쪽 면 (x = 0.5 쪽)
-	polygonmap.emplace_back(polygon(p6, p7, p9, 0, 1, 0));
-
-	// 뒷 면 (z = -0.5 쪽)
-	polygonmap.emplace_back(polygon(p7, p8, p9, 0, 0, 1));
-
-	// 왼쪽 면 (x = -0.5 쪽)
-	polygonmap.emplace_back(polygon(p8, p5, p9, 1, 1, 0));
+	polygonmap.emplace_back(vertices[4], vertices[9], vertices[5], 1.0, 1.0, 0.0);
+	polygonmap.emplace_back(vertices[2], vertices[4], vertices[11], 1.0, 1.0, 0.0);
+	polygonmap.emplace_back(vertices[6], vertices[2], vertices[10], 1.0, 1.0, 0.0);
+	polygonmap.emplace_back(vertices[8], vertices[6], vertices[7], 1.0, 1.0, 0.0);
+	polygonmap.emplace_back(vertices[9], vertices[8], vertices[1], 1.0, 1.0, 0.0);
 
 
-	// polygon 회전 제거 - 기본 상태로 유지
-	for (auto poly = polygonmap.begin(); poly != polygonmap.end(); ++poly) {
-		poly->sendvertexdata(allVertices);
-	}
-
-	// ZX 평면에 원 그리기 (Y = 0)
-	int circleSegments = 36; // 원을 36개의 선분으로
-	float radius = 2.0f;
-
-	for (int i = 0; i < circleSegments; ++i) {
-		float angle1 = (float)i * 2.0f * pi / circleSegments;
-		float angle2 = (float)(i + 1) * 2.0f * pi / circleSegments;
-
-		// 첫 번째 점 (ZX 평면이므로 y=0)
-		float x1 = radius * cos(angle1);
-		float z1 = radius * sin(angle1);
-		allVertices.insert(allVertices.end(), {
-			x1, 0.0f, z1,           // 위치
-			0.0f, 1.0f, 0.0f        // 흰색 (노말 대신 색상 정보로 사용)
-			});
-
-		// 두 번째 점
-		float x2 = radius * cos(angle2);
-		float z2 = radius * sin(angle2);
-		allVertices.insert(allVertices.end(), {
-			x2, 0.0f, z2,           // 위치
-			0.0f, 1.0f, 0.0f        // 흰색
-			});
+	// 모든 정점 데이터를 allVertices 벡터에 추가
+	for (auto& p : polygonmap) {
+		p.sendvertexdata(allVertices);
 	}
 
 	//--- 세이더 프로그램 만들기
@@ -503,76 +435,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 
 	glLineWidth(2.0f);
 
-	// 축은 변환 없이 그리기 (단위 행렬 적용)
-	glm::mat4 identityMatrix = glm::mat4(1.0f);
-	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(identityMatrix));
-
-	objectColor = glm::vec3(1.0f, 0.0f, 0.0f); // 빨간 x축
-	glUniform3fv(objectColorLocation, 1, glm::value_ptr(objectColor));
-	glDrawArrays(GL_LINES, 0, 2);
-
-	objectColor = glm::vec3(0.0f, 1.0f, 0.0f); // 초록 y축
-	glUniform3fv(objectColorLocation, 1, glm::value_ptr(objectColor));
-	glDrawArrays(GL_LINES, 2, 2);
-	objectColor = glm::vec3(0.0f, 0.0f, 1.0f); // 파란 z축
-	glUniform3fv(objectColorLocation, 1, glm::value_ptr(objectColor));
-	glDrawArrays(GL_LINES, 4, 2);
-
-	// ZX 평면의 원 그리기 (흰색)
-	objectColor = glm::vec3(1.0f, 1.0f, 1.0f); // 흰색
-	glUniform3fv(objectColorLocation, 1, glm::value_ptr(objectColor));
-
-	// 원을 lightOrbitRadius / 2.0 크기로 스케일
-	glm::mat4 circleScale = glm::scale(glm::mat4(1.0f), glm::vec3(lightOrbitRadius / 2.0f, 1.0f, lightOrbitRadius / 2.0f));
-	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(circleScale));
-	glDrawArrays(GL_LINES, 66, 72); // 36개 선분 = 72개 정점 (36*2)
-
-	// 다시 단위 행렬로 복원
-	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(identityMatrix));
-
-	// 조명 위치 표시 (회색 육면체)
-	float lightMarkerX = lightOrbitRadius * cos(orbitAngle);
-	float lightMarkerZ = lightOrbitRadius * sin(orbitAngle);
-
-	// 조명 마커 변환: 0.5 스케일 -> 궤도 위치로 이동 -> Y축 회전
-	glm::mat4 lightMarkerTransform = glm::mat4(1.0f);
-	lightMarkerTransform = glm::rotate(lightMarkerTransform, -orbitAngle, glm::vec3(0.0f, 1.0f, 0.0f)); // Y축 회전
-	lightMarkerTransform = glm::translate(lightMarkerTransform, glm::vec3(lightOrbitRadius * 1.04f, 0.0f, 0.0f)); // 궤도 위치로 이동
-	lightMarkerTransform = glm::scale(lightMarkerTransform, glm::vec3(0.1f, 0.1f, 0.1f)); // 0.1 크기로 스케일
-
-	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(lightMarkerTransform));
-
-	objectColor = glm::vec3(0.5f, 0.5f, 0.5f); // 회색
-	glUniform3fv(objectColorLocation, 1, glm::value_ptr(objectColor));
-
-	// 육면체 6개 면 그리기 (인덱스 0~5, 각 면당 6개 정점)
-	for (int i = 0; i < 6; ++i) {
-		glDrawArrays(GL_TRIANGLES, 6 + 6 * i, 6);
-	}
-
-	// 다시 단위 행렬로 복원
-	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(identityMatrix));
-
-	objectColor = glm::vec3(1.0f, 0.5f, 0.31f); // 주황색 객체
-	glUniform3fv(objectColorLocation, 1, glm::value_ptr(objectColor));
-
-
-	// polygon들은 변환 행렬 적용해서 그리기
-	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
-	if (wiretoggle) {
-		for (int i = 0; i < 10; ++i) {
-			if (selection[i]) {
-				glDrawArrays(GL_LINES, 6 + 6 * i, 6);
-			}
-		}
-	}
-	else {
-		for (int i = 0; i < 10; ++i) {
-			if (selection[i]) {
-				glDrawArrays(GL_TRIANGLES, 6 + 6 * i, 6);
-			}
-		}
-	}
+	
 
 	glBindVertexArray(0);
 
@@ -606,63 +469,6 @@ void Keyboard(unsigned char key, int x, int y) {
 		}
 	}
 	break;
-	case '0':
-	case '1':
-	case '2':
-	case '3':
-	case '4':
-	case '5':
-	case '6':
-	case '7':
-	case '8':
-	case '9':
-	{
-		int idx = key - '0';
-		for (int i = 0; i < 10; ++i) {
-			selection[i] = 0;
-		}
-		idx += 9;
-		idx %= 10;
-		selection[idx] = 1;
-	}
-	break;
-	case 'p':
-	{
-		if (selection[0]) {
-			int copy[10] = { 0,2,0,0,0,0,1,1,1,1 };
-			for (int i = 0; i < 10; ++i) {
-				selection[i] = copy[i];
-			}
-		}
-		else {
-			int copy[10] = { 1,1,1,1,1,1,0,0,0,0 };
-			for (int i = 0; i < 10; ++i) {
-				selection[i] = copy[i];
-			}
-		}
-	}
-	break;
-	case 'c': // 육면체
-	{
-		int copy[10] = { 1,1,1,1,1,1,0,0,0,0 };
-
-
-
-
-		for (int i = 0; i < 10; ++i) {
-			selection[i] = copy[i];
-		}
-	}
-	break;
-	case 't':
-	{
-		int copy[10] = { 0,0,0,0,0,1,1,1,1,1 };
-
-		for (int i = 0; i < 10; ++i) {
-			selection[i] = copy[i];
-		}
-	}
-	break;
 	case 'h': // 은면제거 적용/해제
 	{
 		if (hidetoggle) {
@@ -673,38 +479,6 @@ void Keyboard(unsigned char key, int x, int y) {
 			glDisable(GL_DEPTH_TEST);
 			hidetoggle = 1;
 		}
-	}
-	break;
-	case 'w': // 와이어객체
-	{
-		wiretoggle = 1;
-	}
-	break;
-	case 'W': // 솔리드객체
-	{
-		wiretoggle = 0;
-
-	}
-	break;
-	case 'x': // x축 기준 양방향 회전애니메이션(자전)
-	{
-		xangle += 0.02f;
-	}
-	break;
-	case 'X': // x축 기준 음방향 회전애니메이션(자전)
-	{
-		xangle -= 0.02f;
-
-	}
-	break;
-	case 'y': // y축 기준 양방향 회전애니메이션(자전)
-	{
-		angle += 0.02f;
-	}
-	break;
-	case 'Y': // y축 기준 음방향 회전애니메이션(자전)
-	{
-		angle -= 0.02f;
 	}
 	break;
 	case 's': // 초기위치로 리셋(모든 애니메이션 멈추기)
@@ -768,28 +542,7 @@ void SpecialKeys(int key, int x, int y) {
 
 void Mouse(int button, int state, int x, int y)
 {
-	switch (button) {
-	case GLUT_LEFT_BUTTON:
-	{
-		if (state == GLUT_DOWN) {// 도형선택
-
-		}
-		else if (state == GLUT_UP) {
-
-			glutPostRedisplay();
-		}
-	}
-	break;
-	case GLUT_RIGHT_BUTTON:
-	{
-		if (state == GLUT_DOWN) {
-
-		}
-	}
-	break;
-	default:
-		break;
-	}
+	
 }
 
 void TimerFunction(int value)

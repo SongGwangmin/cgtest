@@ -530,29 +530,28 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 	// 다시 단위 행렬로 복원
 	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(identityMatrix));
 
-	// 조명 위치 표시 (노란색 점)
+	// 조명 위치 표시 (회색 육면체)
 	float lightMarkerX = lightOrbitRadius * cos(orbitAngle);
 	float lightMarkerZ = lightOrbitRadius * sin(orbitAngle);
 	
-	// 조명 위치에 작은 선으로 표시
-	std::vector<float> lightMarker = {
-		lightMarkerX, -0.1f, lightMarkerZ, 0.0f, 1.0f, 0.0f,
-		lightMarkerX, 0.1f, lightMarkerZ, 0.0f, 1.0f, 0.0f
-	};
+	// 조명 마커 변환: 0.5 스케일 -> 궤도 위치로 이동 -> Y축 회전
+	glm::mat4 lightMarkerTransform = glm::mat4(1.0f);
+	lightMarkerTransform = glm::rotate(lightMarkerTransform, -orbitAngle, glm::vec3(0.0f, 1.0f, 0.0f)); // Y축 회전
+	lightMarkerTransform = glm::translate(lightMarkerTransform, glm::vec3(lightOrbitRadius * 1.04f, 0.0f, 0.0f)); // 궤도 위치로 이동
+	lightMarkerTransform = glm::scale(lightMarkerTransform, glm::vec3(0.1f, 0.1f, 0.1f)); // 0.1 크기로 스케일
 	
-	// VBO에 임시로 조명 마커 추가
-	size_t originalSize = allVertices.size();
-	allVertices.insert(allVertices.end(), lightMarker.begin(), lightMarker.end());
-	glBufferData(GL_ARRAY_BUFFER, allVertices.size() * sizeof(float),
-		allVertices.data(), GL_DYNAMIC_DRAW);
+	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(lightMarkerTransform));
 	
-	objectColor = glm::vec3(1.0f, 1.0f, 0.0f); // 노란색
+	objectColor = glm::vec3(0.5f, 0.5f, 0.5f); // 회색
 	glUniform3fv(objectColorLocation, 1, glm::value_ptr(objectColor));
-	glPointSize(10.0f);
-	glDrawArrays(GL_LINES, originalSize / 6, 2);
 	
-	// 원래 크기로 복원
-	allVertices.resize(originalSize);
+	// 육면체 6개 면 그리기 (인덱스 0~5, 각 면당 6개 정점)
+	for (int i = 0; i < 6; ++i) {
+		glDrawArrays(GL_TRIANGLES, 6 + 6 * i, 6);
+	}
+	
+	// 다시 단위 행렬로 복원
+	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(identityMatrix));
 
 	objectColor = glm::vec3(1.0f, 0.5f, 0.31f); // 주황색 객체
 	glUniform3fv(objectColorLocation, 1, glm::value_ptr(objectColor));

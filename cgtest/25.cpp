@@ -67,11 +67,14 @@ float angle = 0.0f; // 회전 각도
 float xangle = 0.0f;
 float polygon_xpos = 0.0f;
 float polygon_ypos = 0.0f;
+float orbitAngle = 0.0f; // 조명 공전 각도
 
 // 동적 회전축을 위한 전역 변수
 glm::vec3 current_xaxis;
 glm::vec3 current_yaxis;
 glm::vec3 current_zaxis;
+
+float lightOrbitRadius = 2.0f; // 조명 궤도 반지름
 
 typedef struct poitment {
 	float xpos;
@@ -320,6 +323,32 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	for (auto poly = polygonmap.begin(); poly != polygonmap.end(); ++poly) {
 		poly->sendvertexdata(allVertices);
 	}
+
+	// ZX 평면에 원 그리기 (Y = 0)
+	int circleSegments = 36; // 원을 36개의 선분으로
+	float radius = 2.0f;
+	
+	for (int i = 0; i < circleSegments; ++i) {
+		float angle1 = (float)i * 2.0f * pi / circleSegments;
+		float angle2 = (float)(i + 1) * 2.0f * pi / circleSegments;
+		
+		// 첫 번째 점 (ZX 평면이므로 y=0)
+		float x1 = radius * cos(angle1);
+		float z1 = radius * sin(angle1);
+		allVertices.insert(allVertices.end(), {
+			x1, 0.0f, z1,           // 위치
+			0.0f, 1.0f, 0.0f        // 흰색 (노말 대신 색상 정보로 사용)
+		});
+		
+		// 두 번째 점
+		float x2 = radius * cos(angle2);
+		float z2 = radius * sin(angle2);
+		allVertices.insert(allVertices.end(), {
+			x2, 0.0f, z2,           // 위치
+			0.0f, 1.0f, 0.0f        // 흰색
+		});
+	}
+
 	//--- 세이더 프로그램 만들기
 	glutDisplayFunc(drawScene); //--- 출력 콜백 함수
 	glutReshapeFunc(Reshape);
@@ -413,7 +442,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 	// 뷰 변환 행렬 설정 - 카메라를 x, y, z축으로 0.2씩 이동
 	glm::mat4 view = glm::mat4(1.0f);
 	view = glm::lookAt(
-		glm::vec3(2.2f, 2.2f, 2.2f), // 카메라 위치
+		glm::vec3(2.2f, 2.2f, 4.2f), // 카메라 위치
 		glm::vec3(0.0f, 0.0f, 0.0f), // 바라보는 점
 		glm::vec3(0.0f, 1.0f, 0.0f)  // 업 벡터
 	);
@@ -441,9 +470,12 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 	unsigned int lightColorLocation = glGetUniformLocation(shaderProgramID, "lightColor");
 	unsigned int objectColorLocation = glGetUniformLocation(shaderProgramID, "objectColor");
 
-	// 조명 설정 - lightPos가 (2, 2, 0)
-	glm::vec3 lightPos(2.0f, 2.0f, 0.0f);
-	glm::vec3 viewPos(2.2f, 2.2f, 2.2f); // 카메라 위치와 동일하게
+	// 조명 설정 - 원 궤도를 따라 회전
+	float lightX = lightOrbitRadius * cos(orbitAngle);
+	float lightZ = lightOrbitRadius * sin(orbitAngle);
+	glm::vec3 lightPos(lightX, 0.0f, lightZ); // ZX 평면에서 회전
+	
+	glm::vec3 viewPos(2.2f, 2.2f, 4.2f); // 카메라 위치와 동일하게
 	glm::vec3 lightColor(1.0f, 1.0f, 1.0f); // 흰색 조명으로 수정
 	glm::vec3 objectColor(1.0f, 0.5f, 0.31f); // 주황색 객체
 
@@ -477,6 +509,42 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 	objectColor = glm::vec3(0.0f, 0.0f, 1.0f); // 파란 z축
 	glUniform3fv(objectColorLocation, 1, glm::value_ptr(objectColor));
 	glDrawArrays(GL_LINES, 4, 2);
+
+	// ZX 평면의 원 그리기 (흰색)
+	objectColor = glm::vec3(1.0f, 1.0f, 1.0f); // 흰색
+	glUniform3fv(objectColorLocation, 1, glm::value_ptr(objectColor));
+	
+	// 원을 lightOrbitRadius / 2.0 크기로 스케일
+	glm::mat4 circleScale = glm::scale(glm::mat4(1.0f), glm::vec3(lightOrbitRadius / 2.0f, 1.0f, lightOrbitRadius / 2.0f));
+	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(circleScale));
+	glDrawArrays(GL_LINES, 66, 72); // 36개 선분 = 72개 정점 (36*2)
+	
+	// 다시 단위 행렬로 복원
+	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(identityMatrix));
+
+	// 조명 위치 표시 (노란색 점)
+	float lightMarkerX = lightOrbitRadius * cos(orbitAngle);
+	float lightMarkerZ = lightOrbitRadius * sin(orbitAngle);
+	
+	// 조명 위치에 작은 선으로 표시
+	std::vector<float> lightMarker = {
+		lightMarkerX, -0.1f, lightMarkerZ, 0.0f, 1.0f, 0.0f,
+		lightMarkerX, 0.1f, lightMarkerZ, 0.0f, 1.0f, 0.0f
+	};
+	
+	// VBO에 임시로 조명 마커 추가
+	size_t originalSize = allVertices.size();
+	allVertices.insert(allVertices.end(), lightMarker.begin(), lightMarker.end());
+	glBufferData(GL_ARRAY_BUFFER, allVertices.size() * sizeof(float),
+		allVertices.data(), GL_DYNAMIC_DRAW);
+	
+	objectColor = glm::vec3(1.0f, 1.0f, 0.0f); // 노란색
+	glUniform3fv(objectColorLocation, 1, glm::value_ptr(objectColor));
+	glPointSize(10.0f);
+	glDrawArrays(GL_LINES, originalSize / 6, 2);
+	
+	// 원래 크기로 복원
+	allVertices.resize(originalSize);
 
 	objectColor = glm::vec3(1.0f, 0.5f, 0.31f); // 주황색 객체
 	glUniform3fv(objectColorLocation, 1, glm::value_ptr(objectColor));
@@ -515,9 +583,20 @@ void Keyboard(unsigned char key, int x, int y) {
 	case 'q': // 프로그램 종료
 		glutLeaveMainLoop();
 		break;
-	case 'r': // vertexpos[0] 대칭이동
+	case 'r': // 조명 공전 - 반시계방향
 	{
-
+		orbitAngle += 0.1f; // 약 5.7도씩 증가
+		if (orbitAngle > 2.0f * pi) {
+			orbitAngle -= 2.0f * pi; // 2π를 넘으면 리셋
+		}
+	}
+	break;
+	case 'R': // 조명 공전 - 시계방향
+	{
+		orbitAngle -= 0.1f; // 약 5.7도씩 감소
+		if (orbitAngle < 0.0f) {
+			orbitAngle += 2.0f * pi; // 0 미만이면 2π 더하기
+		}
 	}
 	break;
 	case '0':
@@ -627,7 +706,25 @@ void Keyboard(unsigned char key, int x, int y) {
 		angle = 0.0f;
 		polygon_xpos = 0.0f;
 		polygon_ypos = 0.0f;
+		orbitAngle = 0.0f; // 조명 궤도 각도도 리셋
+		lightOrbitRadius = 2.0f; // 조명 궤도 반지름도 리셋
 
+	}
+	break;
+	case 'z': // 조명 궤도 반지름 증가
+	{
+		lightOrbitRadius += 0.1f;
+		if (lightOrbitRadius > 5.0f) {
+			lightOrbitRadius = 5.0f; // 최대 반지름 제한
+		}
+	}
+	break;
+	case 'Z': // 조명 궤도 반지름 감소
+	{
+		lightOrbitRadius -= 0.1f;
+		if (lightOrbitRadius < 0.5f) {
+			lightOrbitRadius = 0.5f; // 최소 반지름 제한
+		}
 	}
 	break;
 	case 'u':

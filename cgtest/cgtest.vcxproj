@@ -169,7 +169,10 @@
     <ClCompile Include="22.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="23.cpp" />
+    <ClCompile Include="23.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="25.cpp" />
     <ClCompile Include="9.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </ClCompile>
@@ -188,7 +191,9 @@
     <Text Include="vertex.glsl" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="fragment_light.glsl" />
     <None Include="fragment_matrix.glsl" />
+    <None Include="vertex_light.glsl" />
     <None Include="vertex_matrix.glsl" />
     <None Include="vertex_projection.glsl" />
     <None Include="vertex_view.glsl" />

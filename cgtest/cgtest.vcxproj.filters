@@ -75,6 +75,9 @@
     <ClCompile Include="23.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="25.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="vertex.glsl">
@@ -95,6 +98,12 @@
       <Filter>Source Files</Filter>
     </None>
     <None Include="vertex_projection.glsl">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="vertex_light.glsl">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="fragment_light.glsl">
       <Filter>Source Files</Filter>
     </None>
   </ItemGroup>

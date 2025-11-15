@@ -259,24 +259,24 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	// 축은 노말 벡터가 필요없으므로 (0,0,0)으로 설정
 	allVertices.insert(allVertices.end(), {
 					xaxis1.x, xaxis1.y, xaxis1.z,
-					0.0f, 0.0f, 0.0f }); // 위치 + 노말
+					1.0f, 0.0f, 0.0f }); // 위치 + 노말
 	allVertices.insert(allVertices.end(), {
 					xaxis2.x, xaxis2.y, xaxis2.z,
-					0.0f, 0.0f, 0.0f });
+					1.0f, 0.0f, 0.0f });
 
 	allVertices.insert(allVertices.end(), {
 					yaxis1.x, yaxis1.y, yaxis1.z,
-					0.0f, 0.0f, 0.0f });
+					1.0f, 0.0f, 0.0f });
 	allVertices.insert(allVertices.end(), {
 					yaxis2.x, yaxis2.y, yaxis2.z,
-					0.0f, 0.0f, 0.0f });
+					1.0f, 0.0f, 0.0f });
 
 	allVertices.insert(allVertices.end(), {
 					zaxis1.x, zaxis1.y, zaxis1.z,
-					0.0f, 0.0f, 0.0f });
+					1.0f, 0.0f, 0.0f });
 	allVertices.insert(allVertices.end(), {
 					zaxis2.x, zaxis2.y, zaxis2.z,
-					0.0f, 0.0f, 0.0f });
+					1.0f, 0.0f, 0.0f });
 
 	// 현재 축 벡터들 계산 (기본 축 사용)
 	current_xaxis = glm::vec3(1.0f, 0.0f, 0.0f);
@@ -398,8 +398,8 @@ GLuint make_shaderProgram()
 GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 {
 	GLfloat rColor, gColor, bColor;
-	rColor = gColor = 1.0;
-	bColor = 1.0; //--- 배경색을 파랑색으로 설정
+	rColor = gColor = 0.0;
+	bColor = 0.0; //--- 배경색을 파랑색으로 설정
 	glClearColor(rColor, gColor, bColor, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glUseProgram(shaderProgramID);

@@ -68,6 +68,7 @@ float xangle = 0.0f;
 float polygon_xpos = 0.0f;
 float polygon_ypos = 0.0f;
 float orbitAngle = 0.0f; // 조명 공전 각도
+int turnontoggle = 1; // 조명 ON/OFF (1: ON, 0: OFF)
 
 // 동적 회전축을 위한 전역 변수
 glm::vec3 current_xaxis;
@@ -473,10 +474,17 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 	// 조명 설정 - 원 궤도를 따라 회전
 	float lightX = lightOrbitRadius * cos(orbitAngle);
 	float lightZ = lightOrbitRadius * sin(orbitAngle);
-	glm::vec3 lightPos(lightX, 0.0f, lightZ); // ZX 평면에서 회전
+	
+	glm::vec3 lightPos;
+	if (turnontoggle) {
+		lightPos = glm::vec3(lightX, 0.0f, lightZ); // ZX 평면에서 회전
+	}
+	else {
+		lightPos = glm::vec3(-500.0f, -500.0f, -500.0f); // 조명 OFF - 멀리 이동
+	}
 	
 	glm::vec3 viewPos(2.2f, 2.2f, 4.2f); // 카메라 위치와 동일하게
-	glm::vec3 lightColor(1.0f, 1.0f, 1.0f); // 흰색 조명으로 수정
+	glm::vec3 lightColor(1.0f, 1.0f, 1.0f); // 흰색 조명
 	glm::vec3 objectColor(1.0f, 0.5f, 0.31f); // 주황색 객체
 
 	glUniform3fv(lightPosLocation, 1, glm::value_ptr(lightPos));
@@ -488,7 +496,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 		glBindVertexArray(VAO);
 		glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
-		// 버퍼에 정점 데이터 업로드
+		// 버퍼에 정점 데이터업로드
 		glBufferData(GL_ARRAY_BUFFER, allVertices.size() * sizeof(float),
 			allVertices.data(), GL_DYNAMIC_DRAW);
 	}
@@ -708,6 +716,7 @@ void Keyboard(unsigned char key, int x, int y) {
 		polygon_ypos = 0.0f;
 		orbitAngle = 0.0f; // 조명 궤도 각도도 리셋
 		lightOrbitRadius = 2.0f; // 조명 궤도 반지름도 리셋
+		turnontoggle = 1; // 조명 ON으로 리셋
 
 	}
 	break;
@@ -725,6 +734,11 @@ void Keyboard(unsigned char key, int x, int y) {
 		if (lightOrbitRadius < 0.5f) {
 			lightOrbitRadius = 0.5f; // 최소 반지름 제한
 		}
+	}
+	break;
+	case 'm': // 조명 ON/OFF 토글
+	{
+		turnontoggle = 1 - turnontoggle; // 0 <-> 1 전환
 	}
 	break;
 	case 'u':

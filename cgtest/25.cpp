@@ -285,22 +285,22 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 
 	// 육면체 면들 (외부를 향하도록 반시계방향 정점 순서)
 	// 위 면 (y = 0.5) - 위에서 아래를 볼 때 반시계
-	polygonmap.emplace_back(polygon(p1, p4, p3, p2, 1, 0, 0));
+	polygonmap.emplace_back(polygon(p1, p2, p3, p4, 1, 0, 0));
 	
 	// 아래 면 (y = -0.5) - 아래에서 위를 볼 때 반시계
 	polygonmap.emplace_back(polygon(p5, p6, p7, p8, 1, 1, 0));
 	
 	// 앞 면 (z = 0.5) - 앞에서 뒤를 볼 때 반시계
-	polygonmap.emplace_back(polygon(p1, p5, p8, p4, 0, 0, 1));
+	polygonmap.emplace_back(polygon(p1, p4, p8, p5, 0, 0, 1));
 	
 	// 뒷 면 (z = -0.5) - 뒤에서 앞을 볼 때 반시계
-	polygonmap.emplace_back(polygon(p2, p3, p7, p6, 1, 0, 1));
+	polygonmap.emplace_back(polygon(p2, p6, p7, p3, 1, 0, 1));
 	
 	// 왼쪽 면 (x = -0.5) - 왼쪽에서 오른쪽을 볼 때 반시계
-	polygonmap.emplace_back(polygon(p4, p8, p7, p3, 0, 1, 0));
+	polygonmap.emplace_back(polygon(p4, p3, p7, p8, 0, 1, 0));
 	
 	// 오른쪽 면 (x = 0.5) - 오른쪽에서 왼쪽을 볼 때 반시계
-	polygonmap.emplace_back(polygon(p1, p2, p6, p5, 0, 1, 1));
+	polygonmap.emplace_back(polygon(p1, p5, p6, p2, 0, 1, 1));
 
 	// 피라미드 면들 (외부를 향하도록 반시계방향)
 	// 앞 면 (z = 0.5 쪽)
@@ -338,7 +338,7 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 void make_vertexShaders()
 {
 	GLchar* vertexSource;
-	//--- 버텍스 세이더 읽어 저장하고 컴파일 하기
+	//--- 버텍스 세이더 읽어 저장하고 컴파일하기
 	//--- filetobuf: 사용자정의 함수로 텍스트를 읽어서 문자열에 저장하는 함수
 	vertexSource = filetobuf("vertex_light.glsl");
 	vertexShader = glCreateShader(GL_VERTEX_SHADER);
@@ -441,10 +441,10 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 	unsigned int lightColorLocation = glGetUniformLocation(shaderProgramID, "lightColor");
 	unsigned int objectColorLocation = glGetUniformLocation(shaderProgramID, "objectColor");
 
-	// 임시 값들로 설정
+	// 조명 설정 - lightPos가 (2, 2, 0)
 	glm::vec3 lightPos(2.0f, 2.0f, 0.0f);
 	glm::vec3 viewPos(2.2f, 2.2f, 2.2f); // 카메라 위치와 동일하게
-	glm::vec3 lightColor(1.0f, 2.0f, 1.0f); // 흰색 조명
+	glm::vec3 lightColor(1.0f, 1.0f, 1.0f); // 흰색 조명으로 수정
 	glm::vec3 objectColor(1.0f, 0.5f, 0.31f); // 주황색 객체
 
 	glUniform3fv(lightPosLocation, 1, glm::value_ptr(lightPos));
@@ -543,7 +543,7 @@ void Keyboard(unsigned char key, int x, int y) {
 	case 'p':
 	{
 		if (selection[0]) {
-			int copy[10] = { 0,0,0,0,0,1,1,1,1,1 };
+			int copy[10] = { 0,2,0,0,0,0,1,1,1,1 };
 			for (int i = 0; i < 10; ++i) {
 				selection[i] = copy[i];
 			}

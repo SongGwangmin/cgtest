@@ -412,7 +412,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 
 	// 뷰 변환 행렬 설정
 	glm::mat4 view = glm::lookAt(
-		glm::vec3(0.0f, 0.0f, 4.2f), // 카메라 위치
+		glm::vec3(0.0f, 0.0f, 5.0f), // 카메라 위치
 		glm::vec3(0.0f, 0.0f, 0.0f), // 바라보는 점
 		glm::vec3(0.0f, 1.0f, 0.0f)  // 업 벡터
 	);
@@ -503,6 +503,16 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 		
 		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model3));
 		objectColor = glm::vec3(0.0f, 0.0f, 1.0f); // 파란색
+		glUniform3fv(objectColorLocation, 1, glm::value_ptr(objectColor));
+		glDrawArrays(GL_TRIANGLES, 0, vertexCount);
+
+		// 4. 조명 위치의 1/6 사이즈 회색 구
+		glm::mat4 model4 = glm::mat4(1.0f);
+		model4 = glm::translate(model4, glm::vec3(lightX, 0.0f, lightZ) * 1.05f); // 조명 위치로 이동
+		model4 = glm::scale(model4, glm::vec3(0.167f, 0.167f, 0.167f)); // 1/6 크기 (약 0.167)
+		
+		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model4));
+		objectColor = glm::vec3(0.5f, 0.5f, 0.5f); // 회색
 		glUniform3fv(objectColorLocation, 1, glm::value_ptr(objectColor));
 		glDrawArrays(GL_TRIANGLES, 0, vertexCount);
 

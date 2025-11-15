@@ -239,48 +239,9 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	glEnable(GL_DEPTH_TEST);
 	allVertices.clear();
 
-	// 구 만들기
-	float phi = (1.0f + sqrt(5.0f)) * 0.5f;
-	float a = 1.0f;
-	float b = 1.0f / phi;
+	allVertices.clear();
 
-	// 정이십면체 12개 꼭짓점 정의
-	pointment vertices[12] = {
-		{ -b, a, 0 },{ b, a, 0 },{ -b, -a, 0 },{ b, -a, 0 },
-		{ 0, -b, a },{ 0, b, a },{ 0, -b, -a },{ 0, b, -a },
-		{ a, 0, -b },{ a, 0, b },{ -a, 0, -b },{ -a, 0, b }
-	};
-
-	// 정이십면체 20개 삼각형 면 정의
-	polygonmap.emplace_back(vertices[0], vertices[11], vertices[5], 1.0, 0.0, 0.0);
-	polygonmap.emplace_back(vertices[0], vertices[5], vertices[1], 1.0, 0.0, 0.0);
-	polygonmap.emplace_back(vertices[0], vertices[1], vertices[7], 1.0, 0.0, 0.0);
-	polygonmap.emplace_back(vertices[0], vertices[7], vertices[10], 1.0, 0.0, 0.0);
-	polygonmap.emplace_back(vertices[0], vertices[10], vertices[11], 1.0, 0.0, 0.0);
-
-	polygonmap.emplace_back(vertices[1], vertices[5], vertices[9], 0.0, 1.0, 0.0);
-	polygonmap.emplace_back(vertices[5], vertices[11], vertices[4], 0.0, 1.0, 0.0);
-	polygonmap.emplace_back(vertices[11], vertices[10], vertices[2], 0.0, 1.0, 0.0);
-	polygonmap.emplace_back(vertices[10], vertices[7], vertices[6], 0.0, 1.0, 0.0);
-	polygonmap.emplace_back(vertices[7], vertices[1], vertices[8], 0.0, 1.0, 0.0);
-
-	polygonmap.emplace_back(vertices[3], vertices[9], vertices[4], 0.0, 0.0, 1.0);
-	polygonmap.emplace_back(vertices[3], vertices[4], vertices[2], 0.0, 0.0, 1.0);
-	polygonmap.emplace_back(vertices[3], vertices[2], vertices[6], 0.0, 0.0, 1.0);
-	polygonmap.emplace_back(vertices[3], vertices[6], vertices[8], 0.0, 0.0, 1.0);
-	polygonmap.emplace_back(vertices[3], vertices[8], vertices[9], 0.0, 0.0, 1.0);
-
-	polygonmap.emplace_back(vertices[4], vertices[9], vertices[5], 1.0, 1.0, 0.0);
-	polygonmap.emplace_back(vertices[2], vertices[4], vertices[11], 1.0, 1.0, 0.0);
-	polygonmap.emplace_back(vertices[6], vertices[2], vertices[10], 1.0, 1.0, 0.0);
-	polygonmap.emplace_back(vertices[8], vertices[6], vertices[7], 1.0, 1.0, 0.0);
-	polygonmap.emplace_back(vertices[9], vertices[8], vertices[1], 1.0, 1.0, 0.0);
-
-
-	// 모든 정점 데이터를 allVertices 벡터에 추가
-	for (auto& p : polygonmap) {
-		p.sendvertexdata(allVertices);
-	}
+	
 
 	//--- 세이더 프로그램 만들기
 	glutDisplayFunc(drawScene); //--- 출력 콜백 함수
@@ -361,31 +322,28 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 {
 	GLfloat rColor, gColor, bColor;
 	rColor = gColor = 0.0;
-	bColor = 0.0; //--- 배경색을 파랑색으로 설정
+	bColor = 0.0; //--- 배경색을 검은색으로 설정
 	glClearColor(rColor, gColor, bColor, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glUseProgram(shaderProgramID);
 
 	// 모델 변환 행렬 설정
-
 	glm::mat4 model = glm::mat4(1.0f);
 	model = glm::rotate(model, angle, current_yaxis);
 
-
-	// 뷰 변환 행렬 설정 - 카메라를 x, y, z축으로 0.2씩 이동
-	glm::mat4 view = glm::mat4(1.0f);
-	view = glm::lookAt(
+	// 뷰 변환 행렬 설정
+	glm::mat4 view = glm::lookAt(
 		glm::vec3(2.2f, 2.2f, 4.2f), // 카메라 위치
 		glm::vec3(0.0f, 0.0f, 0.0f), // 바라보는 점
 		glm::vec3(0.0f, 1.0f, 0.0f)  // 업 벡터
 	);
 
-	// 투영 변환 행렬 설정 (직교 투영)
+	// 투영 변환 행렬 설정
 	glm::mat4 projection = glm::perspective(
-		glm::radians(45.0f), // 시야각
+		glm::radians(45.0f),          // 시야각
 		(float)width / (float)height, // 종횡비
-		0.1f, // 근평면
-		100.0f // 원평면
+		0.1f,                         // 근평면
+		100.0f                        // 원평면
 	);
 
 	// Uniform 변수들 설정
@@ -409,35 +367,35 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 
 	glm::vec3 lightPos;
 	if (turnontoggle) {
-		lightPos = glm::vec3(lightX, 0.0f, lightZ); // ZX 평면에서 회전
+		lightPos = glm::vec3(lightX, 2.0f, lightZ); // ZX 평면에서 회전 (Y값을 주어 위에서 비추도록 수정)
 	}
 	else {
 		lightPos = glm::vec3(-500.0f, -500.0f, -500.0f); // 조명 OFF - 멀리 이동
 	}
 
-	glm::vec3 viewPos(2.2f, 2.2f, 4.2f); // 카메라 위치와 동일하게
-	glm::vec3 lightColor(1.0f, 1.0f, 1.0f); // 흰색 조명
-	glm::vec3 objectColor(1.0f, 0.5f, 0.31f); // 주황색 객체
+	glm::vec3 viewPos(2.2f, 2.2f, 4.2f);
+	glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
+	glm::vec3 objectColor(1.0f, 0.5f, 0.31f);
 
 	glUniform3fv(lightPosLocation, 1, glm::value_ptr(lightPos));
 	glUniform3fv(viewPosLocation, 1, glm::value_ptr(viewPos));
 	glUniform3fv(lightColorLocation, 1, glm::value_ptr(lightColor));
 	glUniform3fv(objectColorLocation, 1, glm::value_ptr(objectColor));
 
+	// --- 여기가 핵심 수정 부분 ---
 	if (!allVertices.empty()) {
 		glBindVertexArray(VAO);
 		glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
-		// 버퍼에 정점 데이터업로드
-		glBufferData(GL_ARRAY_BUFFER, allVertices.size() * sizeof(float),
-			allVertices.data(), GL_DYNAMIC_DRAW);
+		// 버퍼에 정점 데이터 업로드
+		glBufferData(GL_ARRAY_BUFFER, allVertices.size() * sizeof(float), allVertices.data(), GL_DYNAMIC_DRAW);
+
+		// !!! [가장 중요한 부분] 실제로 그리라는 명령어를 추가합니다. !!!
+		// 각 정점은 6개의 float(위치 3, 노말 3)로 이루어져 있으므로, 총 float 개수를 6으로 나눕니다.
+		glDrawArrays(GL_TRIANGLES, 0, allVertices.size() / 6);
+
+		glBindVertexArray(0);
 	}
-
-	glLineWidth(2.0f);
-
-	
-
-	glBindVertexArray(0);
 
 	glutSwapBuffers(); // 화면에 출력하기
 }
@@ -467,6 +425,26 @@ void Keyboard(unsigned char key, int x, int y) {
 		if (orbitAngle < 0.0f) {
 			orbitAngle += 2.0f * pi; // 0 미만이면 2π 더하기
 		}
+	}
+	break;
+	case 'y': // y축 기준 양방향 회전
+	{
+		angle += 0.02f;
+	}
+	break;
+	case 'Y': // y축 기준 음방향 회전
+	{
+		angle -= 0.02f;
+	}
+	break;
+	case 'x': // x축 기준 양방향 회전
+	{
+		xangle += 0.02f;
+	}
+	break;
+	case 'X': // x축 기준 음방향 회전
+	{
+		xangle -= 0.02f;
 	}
 	break;
 	case 'h': // 은면제거 적용/해제

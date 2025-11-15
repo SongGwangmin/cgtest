@@ -48,7 +48,7 @@ void setupBuffers();
 void TimerFunction(int value);
 
 //--- 필요한 변수 선언
-GLint width = 800, height = 800;
+GLint width = 1200, height = 800;
 GLuint shaderProgramID; //--- 세이더 프로그램 이름
 GLuint vertexShader; //--- 버텍스 세이더 객체
 GLuint fragmentShader; //--- 프래그먼트 세이더 객체
@@ -78,7 +78,7 @@ float orbitAngle = 0.0f; // 조명 공전 각도
 int turnontoggle = 1; // 조명 ON/OFF (1: ON, 0: OFF)
 
 
-float lightOrbitRadius = 2.0f; // 조명 궤도 반지름
+float lightOrbitRadius = 4.0f; // 조명 궤도 반지름
 
 typedef struct poitment {
 	float xpos;
@@ -315,10 +315,12 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	// ---!!! 핵심 수정 부분 !!!---
 	// 프로그램 시작 시 구의 정점 데이터를 미리 생성하여 allVertices에 저장
 	allVertices.clear();
+	
+	// 구 하나만 생성 (재사용할 것임)
 	generateSphereVerticesForDrawArrays(1.0f, 36, 18, allVertices);
 
-
 	//--- 세이더 프로그램 만들기
+
 	glutDisplayFunc(drawScene); //--- 출력 콜백 함수
 	glutReshapeFunc(Reshape);
 
@@ -464,11 +466,45 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 		glBindVertexArray(VAO);
 		glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
-		// 버퍼에 정점 데이터 업로드
-		glBufferData(GL_ARRAY_BUFFER, allVertices.size() * sizeof(float), allVertices.data(), GL_STATIC_DRAW); // 데이터가 변하지 않으므로 DYNAMIC 대신 STATIC 사용
+		// 버퍼에 정점 데이터 업로드 (한 번만)
+		glBufferData(GL_ARRAY_BUFFER, allVertices.size() * sizeof(float), allVertices.data(), GL_STATIC_DRAW);
 
-		// 각 정점은 6개의 float(위치 3, 노말 3)로 이루어져 있으므로, 총 float 개수를 6으로 나눔
-		glDrawArrays(GL_TRIANGLES, 0, allVertices.size() / 6);
+		int vertexCount = allVertices.size() / 6; // 각 정점은 6개의 float(위치 3, 노말 3)
+
+		// 1. 중앙의 1/2 사이즈 빨간 구
+		glm::mat4 model1 = glm::mat4(1.0f);
+		model1 = glm::rotate(model1, angle, glm::vec3(0.0f, 1.0f, 0.0f)); // y축 회전
+		model1 = glm::rotate(model1, xangle, glm::vec3(1.0f, 0.0f, 0.0f)); // x축 회전
+		model1 = glm::scale(model1, glm::vec3(0.5f, 0.5f, 0.5f)); // 1/2 크기
+		
+		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model1));
+		objectColor = glm::vec3(1.0f, 0.0f, 0.0f); // 빨간색
+		glUniform3fv(objectColorLocation, 1, glm::value_ptr(objectColor));
+		glDrawArrays(GL_TRIANGLES, 0, vertexCount);
+
+		// 2. 약간 왼쪽의 1/3 사이즈 초록 구
+		glm::mat4 model2 = glm::mat4(1.0f);
+		model2 = glm::translate(model2, glm::vec3(-1.2f, 0.0f, 0.0f)); // 왼쪽으로 이동
+		model2 = glm::rotate(model2, angle, glm::vec3(0.0f, 1.0f, 0.0f)); // y축 회전
+		model2 = glm::rotate(model2, xangle, glm::vec3(1.0f, 0.0f, 0.0f)); // x축 회전
+		model2 = glm::scale(model2, glm::vec3(0.333f, 0.333f, 0.333f)); // 1/3 크기
+		
+		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model2));
+		objectColor = glm::vec3(0.0f, 1.0f, 0.0f); // 초록색
+		glUniform3fv(objectColorLocation, 1, glm::value_ptr(objectColor));
+		glDrawArrays(GL_TRIANGLES, 0, vertexCount);
+
+		// 3. 더 왼쪽의 1/4 사이즈 파란 구
+		glm::mat4 model3 = glm::mat4(1.0f);
+		model3 = glm::translate(model3, glm::vec3(-2.0f, 0.0f, 0.0f)); // 더 왼쪽으로 이동
+		model3 = glm::rotate(model3, angle, glm::vec3(0.0f, 1.0f, 0.0f)); // y축 회전
+		model3 = glm::rotate(model3, xangle, glm::vec3(1.0f, 0.0f, 0.0f)); // x축 회전
+		model3 = glm::scale(model3, glm::vec3(0.25f, 0.25f, 0.25f)); // 1/4 크기
+		
+		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model3));
+		objectColor = glm::vec3(0.0f, 0.0f, 1.0f); // 파란색
+		glUniform3fv(objectColorLocation, 1, glm::value_ptr(objectColor));
+		glDrawArrays(GL_TRIANGLES, 0, vertexCount);
 
 		glBindVertexArray(0);
 	}

@@ -169,22 +169,25 @@ private:
 		const glm::vec3& v1,
 		const glm::vec3& v2)
 	{
+		glm::vec3 edge1 = v1 - v0;
+		glm::vec3 edge2 = v2 - v0;
+		glm::vec3 normal = glm::normalize(glm::cross(edge1, edge2));
 		// 정점 0
 		vbo.insert(vbo.end(), {
 			v0.x, v0.y, v0.z,
-			color.r, color.g, color.b
+			normal.x, normal.y, normal.z
 			});
 
 		// 정점 1
 		vbo.insert(vbo.end(), {
 			v1.x, v1.y, v1.z,
-			color.r, color.g, color.b
+			normal.x, normal.y, normal.z
 			});
 
 		// 정점 2
 		vbo.insert(vbo.end(), {
 			v2.x, v2.y, v2.z,
-			color.r, color.g, color.b
+			normal.x, normal.y, normal.z
 			});
 	}
 };

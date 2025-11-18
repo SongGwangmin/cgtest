@@ -60,6 +60,9 @@ int barrelRotateToggle = 0;  // g: 포신 y축 회전 (양쪽 반대 방향)
 int flagRotateToggle = 0;    // p: 깃대 x축 회전 (양쪽 반대 방향)
 int cameraRotateToggle = 0;  // a: 카메라 자동 공전
 
+
+int lightrotatedir = 0;
+
 // 애니메이션 변수
 float turretSwapTime = 0.0f;           // 포탑 위치 교환 애니메이션 시간 (0~1)
 glm::vec3 turretSwapStartPos(0.0f);    // 포탑 위치 교환 시작 위치
@@ -73,6 +76,7 @@ glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);      // 카메라 타겟
 // 조명 변수
 int turnontoggle = 1;              // 조명 ON/OFF (1: ON, 0: OFF)
 int currentLightColorIndex = 0;    // 현재 조명 색상 인덱스
+glm::vec3 lightPosition(0.0f, 20.0f, 50.0f); // 조명 위치
 
 // 조명 색상 배열 (흰색, 빨간색, 파란색)
 glm::vec3 lightColors[3] = {
@@ -171,7 +175,7 @@ private:
 	{
 		glm::vec3 edge1 = v1 - v0;
 		glm::vec3 edge2 = v2 - v0;
-		glm::vec3 normal = glm::normalize(glm::cross(edge1, edge2));
+		glm::vec3 normal = glm::normalize(glm::cross(edge2, edge1));
 		// 정점 0
 		vbo.insert(vbo.end(), {
 			v0.x, v0.y, v0.z,
@@ -604,8 +608,8 @@ GLuint make_shaderProgram()
 GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 {
 	GLfloat rColor, gColor, bColor;
-	rColor = gColor = 1.0;
-	bColor = 1.0; //--- 배경색을 흰색으로 설정
+	rColor = gColor = 0.0;
+	bColor = 0.0; //--- 배경색을 흰색으로 설정
 	glClearColor(rColor, gColor, bColor, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -644,7 +648,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 	// 조명 설정
 	glm::vec3 lightPos;
 	if (turnontoggle) {
-		lightPos = glm::vec3(50.0f, 50.0f, 50.0f);        // 조명 위치
+		lightPos = lightPosition;                        // 조명 ON - 설정된 위치 사용
 	}
 	else {
 		lightPos = glm::vec3(-500.0f, -500.0f, -500.0f); // 조명 OFF - 멀리 이동
@@ -742,6 +746,17 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 		model = tank.flagRotate(1);
 		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
 		glDrawArrays(GL_TRIANGLES, startIndex, 36);
+
+		// 조명 위치 표시 (작은 큐브)
+		objectColor = glm::vec3(1.0f, 1.0f, 0.0f); // 노란색
+		glUniform3fv(objectColorLocation, 1, glm::value_ptr(objectColor));
+		
+		model = glm::mat4(1.0f);
+		model = glm::translate(model, lightPosition); // 조명 위치로 이동
+		model = glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f)); // 작은 크기로 스케일
+		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
+		glDrawArrays(GL_TRIANGLES, 6, 36); // 첫 번째 큐브 데이터 사용 (바닥 6개 정점 건너뛰고)
+		
 		glBindVertexArray(0);
 	}
 
@@ -793,28 +808,12 @@ void Keyboard(unsigned char key, int x, int y) {
 	break;
 	case 'y': // y축 기준 양의 방향(반시계) 회전
 	{
-		// 카메라를 중심으로 타겟을 회전
-		glm::vec3 direction = cameraTarget - cameraPos;
-		float angle = glm::radians(5.0f); // 5도씩 회전
-
-		// y축 회전 행렬 적용
-		glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0.0f, 1.0f, 0.0f));
-		glm::vec4 newDirection = rotation * glm::vec4(direction, 0.0f);
-
-		cameraTarget = cameraPos + glm::vec3(newDirection);
+		lightrotatedir = 1;
 	}
 	break;
 	case 'Y': // y축 기준 음의 방향(시계) 회전
 	{
-		// 카메라를 중심으로 타겟을 회전
-		glm::vec3 direction = cameraTarget - cameraPos;
-		float angle = glm::radians(-5.0f); // -5도씩 회전
-
-		// y축 회전 행렬 적용
-		glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0.0f, 1.0f, 0.0f));
-		glm::vec4 newDirection = rotation * glm::vec4(direction, 0.0f);
-
-		cameraTarget = cameraPos + glm::vec3(newDirection);
+		lightrotatedir = -1;
 	}
 	break;
 	case 'r': // 화면 중심 y축에 대하여 카메라 공전 (반시계)
@@ -828,21 +827,16 @@ void Keyboard(unsigned char key, int x, int y) {
 		glm::vec4 newCameraPos = rotation * glm::vec4(cameraPos, 1.0f);
 
 		cameraPos = glm::vec3(newCameraPos);
-		cameraTarget = cameraPos + delta; // 카메라 위치 + delta = 타겟
 	}
 	break;
 	case 'R': // 화면 중심 y축에 대하여 카메라 공전 (시계)
 	{
-		// 카메라와 타겟의 차이 벡터 저장
-		glm::vec3 delta = cameraTarget - cameraPos;
-
-		// 원점을 중심으로 카메라를 회전
+		
 		float angle = glm::radians(-5.0f); // -5도씩 회전
 		glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0.0f, 1.0f, 0.0f));
 		glm::vec4 newCameraPos = rotation * glm::vec4(cameraPos, 1.0f);
 
 		cameraPos = glm::vec3(newCameraPos);
-		cameraTarget = cameraPos + delta; // 카메라 위치 + delta = 타겟
 	}
 	break;
 	case 'M':
@@ -879,6 +873,11 @@ void Keyboard(unsigned char key, int x, int y) {
 			glDisable(GL_CULL_FACE);
 			culltoggle = 0;
 		}
+	}
+	break;
+	case 's':
+	{
+		lightrotatedir = 0;
 	}
 	break;
 	case 't': // 중앙 몸체 y축 회전 토글
@@ -983,6 +982,12 @@ void TimerFunction(int value)
 		cameraPos = rotation * glm::vec4(cameraPos, 0.0f);
 
 	}
+
+	lightPosition = glm::rotate(
+		glm::mat4(1.0f),
+		glm::radians(lightrotatedir * 2.0f), // 매 프레임마다 2도씩 회전
+		glm::vec3(0.0f, 1.0f, 0.0f)
+	) * glm::vec4(lightPosition, 1.0f);
 
 	glutPostRedisplay();
 	glutTimerFunc(25, TimerFunction, 1);

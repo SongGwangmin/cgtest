@@ -24,6 +24,8 @@ void main ()
 	vec3 specular = specularLight * lightColor;
 	 
 
- vec3 result = (ambient + diffuse + specular) * objectColor; //--- 최종 조명 설정된 픽셀 색상: (주변+산란반사+거울반사조명)*객체색상
+ //vec3 result = (ambient + diffuse + specular) * objectColor; //--- 최종 조명 설정된 픽셀 색상: (주변+산란반사+거울반사조명)*객체색상
+     vec3 result = (ambient + diffuse) * objectColor + specular;
+
 FragColor = vec4 (result, 1.0);
  }

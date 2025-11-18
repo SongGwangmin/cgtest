@@ -77,6 +77,13 @@ float polygon_ypos = 0.0f;
 float orbitAngle = 0.0f; // 조명 공전 각도
 int turnontoggle = 1; // 조명 ON/OFF (1: ON, 0: OFF)
 
+// 조명 색상 배열 (흰색, 빨간색, 파란색)
+glm::vec3 lightColors[3] = {
+	glm::vec3(1.0f, 1.0f, 1.0f),  // 0: 흰색
+	glm::vec3(1.0f, 0.0f, 0.0f),  // 1: 빨간색
+	glm::vec3(0.0f, 0.0f, 1.0f)   // 2: 파란색
+};
+int currentLightColorIndex = 0; // 현재 조명 색상 인덱스
 
 float lightOrbitRadius = 4.0f; // 조명 궤도 반지름
 
@@ -453,7 +460,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 	}
 
 	glm::vec3 viewPos(2.2f, 2.2f, 4.2f);
-	glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
+	glm::vec3 lightColor = lightColors[currentLightColorIndex]; // 배열에서 현재 조명 색상 가져오기
 	glm::vec3 objectColor(1.0f, 0.0f, 0.0f);
 
 	glUniform3fv(lightPosLocation, 1, glm::value_ptr(lightPos));
@@ -591,6 +598,7 @@ void Keyboard(unsigned char key, int x, int y) {
 		orbitAngle = 0.0f; // 조명 궤도 각도도 리셋
 		lightOrbitRadius = 2.0f; // 조명 궤도 반지름도 리셋
 		turnontoggle = 1; // 조명 ON으로 리셋
+		currentLightColorIndex = 0; // 조명 색상도 흰색으로 리셋
 
 	}
 	break;
@@ -613,6 +621,11 @@ void Keyboard(unsigned char key, int x, int y) {
 	case 'm': // 조명 ON/OFF 토글
 	{
 		turnontoggle = 1 - turnontoggle; // 0 <-> 1 전환
+	}
+	break;
+	case 'c': // 조명 색상 변경
+	{
+		currentLightColorIndex = (currentLightColorIndex + 1) % 3; // 0 -> 1 -> 2 -> 0 순환
 	}
 	break;
 	case 'u':

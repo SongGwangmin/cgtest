@@ -92,6 +92,10 @@ int currentLightColorIndex = 0; // 현재 조명 색상 인덱스
 
 float lightOrbitRadius = 4.0f; // 조명 궤도 반지름
 
+
+glm::vec3 snow[10][10];
+float snowfallSpeed[10][10];
+
 typedef struct poitment {
 	float xpos;
 	float ypos;
@@ -392,6 +396,18 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 		floor4.x, floor4.y, floor4.z, floorNormal.x, floorNormal.y, floorNormal.z
 	});
 
+	// 눈 좌표 설정
+
+	for(int i=0; i<10; i++)
+	{
+		for(int j=0; j<10; j++)
+		{
+			snow[i][j] = glm::vec3(-5.0f + i, 4.0f, -5.0f + j);
+			snowfallSpeed[i][j] = 0.01f * (static_cast<float>(polyrandom(gen) % 12 + 1));
+		}
+	}
+
+
 	//--- 세이더 프로그램 만들기
 
 	glutDisplayFunc(drawScene); //--- 출력 콜백 함수
@@ -485,7 +501,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 
 	// 뷰 변환 행렬 설정
 	glm::mat4 view = glm::lookAt(
-		glm::vec3(0.0f, 5.0f, 5.0f), // 카메라 위치
+		glm::vec3(0.0f, 5.0f, 10.0f), // 카메라 위치
 		glm::vec3(0.0f, 0.0f, 0.0f), // 바라보는 점
 		glm::vec3(0.0f, 1.0f, 0.0f)  // 업 벡터
 	);
@@ -525,7 +541,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 		lightPos = glm::vec3(-500.0f, -500.0f, -500.0f); // 조명 OFF - 멀리 이동
 	}
 
-	glm::vec3 viewPos(0.0f, 5.0f, 5.0f);
+	glm::vec3 viewPos(0.0f, 5.0f, 10.0f);
 	glm::vec3 lightColor = lightColors[currentLightColorIndex]; // 배열에서 현재 조명 색상 가져오기
 	glm::vec3 objectColor(1.0f, 0.0f, 0.0f);
 
@@ -591,7 +607,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 		glDrawArrays(GL_TRIANGLES, 0, 3672);
 
 		// 5. 피라미드 그리기 (오른쪽에 배치)
-		glm::mat4 model5 = glm::mat4(1.0f);
+		glm::mat4 model5 = glm::scale(glm::mat4(1.0f), glm::vec3(3.0f, 3.0f, 3.0f));
 		//model5 = glm::translate(model5, glm::vec3(1.5f, 0.0f, 0.0f)); // 오른쪽으로 이동
 		//model5 = glm::rotate(model5, angle, glm::vec3(0.0f, 1.0f, 0.0f)); // y축 회전
 		//model5 = glm::rotate(model5, xangle, glm::vec3(1.0f, 0.0f, 0.0f)); // x축 회전
@@ -627,6 +643,19 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 		objectColor = glm::vec3(0.5f, 0.5f, 0.5f); // 회색
 		glUniform3fv(objectColorLocation, 1, glm::value_ptr(objectColor));
 		glDrawArrays(GL_TRIANGLES, 3672 + 12, 6); // 2개의 삼각형 = 6개 정점
+
+		// 7. 눈 그리기 (작은 흰 구들)
+		for (int i = 0; i < 10; i++) {
+			for (int j = 0; j < 10; j++) {
+				glm::mat4 modelSnow = glm::mat4(1.0f);
+				modelSnow = glm::translate(modelSnow, snow[i][j]);
+				modelSnow = glm::scale(modelSnow, glm::vec3(0.05f, 0.05f, 0.05f)); // 매우 작은 크기
+				glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(modelSnow));
+				objectColor = glm::vec3(1.0f, 1.0f, 1.0f); // 흰색
+				glUniform3fv(objectColorLocation, 1, glm::value_ptr(objectColor));
+				glDrawArrays(GL_TRIANGLES, 0, 3672);
+			}
+		}
 
 		glBindVertexArray(0);
 	}
@@ -765,6 +794,31 @@ void Mouse(int button, int state, int x, int y)
 
 void TimerFunction(int value)
 {
+	// 빨간 구 공전 (5도씩, 원점 중심)
+	float redAngle = glm::radians(5.0f);
+	glm::mat4 redRotation = glm::rotate(glm::mat4(1.0f), redAngle, glm::vec3(0.0f, 1.0f, 0.0f));
+	redSpherePos = glm::vec3(redRotation * glm::vec4(redSpherePos, 1.0f));
+
+	// 초록 구 공전 (3도씩, 원점 중심)
+	float greenAngle = glm::radians(3.0f);
+	glm::mat4 greenRotation = glm::rotate(glm::mat4(1.0f), greenAngle, glm::vec3(0.0f, 1.0f, 0.0f));
+	greenSpherePos = glm::vec3(greenRotation * glm::vec4(greenSpherePos, 1.0f));
+
+	// 파란 구 공전 (2도씩, 원점 중심)
+	float blueAngle = glm::radians(2.0f);
+	glm::mat4 blueRotation = glm::rotate(glm::mat4(1.0f), blueAngle, glm::vec3(0.0f, 1.0f, 0.0f));
+	blueSpherePos = glm::vec3(blueRotation * glm::vec4(blueSpherePos, 1.0f));
+
+	// 눈 내리기 애니메이션
+	for (int i = 0; i < 10; i++) {
+		for (int j = 0; j < 10; j++) {
+			snow[i][j].y -= snowfallSpeed[i][j];
+			if (snow[i][j].y < -0.5f) { // 바닥에 닿으면 다시 위로 올리기
+				snow[i][j].y = 4.0f;
+			}
+		}
+	}
+
 	glutPostRedisplay();
 	glutTimerFunc(25, TimerFunction, 1);
 }

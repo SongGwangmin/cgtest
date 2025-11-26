@@ -2,14 +2,13 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <iostream>
-#include <vector> // 구 생성을 위해 추가
-#include <list>
-#include <algorithm>
-#include <cmath> // 구 생성을 위해 추가
 #include <gl/glew.h>
 #include <gl/freeglut.h>
 #include <gl/freeglut_ext.h>
 #include <random>
+#include <list>
+#include <algorithm>
+#include <cmath>
 #include <gl/glm/glm.hpp>
 #include <gl/glm/ext.hpp>
 #include <gl/glm/gtc/matrix_transform.hpp>
@@ -22,12 +21,6 @@
 #define pentagon 4
 #define polygonwidth 100
 #define pi 3.14159265358979323846
-
-// M_PI가 정의되지 않은 경우를 대비하여 추가
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
-
 
 std::random_device rd;
 
@@ -48,7 +41,7 @@ void setupBuffers();
 void TimerFunction(int value);
 
 //--- 필요한 변수 선언
-GLint width = 1200, height = 800;
+GLint width = 800, height = 800;
 GLuint shaderProgramID; //--- 세이더 프로그램 이름
 GLuint vertexShader; //--- 버텍스 세이더 객체
 GLuint fragmentShader; //--- 프래그먼트 세이더 객체
@@ -56,45 +49,78 @@ GLuint VAO, VBO; //--- 버텍스 배열 객체, 버텍스 버퍼 객체
 int nowdrawstate = 0; // 0: point, 1: line, 2: triangle, 3: rectangle
 int selectedshape = -1; // 선택된 도형 인덱스
 int spin = 1; //  1: 시계방향, -1: 반시계방향
-int animation = 1; // 0: 정지, 1: 회전
+int animation = 0; // 0: 정지, 1: 회전
 int hidetoggle = 1; // 1. 은면제거
 int wiretoggle = 0; // 1. 와이어프레임 모드
 int culltoggle = 0; // 1. 뒷면 컬링 모드
 
+// cube 관련 토글 변수
+int zrotoggle = 0; // 1. z축 회전 모드
+int opentoggle = 0; // 1. 도형 열기 모드
+int tiretoggle = 0; // 1. 옆면이 회전
+int backsizetoggle = 0; // 1. 뒷면 size 모드
+
+// 위치 교환 애니메이션 관련 변수
+int swapAnimationActive = 0; // 0: 정지, 1: 애니메이션 중
+float swapAnimationProgress = 0.0f; // 0.0 ~ 1.0
+glm::vec3 swapStartPos[2]; // 시작 위치
+glm::vec3 swapEndPos[2]; // 목표 위치
+
+// y축 회전 애니메이션 관련 변수
+int yRotationAnimationActive = 0; // 0: 정지, 1: 애니메이션 중
+
+// 새로운 토글 변수들
+int edgeopentoggle = 0; // 0: edge 열림, 1: edge 닫힘
+int backscaletoggle = 0; // 1: scale 증가, 0: scale 감소
+
+// r키 순차 동작을 위한 변수들
+int rsequence = 0; // 0: 정지, 1: 순차 열기, 2: 순차 닫기
+int rcurrentface = 0; // 현재 동작 중인 면 (0:t1, 1:t2, 2:t3, 3:t4)
+
+// piriamid 관련 토글 변수
+int openeverytoggle = 0; // 1. 모든 면 열기 모드	
+int sequentopnetoggle = 0; // 1. 면이 순차적으로 열림
+int sequentoclosetoggle = 0; // 1. 면이 순차적으로 닫힘
+
+// cube 관련 변수
+float topangle = 0.0f; // 윗면 회전 각도
+float oepnangle = 0.0f; // front 열리는 각도
+float tireangle = 0.0f; // 옆면 회전 각도
+float backsize = 1.0f; // 뒷면 크기
+
+// piramid 관련 변수
+float t1angle = 0.0f; // 면1 회전 각도
+float t2angle = 0.0f; // 면2 회전 각도
+float t3angle = 0.0f; // 면3 회전 각도
+float t4angle = 0.0f; // 면4 회전 각도
+
 
 // Forward declaration
 class polygon;
-std::list<polygon> polygonmap;
-std::list<polygon>::iterator mouse_dest; // 마우스로 선택된 polygon 저장
+std::vector<polygon> polygonmap;
+int mouse_dest = -1; // 마우스로 선택된 polygon 인덱스 저장
 std::vector<float> allVertices;
 
 int selection[10] = { 1,1,1,1,1,1,0,0,0,0 };
+int currentObject = 0; // 현재 선택된 객체 (0 또는 1)
 
-float angle = 0.0f; // y축 회전 각도
-float xangle = 0.0f; // x축 회전 각도 (추가)
+float angle = 0.0f; // 회전 각도
+float xangle = 0.0f;
 float polygon_xpos = 0.0f;
 float polygon_ypos = 0.0f;
-float orbitAngle = 0.0f; // 조명 공전 각도
-int turnontoggle = 1; // 조명 ON/OFF (1: ON, 0: OFF)
 
-// 구의 위치 좌표 (전역 변수)
-glm::vec3 redSpherePos(-1.0f, 2.0f, 0.0f);      // 빨간 구 (중앙, 1/2 크기)
-glm::vec3 greenSpherePos(-2.2f, 2.0f, 0.0f);  // 초록 구 (왼쪽, 1/3 크기)
-glm::vec3 blueSpherePos(-3.0f, 2.0f, 0.0f);   // 파란 구 (더 왼쪽, 1/4 크기)
+// 동적 회전축을 위한 전역 변수
+glm::vec3 current_xaxis;
+glm::vec3 current_yaxis;
+glm::vec3 current_zaxis;
 
-// 조명 색상 배열 (흰색, 빨간색, 파란색)
-glm::vec3 lightColors[3] = {
-	glm::vec3(1.0f, 1.0f, 1.0f),  // 0: 흰색
-	glm::vec3(1.0f, 0.0f, 0.0f),  // 1: 빨간색
-	glm::vec3(0.0f, 0.0f, 1.0f)   // 2: 파란색
+// 도형 타입 열거형
+enum ShapeType {
+	SHAPE_CUBE = 0,      // 육면체
+	SHAPE_SPHERE = 1,    // 구
+	SHAPE_CONE = 2,      // 12각뿔
+	SHAPE_CYLINDER = 3   // 12각기둥
 };
-int currentLightColorIndex = 0; // 현재 조명 색상 인덱스
-
-float lightOrbitRadius = 4.0f; // 조명 궤도 반지름
-
-
-glm::vec3 snow[10][10];
-float snowfallSpeed[10][10];
 
 typedef struct poitment {
 	float xpos;
@@ -102,7 +128,21 @@ typedef struct poitment {
 	float zpos;
 } pointment;
 
-// 도형 저장하는 클래스 (현재는 사용되지 않지만 원본 유지를 위해 남겨둠)
+// 변환 정보를 저장하는 구조체
+typedef struct TransformInfo {
+	float xRotation;      // x축 자전 각도
+	float yRotation;      // y축 자전 각도
+	float localScale;     // 제자리 scale 크기
+	glm::vec3 position;   // 위치 (x, y, z)
+	glm::vec3 midPoint;   // 중간 경유 지점
+	ShapeType shapeType;  // 도형 타입
+} TransformInfo;
+
+// 2개짜리 배열 선언
+TransformInfo transformArray[2];
+
+
+// 도형 저장하는 클래스
 class polygon {
 private:
 	GLdouble Rvalue = 0.0;
@@ -116,155 +156,165 @@ public:
 	//std::vector<ret> rects;
 	polygon(pointment p1, pointment p2, pointment p3, GLdouble rv, GLdouble gv, GLdouble bv) {
 		vpos[0][0] = glm::vec4(p1.xpos, p1.ypos, p1.zpos, 1.0f);
+
 		vpos[0][1] = glm::vec4(p2.xpos, p2.ypos, p2.zpos, 1.0f);
+
 		vpos[0][2] = glm::vec4(p3.xpos, p3.ypos, p3.zpos, 1.0f);
+
 		vpos[1][0] = glm::vec4(p1.xpos, p1.ypos, p1.zpos, 1.0f);
+
 		vpos[1][1] = glm::vec4(p2.xpos, p2.ypos, p2.zpos, 1.0f);
+
 		vpos[1][2] = glm::vec4(p3.xpos, p3.ypos, p3.zpos, 1.0f);
-		Rvalue = rv; Gvalue = gv; Bvalue = bv;
+
+		Rvalue = rv;
+		Gvalue = gv;
+		Bvalue = bv;
 	}
 
 	polygon(pointment p1, pointment p2, pointment p3, pointment p4, GLdouble rv, GLdouble gv, GLdouble bv) {
 		vpos[0][0] = glm::vec4(p1.xpos, p1.ypos, p1.zpos, 1.0f);
+
 		vpos[0][1] = glm::vec4(p2.xpos, p2.ypos, p2.zpos, 1.0f);
+
 		vpos[0][2] = glm::vec4(p3.xpos, p3.ypos, p3.zpos, 1.0f);
+
 		vpos[1][0] = glm::vec4(p1.xpos, p1.ypos, p1.zpos, 1.0f);
+
 		vpos[1][1] = glm::vec4(p3.xpos, p3.ypos, p3.zpos, 1.0f);
+
 		vpos[1][2] = glm::vec4(p4.xpos, p4.ypos, p4.zpos, 1.0f);
-		Rvalue = rv; Gvalue = gv; Bvalue = bv;
+
+		Rvalue = rv;
+		Gvalue = gv;
+		Bvalue = bv;
 	}
 
-	void update(float theta) {}
+
+	void update(float theta) {
+
+	}
+
+	void rotate(float theta, char command) {
+		switch (command) {
+		case 'x':
+		{
+			for (int j = 0; j < 2; ++j) {
+				for (int i = 0; i < 3; ++i) {
+					vpos[j][i] = glm::rotate(glm::mat4(1.0f), theta, glm::vec3(1.0f, 0.0f, 0.0f)) * vpos[j][i];
+				}
+			}
+
+		}
+		break;
+		case 'y':
+		{
+			for (int j = 0; j < 2; ++j) {
+				for (int i = 0; i < 3; ++i) {
+					vpos[j][i] = glm::rotate(glm::mat4(1.0f), theta, glm::vec3(0.0f, 1.0f, 0.0f)) * vpos[j][i];
+				}
+			}
+		}
+		break;
+		case 'z':
+		{
+			for (int j = 0; j < 2; ++j) {
+				for (int i = 0; i < 3; ++i) {
+					vpos[j][i] = glm::rotate(glm::mat4(1.0f), theta, glm::vec3(0.0f, 0.0f, 1.0f)) * vpos[j][i];
+				}
+			}
+		}
+		break;
+		}
+	}
+
+
 
 	void sendvertexdata(std::vector<float>& vbo) { // vbo에 정점 데이터 추가
 		for (int poly = 0; poly < 2; ++poly) {
-			glm::vec3 edge1 = glm::vec3(vpos[poly][1] - vpos[poly][0]);
-			glm::vec3 edge2 = glm::vec3(vpos[poly][2] - vpos[poly][0]);
-			glm::vec3 normal = glm::normalize(glm::cross(edge1, edge2));
 			for (int vert = 0; vert < 3; ++vert) {
-				vbo.insert(vbo.end(), { vpos[poly][vert].x, vpos[poly][vert].y, vpos[poly][vert].z });
-				vbo.insert(vbo.end(), { normal.x, normal.y, normal.z });
+				vbo.insert(vbo.end(), {
+					vpos[poly][vert].x, vpos[poly][vert].y, vpos[poly][vert].z, (float)Rvalue, (float)Gvalue, (float)Bvalue
+					});
 			}
 		}
+	}
+
+	// 행렬 뱉는 함수
+	glm::mat4 getedge(float* angles) {
+		glm::vec3 edge = glm::normalize(glm::vec3(vpos[0][0] - vpos[0][1]));
+		glm::mat4 model1 = glm::mat4(1.0f);
+
+		glm::mat4 transparant = glm::mat4(1.0f);
+		transparant = glm::translate(transparant, glm::vec3(-vpos[0][1].x, -vpos[0][1].y, -vpos[0][1].z));
+
+
+		model1 = glm::rotate(model1, *angles, edge);
+
+		glm::mat4 rev = glm::mat4(1.0f);
+		rev = glm::translate(rev, glm::vec3(vpos[0][1].x, vpos[0][1].y, vpos[0][1].z));
+		return rev * model1 * transparant;
+		return model1;
+	}
+
+	glm::mat4 getnomal(float* angles) {
+		glm::vec4 u((vpos[0][0] + vpos[0][2]));
+		u.x /= -2.0f;
+		u.y /= -2.0f;
+		u.z /= -2.0f;
+		u.y -= 0.15f;
+		u.x += 0.16f;
+		// 얘가 transform이 될거임
+		glm::mat4 transport = glm::mat4(1.0f);
+		//transport = glm::translate(transport, glm::vec3(u.x, u.y, u.z));
+		transport = glm::translate(transport, glm::vec3(u.x, u.y, 0));
+		glm::mat4 model1 = glm::mat4(1.0f);
+		model1 = glm::rotate(model1, *angles, current_zaxis);
+
+		glm::mat4 rev = glm::mat4(1.0f);
+		rev = glm::translate(rev, glm::vec3(-u.x, -u.y, 0));
+
+		return rev * model1 * transport;
+
+		//model1 = glm::translate(model1, glm::vec3(-u.x, -u.y, -u.z));
+
+	}
+
+	glm::mat4 getunit(float* angles) {
+		//glm::vec3 u = glm::vec3(vpos[0][0] - vpos[0][1]);
+
+		return glm::mat4(1.0f);
+	}
+
+	glm::mat4 gettirerotate(float* angles) {
+
+		glm::mat4 model1 = glm::mat4(1.0f);
+		model1 = glm::rotate(model1, *angles, current_xaxis);
+
+		return model1;
+	}
+
+	glm::mat4 getbackscale(float* angles) {
+		glm::vec4 u((vpos[0][0] + vpos[0][2]));
+		u /= 2.0f;
+		glm::mat4 transport = glm::mat4(1.0f);
+		transport = glm::translate(transport, glm::vec3(-u.x, -u.y, -u.z));
+
+		glm::mat4 model1 = glm::mat4(1.0f);
+		model1 = glm::scale(model1, glm::vec3(*angles, *angles, *angles));
+
+		glm::mat4 rev = glm::mat4(1.0f);
+		rev = glm::translate(rev, glm::vec3(u.x, u.y, u.z));
+		return rev * model1 * transport;
+
 	}
 };
 
-// ======================================================================
-// ===== 새로 추가된 구 생성 함수 섹션 시작 ===============================
-// ======================================================================
 
-/**
- * 구의 정점, 법선, 텍스처 좌표, 인덱스를 생성하는 함수 (원본)
- * @param radius 구의 반지름
- * @param sectorCount 구를 수평으로 나누는 세그먼트 수
- * @param stackCount 구를 수직으로 나누는 스택 수
- * @param outVertices 생성된 정점 좌표를 저장할 벡터
- * @param outNormals 생성된 법선 벡터를 저장할 벡터
- * @param outTexCoords 생성된 텍스처 좌표를 저장할 벡터
- * @param outIndices 렌더링을 위한 인덱스를 저장할 벡터
- */
-void generateSphere(float radius, int sectorCount, int stackCount,
-	std::vector<float>& outVertices,
-	std::vector<float>& outNormals,
-	std::vector<float>& outTexCoords,
-	std::vector<unsigned int>& outIndices) {
+using ActionFunc = glm::mat4(polygon::*)(float* angles);
 
-	outVertices.clear();
-	outNormals.clear();
-	outTexCoords.clear();
-	outIndices.clear();
 
-	float x, y, z, xy;
-	float nx, ny, nz, lengthInv = 1.0f / radius;
-	float s, t;
 
-	float sectorStep = 2 * M_PI / sectorCount;
-	float stackStep = M_PI / stackCount;
-	float sectorAngle, stackAngle;
-
-	for (int i = 0; i <= stackCount; ++i) {
-		stackAngle = M_PI / 2 - i * stackStep;
-		xy = radius * cosf(stackAngle);
-		z = radius * sinf(stackAngle);
-
-		for (int j = 0; j <= sectorCount; ++j) {
-			sectorAngle = j * sectorStep;
-			x = xy * cosf(sectorAngle);
-			y = xy * sinf(sectorAngle);
-			outVertices.push_back(x);
-			outVertices.push_back(y);
-			outVertices.push_back(z);
-
-			nx = x * lengthInv;
-			ny = y * lengthInv;
-			nz = z * lengthInv;
-			outNormals.push_back(nx);
-			outNormals.push_back(ny);
-			outNormals.push_back(nz);
-
-			s = (float)j / sectorCount;
-			t = (float)i / stackCount;
-			outTexCoords.push_back(s);
-			outTexCoords.push_back(t);
-		}
-	}
-
-	unsigned int k1, k2;
-	for (int i = 0; i < stackCount; ++i) {
-		k1 = i * (sectorCount + 1);
-		k2 = k1 + sectorCount + 1;
-
-		for (int j = 0; j < sectorCount; ++j, ++k1, ++k2) {
-			if (i != 0) {
-				outIndices.push_back(k1);
-				outIndices.push_back(k2);
-				outIndices.push_back(k1 + 1);
-			}
-			if (i != (stackCount - 1)) {
-				outIndices.push_back(k1 + 1);
-				outIndices.push_back(k2);
-				outIndices.push_back(k2 + 1);
-			}
-		}
-	}
-}
-
-/**
- * glDrawArrays를 위해 인덱스 없는 평탄화된 정점 배열을 생성하는 함수
- * @param radius 구의 반지름
- * @param sectorCount 수평 분할 수
- * @param stackCount 수직 분할 수
- * @param finalVertices 최종 정점 데이터(위치+법선)를 저장할 벡터
- */
-void generateSphereVerticesForDrawArrays(float radius, int sectorCount, int stackCount, std::vector<float>& finalVertices) {
-	std::vector<float> vertices;
-	std::vector<float> normals;
-	std::vector<float> texCoords;
-	std::vector<unsigned int> indices;
-
-	// 먼저 인덱스 기반의 구 데이터를 생성
-	generateSphere(radius, sectorCount, stackCount, vertices, normals, texCoords, indices);
-
-	finalVertices.clear();
-	// 인덱스를 순회하면서 각 삼각형의 정점 데이터를 finalVertices에 추가
-	for (size_t i = 0; i < indices.size(); ++i) {
-		unsigned int index = indices[i];
-
-		// 위치 데이터 추가 (x, y, z)
-		finalVertices.push_back(vertices[index * 3]);
-		finalVertices.push_back(vertices[index * 3 + 1]);
-		finalVertices.push_back(vertices[index * 3 + 2]);
-
-		// 법선 데이터 추가 (nx, ny, nz)
-		finalVertices.push_back(normals[index * 3]);
-		finalVertices.push_back(normals[index * 3 + 1]);
-		finalVertices.push_back(normals[index * 3 + 2]);
-	}
-}
-
-// ======================================================================
-// ===== 새로 추가된 구 생성 함수 섹션 끝 =================================
-// ======================================================================
 
 void Keyboard(unsigned char key, int x, int y);
 void SpecialKeys(int key, int x, int y); // 특수 키(화살표 키) 콜백 함수 선언
@@ -296,12 +346,10 @@ void setupBuffers() {
 	glBindVertexArray(VAO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
-	// 정점 속성 설정: 위치 (3개) + 노말 (3개) = 총 6개 float
-	// location 0: 위치
+	// 정점 속성 설정: 위치 (3개) + 색상 (3개) = 총 6개 float
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 
-	// location 1: 노말
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
 
@@ -310,12 +358,15 @@ void setupBuffers() {
 
 int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 {
+	//width = 800;
+	//height = 800;
+
 	//--- 윈도우 생성하기
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
 	glutInitWindowPosition(100, 100);
 	glutInitWindowSize(width, height);
-	glutCreateWindow("Sphere Rendering with Lighting");
+	glutCreateWindow("Rectangle Rendering");
 	//--- GLEW 초기화하기
 	glewExperimental = GL_TRUE;
 	glewInit();
@@ -327,98 +378,86 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	// 버퍼 설정
 	setupBuffers();
 	glEnable(GL_DEPTH_TEST);
-
-	// ---!!! 핵심 수정 부분 !!!---
-	// 프로그램 시작 시 구의 정점 데이터를 미리 생성하여 allVertices에 저장
 	allVertices.clear();
 
-	// 구 하나만 생성 (재사용할 것임)
-	generateSphereVerticesForDrawArrays(1.0f, 36, 18, allVertices);
+	transformArray[0].xRotation = 0.0f;
+	transformArray[0].yRotation = 0.0f;
+	transformArray[0].localScale = 1.0f;
+	transformArray[0].position = glm::vec3(-0.2f, 0.0f, 0.0f);
+	transformArray[0].shapeType = SHAPE_CUBE; // 초기: 육면체
 
-	// 피라미드 정점 정의
-	glm::vec3 p5(0.5f, -0.5f, 0.5f);
-	glm::vec3 p6(0.5f, -0.5f, -0.5f);
-	glm::vec3 p7(-0.5f, -0.5f, -0.5f);
-	glm::vec3 p8(-0.5f, -0.5f, 0.5f);
-	glm::vec3 p9(0.0f, 0.5f, 0.0f);
+	transformArray[1].xRotation = 0.0f;
+	transformArray[1].yRotation = 0.0f;
+	transformArray[1].localScale = 1.0f;
+	transformArray[1].position = glm::vec3(0.2f, 0.0f, 0.0f);
+	transformArray[1].shapeType = SHAPE_CONE; // 초기: 12각뿔
 
-	// 피라미드 면 4개 추가
-	// 앞 면 (z = 0.5 쪽) - 빨간색
-	glm::vec3 normal1 = glm::normalize(glm::cross(p6 - p5, p9 - p5));
+
+	// glm::vec4로 축 좌표 정의
+	glm::vec4 xaxis1(10, 0, 0, 1);
+	glm::vec4 xaxis2(-10, 0, 0, 1);
+	glm::vec4 yaxis1(0, 10, 0, 1);
+	glm::vec4 yaxis2(0, -10, 0, 1);
+	glm::vec4 zaxis1(0, 0, 10, 1);
+	glm::vec4 zaxis2(0, 0, -10, 1);
+
+	// y축으로 -30도 회전 (glm::rotate 사용)
+	/*xaxis1 = glm::rotate(glm::mat4(1.0f), (float)(-pi / 6), glm::vec3(0.0f, 1.0f, 0.0f)) * xaxis1;
+	xaxis2 = glm::rotate(glm::mat4(1.0f), (float)(-pi / 6), glm::vec3(0.0f, 1.0f, 0.0f)) * xaxis2;
+	yaxis1 = glm::rotate(glm::mat4(1.0f), (float)(-pi / 6), glm::vec3(0.0f, 1.0f, 0.0f)) * yaxis1;
+	yaxis2 = glm::rotate(glm::mat4(1.0f), (float)(-pi / 6), glm::vec3(0.0f, 1.0f, 0.0f)) * yaxis2;
+	zaxis1 = glm::rotate(glm::mat4(1.0f), (float)(-pi / 6), glm::vec3(0.0f, 1.0f, 0.0f)) * zaxis1;
+	zaxis2 = glm::rotate(glm::mat4(1.0f), (float)(-pi / 6), glm::vec3(0.0f, 1.0f, 0.0f)) * zaxis2;
+
+	// x축으로 30도 회전 (glm::rotate 사용)
+	xaxis1 = glm::rotate(glm::mat4(1.0f), (float)(-pi / 6), glm::vec3(1.0f, 0.0f, 0.0f)) * xaxis1;
+	xaxis2 = glm::rotate(glm::mat4(1.0f), (float)(-pi / 6), glm::vec3(1.0f, 0.0f, 0.0f)) * xaxis2;
+	yaxis1 = glm::rotate(glm::mat4(1.0f), (float)(-pi / 6), glm::vec3(1.0f, 0.0f, 0.0f)) * yaxis1;
+	yaxis2 = glm::rotate(glm::mat4(1.0f), (float)(-pi / 6), glm::vec3(1.0f, 0.0f, 0.0f)) * yaxis2;
+	zaxis1 = glm::rotate(glm::mat4(1.0f), (float)(-pi / 6), glm::vec3(1.0f, 0.0f, 0.0f)) * zaxis1;
+	zaxis2 = glm::rotate(glm::mat4(1.0f), (float)(-pi / 6), glm::vec3(1.0f, 0.0f, 0.0f)) * zaxis2;*/
+
+
+
+	// 축 데이터를 allVertices에 추가 (vec4의 x, y, z 멤버 사용)
 	allVertices.insert(allVertices.end(), {
-		p5.x, p5.y, p5.z, normal1.x, normal1.y, normal1.z,
-		p6.x, p6.y, p6.z, normal1.x, normal1.y, normal1.z,
-		p9.x, p9.y, p9.z, normal1.x, normal1.y, normal1.z
-	});
-
-	// 오른쪽 면 (x = 0.5 쪽) - 초록색
-	glm::vec3 normal2 = glm::normalize(glm::cross(p7 - p6, p9 - p6));
+					xaxis1.x, xaxis1.y, xaxis1.z,
+					1, 0, 0 });
 	allVertices.insert(allVertices.end(), {
-		p6.x, p6.y, p6.z, normal2.x, normal2.y, normal2.z,
-		p7.x, p7.y, p7.z, normal2.x, normal2.y, normal2.z,
-		p9.x, p9.y, p9.z, normal2.x, normal2.y, normal2.z
-	});
+					xaxis2.x, xaxis2.y, xaxis2.z,
+					1, 0, 0 });
 
-	// 뒷 면 (z = -0.5 쪽) - 파란색
-	glm::vec3 normal3 = glm::normalize(glm::cross(p8 - p7, p9 - p7));
 	allVertices.insert(allVertices.end(), {
-		p7.x, p7.y, p7.z, normal3.x, normal3.y, normal3.z,
-		p8.x, p8.y, p8.z, normal3.x, normal3.y, normal3.z,
-		p9.x, p9.y, p9.z, normal3.x, normal3.y, normal3.z
-	});
-
-	// 왼쪽 면 (x = -0.5 쪽) - 노란색
-	glm::vec3 normal4 = glm::normalize(glm::cross(p5 - p8, p9 - p8));
+					yaxis1.x, yaxis1.y, yaxis1.z,
+					0, 1, 0 });
 	allVertices.insert(allVertices.end(), {
-		p8.x, p8.y, p8.z, normal4.x, normal4.y, normal4.z,
-		p5.x, p5.y, p5.z, normal4.x, normal4.y, normal4.z,
-		p9.x, p9.y, p9.z, normal4.x, normal4.y, normal4.z
-	});
+					yaxis2.x, yaxis2.y, yaxis2.z,
+					0, 1, 0 });
 
-	// 바닥 사각형 추가 (y = -0.5, x: -5~5, z: -5~5)
-	glm::vec3 floor1(-5.0f, -0.5f, -5.0f);
-	glm::vec3 floor2(5.0f, -0.5f, -5.0f);
-	glm::vec3 floor3(5.0f, -0.5f, 5.0f);
-	glm::vec3 floor4(-5.0f, -0.5f, 5.0f);
-	glm::vec3 floorNormal(0.0f, 1.0f, 0.0f); // 위를 향하는 노말
-
-	// 첫 번째 삼각형 (floor1, floor2, floor3)
 	allVertices.insert(allVertices.end(), {
-		floor1.x, floor1.y, floor1.z, floorNormal.x, floorNormal.y, floorNormal.z,
-		floor2.x, floor2.y, floor2.z, floorNormal.x, floorNormal.y, floorNormal.z,
-		floor3.x, floor3.y, floor3.z, floorNormal.x, floorNormal.y, floorNormal.z
-	});
-
-	// 두 번째 삼각형 (floor1, floor3, floor4)
+					zaxis1.x, zaxis1.y, zaxis1.z,
+					0, 0, 1 });
 	allVertices.insert(allVertices.end(), {
-		floor1.x, floor1.y, floor1.z, floorNormal.x, floorNormal.y, floorNormal.z,
-		floor3.x, floor3.y, floor3.z, floorNormal.x, floorNormal.y, floorNormal.z,
-		floor4.x, floor4.y, floor4.z, floorNormal.x, floorNormal.y, floorNormal.z
-	});
+					zaxis2.x, zaxis2.y, zaxis2.z,
+					0, 0, 1 });
 
-	// 눈 좌표 설정
 
-	for(int i=0; i<10; i++)
-	{
-		for(int j=0; j<10; j++)
-		{
-			snow[i][j] = glm::vec3(-5.0f + i, 4.0f, -5.0f + j);
-			snowfallSpeed[i][j] = 0.01f * (static_cast<float>(polyrandom(gen) % 12 + 1));
-		}
-	}
+	/*for (auto& poly : polygonmap) {
+		poly.rotate(-pi / 6, 'y');
+		poly.rotate(-pi / 6, 'x');
+
+		poly.sendvertexdata(allVertices);
+	}*/
+
 
 
 	//--- 세이더 프로그램 만들기
-
 	glutDisplayFunc(drawScene); //--- 출력 콜백 함수
 	glutReshapeFunc(Reshape);
 
 	glutTimerFunc(25, TimerFunction, 1);
 
 	glutKeyboardFunc(Keyboard);
-	glutSpecialFunc(SpecialKeys); // 특수 키(화살표 키) 콜백 등록
-	glutMouseFunc(Mouse);
-	glutMotionFunc(Motion); // 마우스 모션 콜백 등록
 
 	glutMainLoop();
 	return 0;
@@ -427,9 +466,9 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 void make_vertexShaders()
 {
 	GLchar* vertexSource;
-	//--- 버텍스 세이더 읽어 저장하고 컴파일하기
+	//--- 버텍스 세이더 읽어 저장하고 컴파일 하기
 	//--- filetobuf: 사용자정의 함수로 텍스트를 읽어서 문자열에 저장하는 함수
-	vertexSource = filetobuf("vertex_light.glsl");
+	vertexSource = filetobuf("vertex_view.glsl");
 	vertexShader = glCreateShader(GL_VERTEX_SHADER);
 	glShaderSource(vertexShader, 1, &vertexSource, NULL);
 	glCompileShader(vertexShader);
@@ -448,7 +487,7 @@ void make_fragmentShaders()
 {
 	GLchar* fragmentSource;
 	//--- 프래그먼트 세이더 읽어 저장하고 컴파일하기
-	fragmentSource = filetobuf("fragment_light.glsl"); // 프래그세이더 읽어오기
+	fragmentSource = filetobuf("fragment_matrix.glsl"); // 프래그세이더 읽어오기
 	fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
 	glShaderSource(fragmentShader, 1, &fragmentSource, NULL);
 	glCompileShader(fragmentShader);
@@ -466,7 +505,7 @@ void make_fragmentShaders()
 GLuint make_shaderProgram()
 {
 	GLint result;
-	GLchar errorLog[512]; // 에러 로그 크기를 512로 설정
+	GLchar* errorLog = NULL;
 	GLuint shaderID;
 	shaderID = glCreateProgram(); //--- 세이더 프로그램 만들기
 	glAttachShader(shaderID, vertexShader); //--- 세이더 프로그램에 버텍스 세이더 붙이기
@@ -478,7 +517,7 @@ GLuint make_shaderProgram()
 	if (!result) {
 		glGetProgramInfoLog(shaderID, 512, NULL, errorLog);
 		std::cerr << "ERROR: shader program 연결 실패\n" << errorLog << std::endl;
-		// return false; // main에서 bool을 받지 않으므로 return shaderID; 로 변경
+		return false;
 	}
 	glUseProgram(shaderID); //--- 만들어진 세이더 프로그램 사용하기
 	return shaderID;
@@ -487,178 +526,163 @@ GLuint make_shaderProgram()
 GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 {
 	GLfloat rColor, gColor, bColor;
-	rColor = gColor = 0.1f; //--- 배경색을 약간 어두운 회색으로 설정
-	bColor = 0.1f;
+	rColor = gColor = 1.0;
+	bColor = 1.0; //--- 배경색을 파랑색으로 설정
 	glClearColor(rColor, gColor, bColor, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glUseProgram(shaderProgramID);
 
-	// 모델 변환 행렬 설정 (Y축 회전과 X축 회전을 모두 적용)
+	// 각 사각형을 6개 정점으로 변환한 전체 데이터
+	glm::mat4 view = glm::mat4(1.0f);
+
+	glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 0.3f);
+	// y축으로 -pi/6 회전
+	glm::vec4 tempPos = glm::rotate(glm::mat4(1.0f), (float)(-pi / 6), glm::vec3(0.0f, 1.0f, 0.0f)) * glm::vec4(cameraPos, 1.0f);
+	cameraPos = glm::vec3(tempPos);
+	// x축으로 -pi/6 회전
+	tempPos = glm::rotate(glm::mat4(1.0f), (float)(-pi / 6), glm::vec3(1.0f, 0.0f, 0.0f)) * glm::vec4(cameraPos, 1.0f);
+	cameraPos = glm::vec3(tempPos);
+
+	glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
+	glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+
+	view = glm::lookAt(cameraPos, cameraTarget, cameraUp);
+	unsigned int viewLocation = glGetUniformLocation(shaderProgramID, "viewTransform"); //--- 버텍스 세이더에서 viewTransform 변수위치
+	glUniformMatrix4fv(viewLocation, 1, GL_FALSE, &view[0][0]);
+
 	glm::mat4 model = glm::mat4(1.0f);
-	model = glm::rotate(model, angle, glm::vec3(0.0f, 1.0f, 0.0f)); // y축 회전
-	model = glm::rotate(model, xangle, glm::vec3(1.0f, 0.0f, 0.0f)); // x축 회전
+	model = glm::rotate(model, angle, current_yaxis);
 
-
-	// 뷰 변환 행렬 설정
-	glm::mat4 view = glm::lookAt(
-		glm::vec3(0.0f, 5.0f, 10.0f), // 카메라 위치
-		glm::vec3(0.0f, 0.0f, 0.0f), // 바라보는 점
-		glm::vec3(0.0f, 1.0f, 0.0f)  // 업 벡터
-	);
-
-	// 투영 변환 행렬 설정
-	glm::mat4 projection = glm::perspective(
-		glm::radians(45.0f),          // 시야각
-		(float)width / (float)height, // 종횡비
-		0.1f,                         // 근평면
-		100.0f                        // 원평면
-	);
-
-	// Uniform 변수들 설정
-	unsigned int modelLocation = glGetUniformLocation(shaderProgramID, "model");
-	unsigned int viewLocation = glGetUniformLocation(shaderProgramID, "view");
-	unsigned int projectionLocation = glGetUniformLocation(shaderProgramID, "projection");
+	unsigned int modelLocation = glGetUniformLocation(shaderProgramID, "modelTransform");
 
 	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
-	glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(view));
-	glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(projection));
 
-	// 조명 관련 Uniform 변수 설정
-	unsigned int lightPosLocation = glGetUniformLocation(shaderProgramID, "lightPos");
-	unsigned int viewPosLocation = glGetUniformLocation(shaderProgramID, "viewPos");
-	unsigned int lightColorLocation = glGetUniformLocation(shaderProgramID, "lightColor");
-	unsigned int objectColorLocation = glGetUniformLocation(shaderProgramID, "objectColor");
-
-	// 조명 설정 - 원 궤도를 따라 회전
-	float lightX = lightOrbitRadius * cos(orbitAngle);
-	float lightZ = lightOrbitRadius * sin(orbitAngle);
-
-	glm::vec3 lightPos;
-	if (turnontoggle) {
-		lightPos = glm::vec3(lightX, 3.0f, lightZ); // ZX 평면에서 회전 (Y값을 주어 위에서 비추도록 수정)
-	}
-	else {
-		lightPos = glm::vec3(-500.0f, -500.0f, -500.0f); // 조명 OFF - 멀리 이동
-	}
-
-	glm::vec3 viewPos(0.0f, 5.0f, 10.0f);
-	glm::vec3 lightColor = lightColors[currentLightColorIndex]; // 배열에서 현재 조명 색상 가져오기
-	glm::vec3 objectColor(1.0f, 0.0f, 0.0f);
-
-	glUniform3fv(lightPosLocation, 1, glm::value_ptr(lightPos));
-	glUniform3fv(viewPosLocation, 1, glm::value_ptr(viewPos));
-	glUniform3fv(lightColorLocation, 1, glm::value_ptr(lightColor));
-	glUniform3fv(objectColorLocation, 1, glm::value_ptr(objectColor));
-
-	// --- 구 그리기 ---
 	if (!allVertices.empty()) {
 		glBindVertexArray(VAO);
 		glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
-		// 버퍼에 정점 데이터 업로드 (한 번만)
-		glBufferData(GL_ARRAY_BUFFER, allVertices.size() * sizeof(float), allVertices.data(), GL_STATIC_DRAW);
+		// 버퍼에 정점 데이터 업로드
+		glBufferData(GL_ARRAY_BUFFER, allVertices.size() * sizeof(float),
+			allVertices.data(), GL_DYNAMIC_DRAW);
 
-		int vertexCount = allVertices.size() / 6; // 각 정점은 6개의 float(위치 3, 노말 3)
+		// 모든 사각형을 한 번에 그리기 (각 사각형당 6개 정점)
 
-		// 1. 중앙의 1/2 사이즈 빨간 구
-		glm::mat4 model1 = glm::mat4(1.0f);
-		model1 = glm::translate(model1, redSpherePos); // 전역 변수 사용
-		model1 = glm::rotate(model1, angle, glm::vec3(0.0f, 1.0f, 0.0f)); // y축 회전
-		model1 = glm::rotate(model1, xangle, glm::vec3(1.0f, 0.0f, 0.0f)); // x축 회전
-		model1 = glm::scale(model1, glm::vec3(0.5f, 0.5f, 0.5f)); // 1/2 크기
-
-		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model1));
-		objectColor = glm::vec3(1.0f, 0.0f, 0.0f); // 빨간색
-		glUniform3fv(objectColorLocation, 1, glm::value_ptr(objectColor));
-		glDrawArrays(GL_TRIANGLES, 0, 3672);
-
-		// 2. 약간 왼쪽의 1/3 사이즈 초록 구
-		glm::mat4 model2 = glm::mat4(1.0f);
-		model2 = glm::translate(model2, greenSpherePos); // 전역 변수 사용
-		model2 = glm::rotate(model2, angle, glm::vec3(0.0f, 1.0f, 0.0f)); // y축 회전
-		model2 = glm::rotate(model2, xangle, glm::vec3(1.0f, 0.0f, 0.0f)); // x축 회전
-		model2 = glm::scale(model2, glm::vec3(0.333f, 0.333f, 0.333f)); // 1/3 크기
-
-		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model2));
-		objectColor = glm::vec3(0.0f, 1.0f, 0.0f); // 초록색
-		glUniform3fv(objectColorLocation, 1, glm::value_ptr(objectColor));
-		glDrawArrays(GL_TRIANGLES, 0, 3672);
-
-		// 3. 더 왼쪽의 1/4 사이즈 파란 구
-		glm::mat4 model3 = glm::mat4(1.0f);
-		model3 = glm::translate(model3, blueSpherePos); // 전역 변수 사용
-		model3 = glm::rotate(model3, angle, glm::vec3(0.0f, 1.0f, 0.0f)); // y축 회전
-		model3 = glm::rotate(model3, xangle, glm::vec3(1.0f, 0.0f, 0.0f)); // x축 회전
-		model3 = glm::scale(model3, glm::vec3(0.25f, 0.25f, 0.25f)); // 1/4 크기
-
-		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model3));
-		objectColor = glm::vec3(0.0f, 0.0f, 1.0f); // 파란색
-		glUniform3fv(objectColorLocation, 1, glm::value_ptr(objectColor));
-		glDrawArrays(GL_TRIANGLES, 0, 3672);
-
-		// 4. 조명 위치의 1/6 사이즈 회색 구
-		glm::mat4 model4 = glm::mat4(1.0f);
-		model4 = glm::translate(model4, glm::vec3(lightX, 0.0f, lightZ) * 1.05f); // 조명 위치로 이동
-		model4 = glm::scale(model4, glm::vec3(0.167f, 0.167f, 0.167f)); // 1/6 크기 (약 0.167)
-
-		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model4));
-		objectColor = glm::vec3(0.5f, 0.5f, 0.5f); // 회색
-		glUniform3fv(objectColorLocation, 1, glm::value_ptr(objectColor));
-		glDrawArrays(GL_TRIANGLES, 0, 3672);
-
-		// 5. 피라미드 그리기 (오른쪽에 배치)
-		glm::mat4 model5 = glm::scale(glm::mat4(1.0f), glm::vec3(3.0f, 3.0f, 3.0f));
-		//model5 = glm::translate(model5, glm::vec3(1.5f, 0.0f, 0.0f)); // 오른쪽으로 이동
-		//model5 = glm::rotate(model5, angle, glm::vec3(0.0f, 1.0f, 0.0f)); // y축 회전
-		//model5 = glm::rotate(model5, xangle, glm::vec3(1.0f, 0.0f, 0.0f)); // x축 회전
-		//model5 = glm::scale(model5, glm::vec3(0.5f, 0.5f, 0.5f)); // 0.5배 크기
-
-		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model5));
-		
-		// 피라미드의 4개 면 그리기
-		// 앞 면 - 빨간색
-		objectColor = glm::vec3(1.0f, 0.0f, 0.0f);
-		glUniform3fv(objectColorLocation, 1, glm::value_ptr(objectColor));
-		glDrawArrays(GL_TRIANGLES, 3672, 3);
-
-		// 오른쪽 면 - 초록색
-		objectColor = glm::vec3(0.0f, 1.0f, 0.0f);
-		glUniform3fv(objectColorLocation, 1, glm::value_ptr(objectColor));
-		glDrawArrays(GL_TRIANGLES, 3672 + 3, 3);
-
-		// 뒷 면 - 파란색
-		objectColor = glm::vec3(0.0f, 0.0f, 1.0f);
-		glUniform3fv(objectColorLocation, 1, glm::value_ptr(objectColor));
-		glDrawArrays(GL_TRIANGLES, 3672 + 6, 3);
-
-		// 왼쪽 면 - 노란색
-		objectColor = glm::vec3(1.0f, 1.0f, 0.0f);
-		glUniform3fv(objectColorLocation, 1, glm::value_ptr(objectColor));
-		glDrawArrays(GL_TRIANGLES, 3672 + 9, 3);
-
-		// 6. 바닥 사각형 그리기 (회색)
-		glm::mat4 model6 = glm::mat4(1.0f); // 변환 없음 (원점에 고정)
-		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model6));
-		
-		objectColor = glm::vec3(0.5f, 0.5f, 0.5f); // 회색
-		glUniform3fv(objectColorLocation, 1, glm::value_ptr(objectColor));
-		glDrawArrays(GL_TRIANGLES, 3672 + 12, 6); // 2개의 삼각형 = 6개 정점
-
-		// 7. 눈 그리기 (작은 흰 구들)
-		for (int i = 0; i < 10; i++) {
-			for (int j = 0; j < 10; j++) {
-				glm::mat4 modelSnow = glm::mat4(1.0f);
-				modelSnow = glm::translate(modelSnow, snow[i][j]);
-				modelSnow = glm::scale(modelSnow, glm::vec3(0.05f, 0.05f, 0.05f)); // 매우 작은 크기
-				glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(modelSnow));
-				objectColor = glm::vec3(1.0f, 1.0f, 1.0f); // 흰색
-				glUniform3fv(objectColorLocation, 1, glm::value_ptr(objectColor));
-				glDrawArrays(GL_TRIANGLES, 0, 3672);
-			}
-		}
-
-		glBindVertexArray(0);
 	}
+
+	glLineWidth(2.0f);
+
+	// 축은 변환 없이 그리기 (단위 행렬 적용)
+	glm::mat4 identityMatrix = glm::mat4(1.0);
+	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(identityMatrix)); // 버텍스 셰이더에 있는 modelTransform에 단위 행렬 전달
+	glDrawArrays(GL_LINES, 0, 6);
+
+	// GLU 객체 그리기 (고정 파이프라인 사용)
+	glUseProgram(0); // 셰이더 비활성화
+
+	// 고정 파이프라인 행렬 설정
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+
+	// view 행렬 적용 (카메라 설정)
+	gluLookAt(cameraPos.x, cameraPos.y, cameraPos.z,
+		cameraTarget.x, cameraTarget.y, cameraTarget.z,
+		cameraUp.x, cameraUp.y, cameraUp.z);
+
+	// 첫 번째 객체 (transformArray[0])
+	glPushMatrix(); // 현재 행렬 저장
+
+	// 1. 이동 (translate)
+	glTranslatef(transformArray[0].position.x, transformArray[0].position.y, transformArray[0].position.z);
+
+	// 2. y축 자전 (yRotation)
+	glRotatef(glm::degrees(transformArray[0].yRotation), 0.0f, 1.0f, 0.0f);
+
+	// 3. x축 자전 (xRotation)
+	glRotatef(glm::degrees(transformArray[0].xRotation), 1.0f, 0.0f, 0.0f);
+
+	// 4. 제자리 scale (localScale)
+	glScalef(transformArray[0].localScale, transformArray[0].localScale, transformArray[0].localScale);
+
+	glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
+
+	GLUquadricObj* qobj;
+	qobj = gluNewQuadric();
+	gluQuadricDrawStyle(qobj, GLU_FILL);
+
+	glColor3f(0.0f, 0.0f, 0.0f); // 검은색으로 설정
+
+	// shapeType에 따라 도형 그리기
+	switch (transformArray[0].shapeType) {
+	case SHAPE_CUBE: // 육면체
+		gluCylinder(qobj, 0.1, 0.1, 0.2, 4, 1);
+		break;
+	case SHAPE_SPHERE: // 구
+		gluSphere(qobj, 0.1, 20, 20);
+		break;
+	case SHAPE_CONE: // 12각뿔
+		glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
+		gluCylinder(qobj, 0.1, 0.0, 0.2, 12, 1);
+		break;
+	case SHAPE_CYLINDER: // 12각기둥
+		glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
+		gluCylinder(qobj, 0.1, 0.1, 0.2, 12, 1);
+		break;
+	}
+
+	gluDeleteQuadric(qobj);
+
+	glPopMatrix(); // 이전 행렬 복원
+
+	// 두 번째 객체 (transformArray[1]) - 구 그리기
+	glPushMatrix(); // 현재 행렬 저장
+
+	// 1. 이동 (translate)
+	glTranslatef(transformArray[1].position.x, transformArray[1].position.y, transformArray[1].position.z);
+
+	// 2. y축 자전 (yRotation)
+	glRotatef(glm::degrees(transformArray[1].yRotation), 0.0f, 1.0f, 0.0f);
+
+	// 3. x축 자전 (xRotation)
+	glRotatef(glm::degrees(transformArray[1].xRotation), 1.0f, 0.0f, 0.0f);
+
+	// 4. 제자리 scale (localScale)
+	glScalef(transformArray[1].localScale, transformArray[1].localScale, transformArray[1].localScale);
+
+	glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
+
+	GLUquadricObj* qobj2;
+	qobj2 = gluNewQuadric();
+	gluQuadricDrawStyle(qobj2, GLU_FILL);
+
+	glColor3f(0.5f, 0.0f, 0.5f); // 보라색으로 설정
+
+	// shapeType에 따라 도형 그리기
+	switch (transformArray[1].shapeType) {
+	case SHAPE_CUBE: // 육면체
+		gluCylinder(qobj2, 0.1, 0.1, 0.2, 4, 1);
+		break;
+	case SHAPE_SPHERE: // 구
+		gluSphere(qobj2, 0.1, 20, 20);
+		break;
+	case SHAPE_CONE: // 12각뿔
+		glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
+		gluCylinder(qobj2, 0.1, 0.0, 0.2, 12, 1);
+		break;
+	case SHAPE_CYLINDER: // 12각기둥
+		glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
+		gluCylinder(qobj2, 0.1, 0.1, 0.2, 12, 1);
+		break;
+	}
+
+	gluDeleteQuadric(qobj2);
+
+	glPopMatrix(); // 이전 행렬 복원
+
+	// 다시 셰이더 활성화
+	glUseProgram(shaderProgramID);
 
 	glutSwapBuffers(); // 화면에 출력하기
 }
@@ -666,7 +690,6 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 //--- 다시그리기 콜백 함수
 GLvoid Reshape(int w, int h) //--- 콜백 함수: 다시 그리기 콜백 함수
 {
-	width = w; height = h; // 전역 변수 업데이트
 	glViewport(0, 0, w, h);
 }
 
@@ -675,94 +698,10 @@ void Keyboard(unsigned char key, int x, int y) {
 	case 'q': // 프로그램 종료
 		glutLeaveMainLoop();
 		break;
-	case 'r': // 조명 공전 - 반시계방향
-	{
-		orbitAngle += 0.1f; // 약 5.7도씩 증가
-		if (orbitAngle > 2.0f * pi) {
-			orbitAngle -= 2.0f * pi; // 2π를 넘으면 리셋
-		}
-	}
-	break;
-	case 'R': // 조명 공전 - 시계방향
-	{
-		orbitAngle -= 0.1f; // 약 5.7도씩 감소
-		if (orbitAngle < 0.0f) {
-			orbitAngle += 2.0f * pi; // 0 미만이면 2π 더하기
-		}
-	}
-	break;
-	case 'y': // y축 기준 양방향 회전
-	{
-		angle += 0.05f;
-	}
-	break;
-	case 'Y': // y축 기준 음방향 회전
-	{
-		angle -= 0.05f;
-	}
-	break;
-	case 'x': // x축 기준 양방향 회전
-	{
-		xangle += 0.05f;
-	}
-	break;
-	case 'X': // x축 기준 음방향 회전
-	{
-		xangle -= 0.05f;
-	}
-	break;
-	case 'h': // 은면제거 적용/해제
-	{
-		if (hidetoggle) { // 현재 활성화 상태면
-			glDisable(GL_DEPTH_TEST);
-			hidetoggle = 0;
-		}
-		else { // 현재 비활성화 상태면
-			glEnable(GL_DEPTH_TEST);
-			hidetoggle = 1;
-		}
-	}
-	break;
-	case 's': // 초기위치로 리셋(모든 애니메이션 멈추기)
-	{
-		xangle = 0.0f;
-		angle = 0.0f;
-		polygon_xpos = 0.0f;
-		polygon_ypos = 0.0f;
-		orbitAngle = 0.0f; // 조명 궤도 각도도 리셋
-		lightOrbitRadius = 2.0f; // 조명 궤도 반지름도 리셋
-		turnontoggle = 1; // 조명 ON으로 리셋
-		currentLightColorIndex = 0; // 조명 색상도 흰색으로 리셋
-
-	}
-	break;
-	case 'f': // 조명 궤도 반지름 증가
-	{
-		lightOrbitRadius += 0.1f;
-		if (lightOrbitRadius > 5.0f) {
-			lightOrbitRadius = 5.0f; // 최대 반지름 제한
-		}
-	}
-	break;
-	case 'n': // 조명 궤도 반지름 감소
-	{
-		lightOrbitRadius -= 0.1f;
-		if (lightOrbitRadius < 0.5f) {
-			lightOrbitRadius = 0.5f; // 최소 반지름 제한
-		}
-	}
-	break;
-	case 'm': // 조명 ON/OFF 토글
-	{
-		turnontoggle = 1 - turnontoggle; // 0 <-> 1 전환
-	}
-	break;
-	case 'c': // 조명 색상 변경
-	{
-		currentLightColorIndex = (currentLightColorIndex + 1) % 3; // 0 -> 1 -> 2 -> 0 순환
-	}
-	break;
-	case 'u':
+	case 'Q': // 프로그램 종료
+		glutLeaveMainLoop();
+		break;
+	case '+':
 	{
 		if (culltoggle == 0) {
 			glEnable(GL_CULL_FACE);
@@ -772,7 +711,6 @@ void Keyboard(unsigned char key, int x, int y) {
 			glDisable(GL_CULL_FACE);
 			culltoggle = 0;
 		}
-
 	}
 	break;
 	default:
@@ -782,42 +720,11 @@ void Keyboard(unsigned char key, int x, int y) {
 	glutPostRedisplay();
 }
 
-void SpecialKeys(int key, int x, int y) {
-	// 현재 이 함수는 비어있으므로 특별한 동작 없음
-	glutPostRedisplay();
-}
-
-void Mouse(int button, int state, int x, int y)
-{
-	// 현재 이 함수는 비어있으므로 특별한 동작 없음
-}
 
 void TimerFunction(int value)
 {
-	// 빨간 구 공전 (5도씩, 원점 중심)
-	float redAngle = glm::radians(5.0f);
-	glm::mat4 redRotation = glm::rotate(glm::mat4(1.0f), redAngle, glm::vec3(0.0f, 1.0f, 0.0f));
-	redSpherePos = glm::vec3(redRotation * glm::vec4(redSpherePos, 1.0f));
+	// 위치 교환 애니메이션 처리
 
-	// 초록 구 공전 (3도씩, 원점 중심)
-	float greenAngle = glm::radians(3.0f);
-	glm::mat4 greenRotation = glm::rotate(glm::mat4(1.0f), greenAngle, glm::vec3(0.0f, 1.0f, 0.0f));
-	greenSpherePos = glm::vec3(greenRotation * glm::vec4(greenSpherePos, 1.0f));
-
-	// 파란 구 공전 (2도씩, 원점 중심)
-	float blueAngle = glm::radians(2.0f);
-	glm::mat4 blueRotation = glm::rotate(glm::mat4(1.0f), blueAngle, glm::vec3(0.0f, 1.0f, 0.0f));
-	blueSpherePos = glm::vec3(blueRotation * glm::vec4(blueSpherePos, 1.0f));
-
-	// 눈 내리기 애니메이션
-	for (int i = 0; i < 10; i++) {
-		for (int j = 0; j < 10; j++) {
-			snow[i][j].y -= snowfallSpeed[i][j];
-			if (snow[i][j].y < -0.5f) { // 바닥에 닿으면 다시 위로 올리기
-				snow[i][j].y = 4.0f;
-			}
-		}
-	}
 
 	glutPostRedisplay();
 	glutTimerFunc(25, TimerFunction, 1);
@@ -825,5 +732,5 @@ void TimerFunction(int value)
 
 void Motion(int x, int y) // 마우스 모션 콜백 함수
 {
-	// 현재 이 함수는 비어있으므로 특별한 동작 없음
+
 }

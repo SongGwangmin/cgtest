@@ -54,9 +54,9 @@ int wiretoggle = 0; // 0: 솔리드 모드, 1: 와이어프레임 모드
 int culltoggle = 0; // 1. 뒷면 컬링 모드
 int opentoggle = 0; // 0: 문 닫힘, 1: 문 열림
 
-glm::mat4 dir;
+
 // 카메라 변수
-glm::vec3 cameraPos = glm::vec3(0.0f, 10.0f, 150.0f);      // 카메라 위치
+glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 150.0f);      // 카메라 위치
 glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);      // 카메라 타겟
 
 // AntiCube 크기 상수
@@ -64,32 +64,6 @@ const float ANTICUBE_SIZE = 60.0f;  // 한 변의 길이
 const float ANTICUBE_HALF = ANTICUBE_SIZE / 2.0f;  // 반지름 (중심에서 면까지의 거리)
 const float minBound = -ANTICUBE_HALF + 3.0f;
 const float maxBound = ANTICUBE_HALF - 3.0f;
-float cubeSpeed = 0.1f; // 큐브 이동 속도
-
-// AABB 구조체 정의
-struct AABB {
-	glm::vec3 min;  // 최소 좌표 (왼쪽 아래 뒤)
-	glm::vec3 max;  // 최대 좌표 (오른쪽 위 앞)
-};
-
-// 전체 3D AABB 충돌 체크
-bool checkAABBCollision(const AABB& a, const AABB& b) {
-	return (a.min.x <= b.max.x && a.max.x >= b.min.x) &&
-		(a.min.y <= b.max.y && a.max.y >= b.min.y) &&
-		(a.min.z <= b.max.z && a.max.z >= b.min.z);
-}
-
-// X, Z축만 충돌 체크 (Y축 제외)
-bool checkAABBCollisionXZ(const AABB& a, const AABB& b) {
-	return (a.min.x <= b.max.x && a.max.x >= b.min.x) &&
-		(a.min.z <= b.max.z && a.max.z >= b.min.z);
-}
-
-// Y축만 충돌 체크
-bool checkAABBCollisionY(const AABB& a, const AABB& b) {
-	return (a.min.y <= b.max.y && a.max.y >= b.min.y);
-}
-
 
 // Cube 위치와 크기를 저장하는 구조체
 struct CubePos {
@@ -97,7 +71,7 @@ struct CubePos {
 	float size;        // 한 변의 길이
 	float xend;
 	float nowxpos;
-	float nowzpos;
+	float nowypos;
 };
 
 // 3개의 큐브 정보 저장
@@ -107,44 +81,20 @@ CubePos cubepos[3] = {
 	{-30.0f, 20.0f, 30.0f - 20.0f, -30.0f, 0.0f}    // cube3: x시작 -30, 크기 20
 };
 
-// 3개의 큐브 AABB 정보 저장
-AABB cubeAABB[3];
-
-// Player 구조체 정의
-struct Player {
-	glm::vec3 centerPos;     // 중심 좌표
-	glm::vec3 size;          // 크기 (폭, 높이, 깊이)
-	glm::vec3 velocity;      // 속도 (물리 시스템용)
-	bool isOnGround;         // 바닥에 있는지 여부
-
-	// AABB 계산 함수
-	AABB getAABB() const {
-		AABB box;
-		box.min = centerPos - size / 2.0f;  // 중심에서 반 크기만큼 뺌
-		box.max = centerPos + size / 2.0f;  // 중심에서 반 크기만큼 더함
-		return box;
-	}
-};
-
-
-// Player 전역 변수
-Player player;
-
 // Forward declaration
 class polygon;
+int mouse_dest = -1; // 마우스로 선택된 polygon 인덱스 저장
 std::vector<float> allVertices;
 
 float angle = 0.0f; // 회전 각도 (전역 변수)
 float openangle = 0.0f; // EnRjd 각도 (전역 변수)
 float yangle = 0.0f; // Y축 회전 각도 (전역 변수)
-float armangle = 0.0f; // 팔 회전 각도 (전역 변수)
-float maxarmangle = 0.5f;
-int armup = 0; // 팔 올림 내림 토글
+
+// 구의 위치 저장 (5개)
+glm::vec3 spherePositions[5];
+glm::vec3 spheredelta[5];
+
 int xmouse = 400;
-
-int armtoggle = 0;
-
-float t = 0;
 
 // 육면체 클래스
 class Cube {
@@ -255,8 +205,8 @@ private:
 public:
 	// 생성자: 부모 클래스와 동일한 생성자
 	AntiCube(glm::vec3 v0, glm::vec3 v1, glm::vec3 v2, glm::vec3 v3,
-		glm::vec3 v4, glm::vec3 v5, glm::vec3 v6, glm::vec3 v7,
-		glm::vec3 col = glm::vec3(1.0f, 1.0f, 1.0f))
+		     glm::vec3 v4, glm::vec3 v5, glm::vec3 v6, glm::vec3 v7,
+		     glm::vec3 col = glm::vec3(1.0f, 1.0f, 1.0f))
 		: Cube(v0, v1, v2, v3, v4, v5, v6, v7, col)
 	{
 		// 기본적으로 모든 면을 같은 색상으로 초기화
@@ -267,8 +217,8 @@ public:
 
 	// 각 면의 색상을 개별적으로 설정하는 생성자
 	AntiCube(glm::vec3 v0, glm::vec3 v1, glm::vec3 v2, glm::vec3 v3,
-		glm::vec3 v4, glm::vec3 v5, glm::vec3 v6, glm::vec3 v7,
-		glm::vec3 colors[6])
+		     glm::vec3 v4, glm::vec3 v5, glm::vec3 v6, glm::vec3 v7,
+		     glm::vec3 colors[6])
 		: Cube(v0, v1, v2, v3, v4, v5, v6, v7, glm::vec3(1.0f))
 	{
 		// 각 면의 색상 저장
@@ -285,7 +235,7 @@ public:
 			{0, 1, 2, 3}, // 앞면 (반대 순서)
 			{4, 7, 6, 5}, // 뒷면 (반대 순서)
 			{0, 4, 5, 1}, // 아랫면 (반대 순서)
-			{2, 3, 7, 6}, // 윗면 (반대 순서)
+			{2, 6, 7, 3}, // 윗면 (반대 순서)
 			{0, 3, 7, 4}, // 왼쪽면 (반대 순서)
 			{1, 5, 6, 2}  // 오른쪽면 (반대 순서)
 		};
@@ -353,7 +303,7 @@ void Mouse(int button, int state, int x, int y) {
 	}
 }
 void Motion(int x, int y) { // 마우스 모션 콜백 함수 선언
-
+	
 
 }
 void Mousemove(int x, int y) {
@@ -428,123 +378,89 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 		glm::vec3(255.0f / 255.0f, 0.0f / 255.0f, 255.0f / 255.0f)    // 오른쪽면: 마젠타
 	};
 
-	Cube tilecube(
-		glm::vec3(-40.0f, -0.5f, -40.0f), // v0: 앞면 왼쪽 아래
-		glm::vec3(-20.0f, -0.5f, -40.0f),  // v1: 앞면 오른쪽 아래
-		glm::vec3(-20.0f, -0.5f, -20.0f),   // v2: 앞면 오른쪽 위
-		glm::vec3(-40.0f, -0.5f, -20.0f),  // v3: 앞면 왼쪽 위
-		glm::vec3(-40.0f, 0.5f, -40.0f),  // v4: 뒷면 왼쪽 아래
-		glm::vec3(-20.0f, 0.5f, -40.0f),   // v5: 뒷면 오른쪽 아래
-		glm::vec3(-20.0f, 0.5f, -20.0f),    // v6: 뒷면 오른쪽 위
-		glm::vec3(-40.0f, 0.5f, -20.0f),   // v7: 뒷면 왼쪽 위
-		glm::vec3(0.0f, 0.0f, 1.0f)     // 파랑
+	AntiCube antiCube(
+		glm::vec3(-ANTICUBE_HALF, -ANTICUBE_HALF, -ANTICUBE_HALF), // v0: 앞면 왼쪽 아래
+		glm::vec3( ANTICUBE_HALF, -ANTICUBE_HALF, -ANTICUBE_HALF), // v1: 앞면 오른쪽 아래
+		glm::vec3( ANTICUBE_HALF, -ANTICUBE_HALF,  ANTICUBE_HALF), // v2: 앞면 오른쪽 위
+		glm::vec3(-ANTICUBE_HALF, -ANTICUBE_HALF,  ANTICUBE_HALF), // v3: 앞면 왼쪽 위
+		glm::vec3(-ANTICUBE_HALF,  ANTICUBE_HALF, -ANTICUBE_HALF), // v4: 뒷면 왼쪽 아래
+		glm::vec3( ANTICUBE_HALF,  ANTICUBE_HALF, -ANTICUBE_HALF), // v5: 뒷면 오른쪽 아래
+		glm::vec3( ANTICUBE_HALF,  ANTICUBE_HALF,  ANTICUBE_HALF), // v6: 뒷면 오른쪽 위
+		glm::vec3(-ANTICUBE_HALF,  ANTICUBE_HALF,  ANTICUBE_HALF), // v7: 뒷면 왼쪽 위
+		colors
 	);
-	tilecube.sendVertexData(allVertices);
+	antiCube.sendVertexData(allVertices);
+
+	// 첫 번째 Cube: 한 변의 길이 10, z = 20, 파랑색
+	Cube cube1(
+		glm::vec3(-30.0f, -30.0f, 20.0f), // v0: 앞면 왼쪽 아래
+		glm::vec3(-20.0f, -30.0f, 20.0f), // v1: 앞면 오른쪽 아래
+		glm::vec3(-20.0f, -30.0f, 30.0f), // v2: 앞면 오른쪽 위
+		glm::vec3(-30.0f, -30.0f, 30.0f), // v3: 앞면 왼쪽 위
+		glm::vec3(-30.0f, -20.0f, 20.0f), // v4: 뒷면 왼쪽 아래
+		glm::vec3(-20.0f, -20.0f, 20.0f), // v5: 뒷면 오른쪽 아래
+		glm::vec3(-20.0f, -20.0f, 30.0f), // v6: 뒷면 오른쪽 위
+		glm::vec3(-30.0f, -20.0f, 30.0f), // v7: 뒷면 왼쪽 위
+		glm::vec3(0.0f, 0.0f, 1.0f) // 파랑색
+	);
+	cube1.sendVertexData(allVertices);
+
+	// 두 번째 Cube: 한 변의 길이 15, z = 0, 빨강색
+	Cube cube2(
+		glm::vec3(-30.0f, -30.0f, 0.0f),   // v0: 앞면 왼쪽 아래
+		glm::vec3(-15.0f, -30.0f, 0.0f),   // v1: 앞면 오른쪽 아래
+		glm::vec3(-15.0f, -30.0f, 15.0f),  // v2: 앞면 오른쪽 위
+		glm::vec3(-30.0f, -30.0f, 15.0f),  // v3: 앞면 왼쪽 위
+		glm::vec3(-30.0f, -15.0f, 0.0f),   // v4: 뒷면 왼쪽 아래
+		glm::vec3(-15.0f, -15.0f, 0.0f),   // v5: 뒷면 오른쪽 아래
+		glm::vec3(-15.0f, -15.0f, 15.0f),  // v6: 뒷면 오른쪽 위
+		glm::vec3(-30.0f, -15.0f, 15.0f),  // v7: 뒷면 왼쪽 위
+		glm::vec3(1.0f, 0.0f, 0.0f) // 빨강색
+	);
+	cube2.sendVertexData(allVertices);
+
+	// 세 번째 Cube: 한 변의 길이 20, z = -20, 짙은 회색
+	Cube cube3(
+		glm::vec3(-30.0f, -30.0f, -20.0f),  // v0: 앞면 왼쪽 아래
+		glm::vec3(-10.0f, -30.0f, -20.0f),  // v1: 앞면 오른쪽 아래
+		glm::vec3(-10.0f, -30.0f, 0.0f),  // v2: 앞면 오른쪽 위
+		glm::vec3(-30.0f, -30.0f, 0.0f),  // v3: 앞면 왼쪽 위
+		glm::vec3(-30.0f, -10.0f, -20.0f),  // v4: 뒷면 왼쪽 아래
+		glm::vec3(-10.0f, -10.0f, -20.0f),  // v5: 뒷면 오른쪽 아래
+		glm::vec3(-10.0f, -10.0f, 0.0f),  // v6: 뒷면 오른쪽 위
+		glm::vec3(-30.0f, -10.0f, 0.0f),  // v7: 뒷면 왼쪽 위
+		glm::vec3(0.3f, 0.3f, 0.3f) // 짙은 회색 (RGB: 76, 76, 76)
+	);
+	cube3.sendVertexData(allVertices);
+
+	// AntiCube 범위 내에서 랜덤한 5개 점 생성
+	std::uniform_real_distribution<float> posDis(-ANTICUBE_HALF + 3, ANTICUBE_HALF - 3);
+	std::uniform_real_distribution<float> angleDis(0.0f, 2.0f * pi);
 	
-	Cube tilecube1(
-		glm::vec3(-20.0f, -0.5f, -40.0f), // v0: 앞면 왼쪽 아래
-		glm::vec3(0.0f, -0.5f, -40.0f),  // v1: 앞면 오른쪽 아래
-		glm::vec3(0.0f, -0.5f, -20.0f),   // v2: 앞면 오른쪽 위
-		glm::vec3(-20.0f, -0.5f, -20.0f),  // v3: 앞면 왼쪽 위
-		glm::vec3(-20.0f, 0.5f, -40.0f),  // v4: 뒷면 왼쪽 아래
-		glm::vec3(0.0f, 0.5f, -40.0f),   // v5: 뒷면 오른쪽 아래
-		glm::vec3(0.0f, 0.5f, -20.0f),    // v6: 뒷면 오른쪽 위
-		glm::vec3(-20.0f, 0.5f, -20.0f),   // v7: 뒷면 왼쪽 위
-		glm::vec3(0.5f, 0.5f, 0.5f)     // 파랑
-	);
-	tilecube1.sendVertexData(allVertices);
-
-	Cube tilecube2(
-		glm::vec3(-40.0f, -0.5f, -20.0f), // v0: 앞면 왼쪽 아래
-		glm::vec3(-20.0f, -0.5f, -20.0f),  // v1: 앞면 오른쪽 아래
-		glm::vec3(-20.0f, -0.5f, 0.0f),   // v2: 앞면 오른쪽 위
-		glm::vec3(-40.0f, -0.5f, 0.0f),  // v3: 앞면 왼쪽 위
-		glm::vec3(-40.0f, 0.5f, -20.0f),  // v4: 뒷면 왼쪽 아래
-		glm::vec3(-20.0f, 0.5f, -20.0f),   // v5: 뒷면 오른쪽 아래
-		glm::vec3(-20.0f, 0.5f, 0.0f),    // v6: 뒷면 오른쪽 위
-		glm::vec3(-40.0f, 0.5f, 0.0f),   // v7: 뒷면 왼쪽 위
-		glm::vec3(0.5f, 0.5f, 0.5f)     // 파랑
-	);
-	tilecube2.sendVertexData(allVertices);
-
-	Cube tilecube3(
-		glm::vec3(-20.0f, -0.5f, -20.0f), // v0: 앞면 왼쪽 아래
-		glm::vec3(0.0f, -0.5f, -20.0f),  // v1: 앞면 오른쪽 아래
-		glm::vec3(0.0f, -0.5f, 0.0f),   // v2: 앞면 오른쪽 위
-		glm::vec3(-20.0f, -0.5f, 0.0f),  // v3: 앞면 왼쪽 위
-		glm::vec3(-20.0f, 0.5f, -20.0f),  // v4: 뒷면 왼쪽 아래
-		glm::vec3(0.0f, 0.5f, -20.0f),   // v5: 뒷면 오른쪽 아래
-		glm::vec3(0.0f, 0.5f, 0.0f),    // v6: 뒷면 오른쪽 위
-		glm::vec3(-20.0f, 0.5f, 0.0f),   // v7: 뒷면 왼쪽 위
-		glm::vec3(0.0f, 0.0f, 1.0f)     // 파랑
-	);
-	tilecube3.sendVertexData(allVertices);
+	for (int i = 0; i < 5; ++i) {
+		// 랜덤한 위치 생성 (AntiCube 범위 내)
+		spherePositions[i] = glm::vec3(
+			posDis(gen),
+			posDis(gen),
+			posDis(gen)
+		);
+		
+		// 랜덤한 각도로 이동 방향 설정
+		float dirangle = angleDis(gen);
+		spheredelta[i] = glm::vec3(
+			cos(dirangle),
+			sin(dirangle),
+			0.0f
+		);
+	}
 	
-
-	// Player Cube 생성 (중심이 0,0,0이고 한 변의 길이가 8)
-	
-
-	Cube stickCube( // 아래로만 보이는
-		glm::vec3(-2.0f, -0.5f, -2.0f), // v0: 앞면 왼쪽 아래
-		glm::vec3(0.0f, -0.5f, -2.0f),  // v1: 앞면 오른쪽 아래
-		glm::vec3(0.0f, -0.5f, 0.0f),   // v2: 앞면 오른쪽 위
-		glm::vec3(-2.0f, -0.5f, 0.0f),  // v3: 앞면 왼쪽 위
-		glm::vec3(-2.0f, 0.5f, -2.0f),  // v4: 뒷면 왼쪽 아래
-		glm::vec3(0.0f, 0.5f, -2.0f),   // v5: 뒷면 오른쪽 아래
-		glm::vec3(0.0f, 0.5f, 0.0f),    // v6: 뒷면 오른쪽 위
-		glm::vec3(-2.0f, 0.5f, 0.0f),   // v7: 뒷면 왼쪽 위
-		glm::vec3(1.0f, 0.7f, 0.0f)     // 갈색?
-	);
-	stickCube.sendVertexData(allVertices);
-
-	Cube stickCube2( // 아래로만 보이는
-		glm::vec3(-2.0f, -0.0f, -2.0f), // v0: 앞면 왼쪽 아래
-		glm::vec3(0.0f, -0.0f, -2.0f),  // v1: 앞면 오른쪽 아래
-		glm::vec3(0.0f, -0.0f, 0.0f),   // v2: 앞면 오른쪽 위
-		glm::vec3(-2.0f, -0.0f, 0.0f),  // v3: 앞면 왼쪽 위
-		glm::vec3(-2.0f, 0.5f, -2.0f),  // v4: 뒷면 왼쪽 아래
-		glm::vec3(0.0f, 0.5f, -2.0f),   // v5: 뒷면 오른쪽 아래
-		glm::vec3(0.0f, 0.5f, 0.0f),    // v6: 뒷면 오른쪽 위
-		glm::vec3(-2.0f, 0.5f, 0.0f),   // v7: 뒷면 왼쪽 위
-		glm::vec3(1.0f, 0.0f, 0.7f)     // 갈색?
-	);
-	stickCube2.sendVertexData(allVertices);
-
-	Cube stickCube3( // 아래로만 보이는
-		glm::vec3(-2.0f, 0.0f, -2.0f), // v0: 앞면 왼쪽 아래
-		glm::vec3(2.0f, 0.0f, -2.0f),  // v1: 앞면 오른쪽 아래
-		glm::vec3(2.0f, 0.0f, 2.0f),   // v2: 앞면 오른쪽 위
-		glm::vec3(-2.0f, 0.0f, 2.0f),  // v3: 앞면 왼쪽 위
-		glm::vec3(-2.0f, 0.5f, -2.0f),  // v4: 뒷면 왼쪽 아래
-		glm::vec3(2.0f, 0.5f, -2.0f),   // v5: 뒷면 오른쪽 아래
-		glm::vec3(2.0f, 0.5f, 2.0f),    // v6: 뒷면 오른쪽 위
-		glm::vec3(-2.0f, 0.5f, 2.0f), glm::vec3(1.0f, 0.0f, 0.7f)     // 갈색?
-	);
-	stickCube3.sendVertexData(allVertices);
-
-	Cube stickCube4( // 아래로만 보이는
-		glm::vec3(-2.0f, 0.0f, -2.0f), // v0: 앞면 왼쪽 아래
-		glm::vec3(2.0f, 0.0f, -2.0f),  // v1: 앞면 오른쪽 아래
-		glm::vec3(2.0f, 0.0f, 2.0f),   // v2: 앞면 오른쪽 위
-		glm::vec3(-2.0f, 0.0f, 2.0f),  // v3: 앞면 왼쪽 위
-		glm::vec3(-2.0f, 0.5f, -2.0f),  // v4: 뒷면 왼쪽 아래
-		glm::vec3(2.0f, 0.5f, -2.0f),   // v5: 뒷면 오른쪽 아래
-		glm::vec3(2.0f, 0.5f, 2.0f),    // v6: 뒷면 오른쪽 위
-		glm::vec3(-2.0f, 0.5f, 2.0f), glm::vec3(1.0f, 1.0f, 0.7f)     // 갈색?
-	);
-	stickCube4.sendVertexData(allVertices);
-
-
-	dir = glm::rotate(glm::mat4(1.0f), 0.0f, glm::vec3(0.0f, 1.0f, 0.0f));
-
-	maxarmangle = pi / 6.0f;
 
 	//--- 세이더 프로그램 만들기
-
 	glutDisplayFunc(drawScene); //--- 출력 콜백 함수
 	glutReshapeFunc(Reshape);
 
 	glutTimerFunc(25, TimerFunction, 1);
+	glutTimerFunc(100, rotatetimer, 2);
 
 	glutKeyboardFunc(Keyboard);
 	glutSpecialFunc(SpecialKeys); // 특수 키 콜백 함수 등록
@@ -625,7 +541,6 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 	bColor = 1.0; //--- 배경색을 흰색으로 설정
 	glClearColor(rColor, gColor, bColor, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glDisable(GL_CULL_FACE);
 
 	// 카메라 설정
 	glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
@@ -650,9 +565,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 
 	// 모델 행렬 위치
 	unsigned int modelLocation = glGetUniformLocation(shaderProgramID, "modelTransform");
-	glm::mat4 model = glm::mat4(1.0f);
 
-	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
 	// VBO 데이터 바인딩
 	if (!allVertices.empty()) {
 		glBindVertexArray(VAO);
@@ -668,91 +581,107 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		}
 
-		//바닥깔기
-		glDrawArrays(GL_TRIANGLES, 0, 36 * 4);
+		int startVertex = 0;
 
-		model = glm::translate(glm::mat4(1.0f), glm::vec3(40.0f, 0.0f, 0.0f));
-		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
-		glDrawArrays(GL_TRIANGLES, 0, 36 * 4);
-
-		model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 40.0f));
-		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
-		glDrawArrays(GL_TRIANGLES, 0, 36 * 4);
-
-		model = glm::translate(glm::mat4(1.0f), glm::vec3(40.0f, 0.0f, 40.0f));
-		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
-		glDrawArrays(GL_TRIANGLES, 0, 36 * 4);
+		// AntiCube 그리기 (z축 회전 추가)
+		glm::mat4 yrote = glm::rotate(glm::mat4(1.0f), yangle, glm::vec3(0.0f, 1.0f, 0.0f));
 		
-		// 그네 깔기
+		glm::mat4 gototheorigin = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 30.0f, 30.0f));
 
-		//오른 다리
-		model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 1.5f)) * glm::scale(glm::mat4(1.0f), glm::vec3(3.0f, 30.0f, 3.0f)) * glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.5f, 0.0f));
-		model = glm::translate(glm::mat4(1.0f), glm::vec3(20.0f, 0.0f, 0.0f)) * model;
-		model = glm::rotate(glm::mat4(1.0f), yangle, glm::vec3(0.0f, 1.0f, 0.0f)) * model;
-		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
-		glDrawArrays(GL_TRIANGLES, 36 * 4, 36);
+		glm::mat4 rotatetoorigin = glm::rotate(glm::mat4(1.0f), openangle, glm::vec3(1.0f, 0.0f, 0.0f));
 
-		// 왼다리
-		model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 1.5f)) * glm::scale(glm::mat4(1.0f), glm::vec3(3.0f, 30.0f, 3.0f)) * glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.5f, 0.0f));
-		model = glm::translate(glm::mat4(1.0f), glm::vec3(-14.0f, 0.0f, 0.0f)) * model;
-		model = glm::rotate(glm::mat4(1.0f), yangle, glm::vec3(0.0f, 1.0f, 0.0f)) * model;
-		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
-		glDrawArrays(GL_TRIANGLES, 36 * 4, 36);
-
-		// 윗 지지대
-		model = glm::translate(glm::mat4(1.0f), glm::vec3(20.0f, 28.0f, 1.5f)) * glm::scale(glm::mat4(1.0f), glm::vec3(20.0f, 5.0f, 3.0f)) * glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.5f, 0.0f));
+		glm::mat4 backtotheorigin = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -30.0f, -30.0f));
 		
-		model = glm::rotate(glm::mat4(1.0f), yangle, glm::vec3(0.0f, 1.0f, 0.0f)) * model;
-		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
+		glm::mat4 model = glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0.0f, 0.0f, 1.0f));
 
-		glDrawArrays(GL_TRIANGLES, 36 * 4, 36);
+		model = yrote * model;
 
-
-		// 의자
-		model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -22.0f, 0.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(5.0f, 3.0f, 3.0f)) * glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.5f, 0.0f));
-		model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 30.0f, 0.0f)) * glm::rotate(glm::mat4(1.0f), armangle, glm::vec3(1.0f, 0.0f, 0.0f)) * model;
-
-		model = glm::rotate(glm::mat4(1.0f), yangle, glm::vec3(0.0f, 1.0f, 0.0f)) * model;
-		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
-		glDrawArrays(GL_TRIANGLES, 36 * 6, 36);
-
-		// 왼손잡이
-		model = glm::scale(glm::mat4(1.0f), glm::vec3(0.5f, -40.0f, 0.5f));
-		model = glm::translate(glm::mat4(1.0f), glm::vec3(-8.0f, 30.0f, 0.0f)) * glm::rotate(glm::mat4(1.0f), armangle, glm::vec3(1.0f, 0.0f, 0.0f)) * model;
-
-		model = glm::rotate(glm::mat4(1.0f), yangle, glm::vec3(0.0f, 1.0f, 0.0f)) * model;
-		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
-		glDrawArrays(GL_TRIANGLES, 36 * 6, 36);
-
-		//오른손잡이
-		model = glm::scale(glm::mat4(1.0f), glm::vec3(0.5f, -40.0f, 0.5f));
-		model = glm::translate(glm::mat4(1.0f), glm::vec3(8.0f, 30.0f, 0.0f)) * glm::rotate(glm::mat4(1.0f), armangle, glm::vec3(1.0f, 0.0f, 0.0f)) * model;
-
-		model = glm::rotate(glm::mat4(1.0f), yangle, glm::vec3(0.0f, 1.0f, 0.0f)) * model;
-		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
-		glDrawArrays(GL_TRIANGLES, 36 * 6, 36);
-
-
-		//사람큐브
+		glm::mat4 firstmodel = model * backtotheorigin * rotatetoorigin * gototheorigin;
 		
 		
-		model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -20.0f, 0.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(1.5f, 15.0f, 1.5f));
-		model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 30.0f, 0.0f)) * glm::rotate(glm::mat4(1.0f), armangle, glm::vec3(1.0f, 0.0f, 0.0f)) * model;
+		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(firstmodel));
+		
+		glDrawArrays(GL_TRIANGLES, startVertex, 6); // qkekr
+		startVertex += 6;
 
-		model = glm::rotate(glm::mat4(1.0f), yangle, glm::vec3(0.0f, 1.0f, 0.0f)) * model;
-		
 		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
-		glDrawArrays(GL_TRIANGLES, 36 * 7, 36);
+		for (int i = 0; i < 5; ++i) {
+			glDrawArrays(GL_TRIANGLES, startVertex, 6); // 6면 * 2삼각형 * 3정점 = 36
+			startVertex += 6;
+		}
 
-		model = glm::scale(glm::mat4(1.0f), glm::vec3(1.5f, t, 1.5f));
 		
+
+		// Cube1 그리기 (x축 이동 후 z축 회전)
+		model = glm::translate(glm::mat4(1.0f), glm::vec3(cubepos[0].nowxpos + 30.0f, cubepos[0].nowypos, 0.0f));
+		glm::mat4 rotmodel = glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0.0f, 0.0f, 1.0f));
+		model = yrote * rotmodel * model;
 		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
-		glDrawArrays(GL_TRIANGLES, 36 * 7, 36);
-		
+		glDrawArrays(GL_TRIANGLES, startVertex, 36);
+		startVertex += 36;
+
+		// Cube2 그리기 (x축 이동 후 z축 회전)
+		model = glm::translate(glm::mat4(1.0f), glm::vec3(cubepos[1].nowxpos + 30.0f, cubepos[1].nowypos, 0.0f));
+		model = yrote * rotmodel * model;
+		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
+		glDrawArrays(GL_TRIANGLES, startVertex, 36);
+		startVertex += 36;
+
+		// Cube3 그리기 (x축 이동 후 z축 회전)
+		model = glm::translate(glm::mat4(1.0f), glm::vec3(cubepos[2].nowxpos + 30.0f, cubepos[2].nowypos, 0.0f));
+		model = yrote * rotmodel * model;
+		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
+		glDrawArrays(GL_TRIANGLES, startVertex, 36);
+
 		glBindVertexArray(0);
 	}
 
-
+	// GLUquadric을 사용하여 구 그리기
+	// 셰이더를 비활성화하고 고정 파이프라인 사용
+	glUseProgram(0);
+	
+	// GLUquadric 객체 생성
+	GLUquadric* qobj = gluNewQuadric();
+	gluQuadricDrawStyle(qobj, GLU_FILL);
+	gluQuadricNormals(qobj, GLU_SMOOTH);
+	
+	// 투영 및 뷰 행렬 적용 (한 번만)
+	glMatrixMode(GL_PROJECTION);
+	glLoadMatrixf(glm::value_ptr(glm::perspective(
+		glm::radians(45.0f),
+		(float)width / (float)height,
+		0.1f,
+		300.0f
+	)));
+	
+	glMatrixMode(GL_MODELVIEW);
+	glLoadMatrixf(glm::value_ptr(glm::lookAt(cameraPos, cameraTarget, glm::vec3(0.0f, 1.0f, 0.0f))));
+	
+	// z축 회전 적용 (모든 구에 공통)
+	glRotatef(glm::degrees(angle), 0.0f, 0.0f, 1.0f);
+	glRotatef(glm::degrees(yangle), 0.0f, 1.0f, 0.0f);
+	
+	// 5개의 구 그리기
+	for (int i = 0; i < 5; ++i) {
+		glPushMatrix();
+		
+		// 구의 위치로 이동 (회전이 이미 적용된 상태)
+		glTranslatef(spherePositions[i].x, spherePositions[i].y, spherePositions[i].z);
+		
+		// 랜덤한 색상 설정 (저장된 위치를 시드로 사용)
+		float r = 0.0f;
+		float g = 1.0f;
+		float b = 1.0f;
+		glColor3f(r, g, b);
+		
+		// 반지름 3인 구 그리기
+		gluSphere(qobj, 3.0, 20, 20);
+		
+		glPopMatrix();
+	}
+	
+	// GLUquadric 객체 삭제
+	gluDeleteQuadric(qobj);
 
 	glutSwapBuffers(); // 화면에 출력하기
 }
@@ -771,6 +700,21 @@ void Keyboard(unsigned char key, int x, int y) {
 	case 'Q': // 프로그램 종료
 		glutLeaveMainLoop();
 		break;
+	case 'w': // 와이어프레임 모드 적용/해제
+	{
+		wiretoggle = !wiretoggle;
+	}
+	break;
+	case 'z': // z축 양의 방향으로 카메라와 타겟 이동
+	{
+		cameraPos = glm::vec3(0.0f, 0.0f, cameraPos.z + 1);      // 카메라 위치
+	}
+	break;
+	case 'Z': // z축 음의 방향으로 카메라와 타겟 이동
+	{
+		cameraPos = glm::vec3(0.0f, 0.0f, cameraPos.z - 1);      // 카메라 위치
+	}
+	break;
 	case 'y': // y축 기준 양의 방향(반시계) 회전
 	{
 		yangle += 0.1f;
@@ -782,38 +726,61 @@ void Keyboard(unsigned char key, int x, int y) {
 		yangle -= 0.1f;
 	}
 	break;
-	case 'p':
+	case 'b':
+	case 'B':
 	{
+		std::uniform_real_distribution<float> posDis(-ANTICUBE_HALF + 3, ANTICUBE_HALF - 3);
+		std::uniform_real_distribution<float> angleDis(0.0f, 2.0f * pi);
 
-		armtoggle = 1;
-	}
-	break;
-	case 's':
-	{
+		for (int i = 0; i < 5; ++i) {
+			// 랜덤한 위치 생성 (AntiCube 범위 내)
+			spherePositions[i] = glm::vec3(
+				posDis(gen),
+				posDis(gen),
+				posDis(gen)
+			);
 
-		armtoggle = 0;
-	}
-	break;
-	case '+':
-	{
-		if (maxarmangle < 1.0f * pi) {
-			maxarmangle += 0.1f;
-			player.velocity.x *= 1.3f;
-			player.velocity.z *= 1.3f;
-			cubeSpeed *= 1.3f;
+			// 랜덤한 각도로 이동 방향 설정
+			float dirangle = angleDis(gen);
+			spheredelta[i] = glm::vec3(
+				cos(dirangle),
+				sin(dirangle),
+				0.0f
+			);
 		}
 	}
 	break;
-	case '-':
+	case 'h': // 은면제거 적용/해제
 	{
-		if (maxarmangle > pi / 18.0f) {
-			maxarmangle -= 0.1f;
-			player.velocity.x /= 1.3f;
-			player.velocity.z /= 1.3f;
-			cubeSpeed /= 1.3f;
+		if (hidetoggle) {
+			glEnable(GL_DEPTH_TEST);
+			hidetoggle = 0;
+		}
+		else {
+			glDisable(GL_DEPTH_TEST);
+			hidetoggle = 1;
 		}
 	}
 	break;
+	case 'o':
+	case 'O':
+	{
+		opentoggle = 1;
+	}
+	break;
+	case '*':
+	{
+		if (culltoggle == 0) {
+			glEnable(GL_CULL_FACE);
+			culltoggle = 1;
+		}
+		else {
+			glDisable(GL_CULL_FACE);
+			culltoggle = 0;
+		}
+	}
+	break;
+	
 	default:
 		break;
 	}
@@ -823,37 +790,182 @@ void Keyboard(unsigned char key, int x, int y) {
 
 void TimerFunction(int value)
 {
-	if (armtoggle) {
-		if (armup) {
-			armangle += 0.1f;
-			if (armangle >= maxarmangle) {
-				armup = false;
-			}
+	// angle에 따라 각 큐브의 nowxpos를 sin 함수로 업데이트
+	for (int i = 0; i < 3; ++i) {
+		// sin(angle)의 범위는 -1 ~ 1
+		
+		float sinValue = sin(angle) * -1;  // -1 ~ 1
+		
+		// -1 ~ 1을 0 ~ 1로 변환: (sinValue + 1) / 2
+		// 0 ~ 1을 xStart ~ xend로 변환
+		cubepos[i].nowxpos += sinValue / 2;
+
+		if(cubepos[i].nowxpos > cubepos[i].xend && cubepos[i].nowypos > cubepos[i].size * -1) {
+			cubepos[i].nowxpos = cubepos[i].xend;
 		}
-		else {
-			armangle -= 0.1f;
-			if (armangle <= -maxarmangle) {
-				armup = true;
-			}
+		if(cubepos[i].nowxpos < cubepos[i].xStart && cubepos[i].nowypos > cubepos[i].size * -1) {
+			cubepos[i].nowxpos = cubepos[i].xStart;
+		}
+	}
+
+	if (opentoggle) {
+		for (int i = 0; i < 3; ++i) {
+
+			float sinValue = cos(angle) * -1;  // -1 ~ 1
+
+			// -1 ~ 1을 0 ~ 1로 변환: (sinValue + 1) / 2
+			// 0 ~ 1을 xStart ~ xend로 변환
+			cubepos[i].nowypos += sinValue / 2;
+
+		}
+	}
+
+	// 구들의 위치 업데이트 및 충돌 처리
+	for (int i = 0; i < 5; ++i) {
+		// delta 값을 더하여 위치 이동
+		spherePositions[i] += spheredelta[i];
+		
+		// x축 벽과의 충돌 처리
+		if (spherePositions[i].x < minBound) {
+			spherePositions[i].x = minBound;
+			spheredelta[i].x *= -1.0f;  // x 방향 반전
+		}
+		else if (spherePositions[i].x > maxBound) {
+			spherePositions[i].x = maxBound;
+			spheredelta[i].x *= -1.0f;  // x 방향 반전
+		}
+		
+		// y축 벽과의 충돌 처리
+		if (spherePositions[i].y < minBound) {
+			spherePositions[i].y = minBound;
+			spheredelta[i].y *= -1.0f;  // y 방향 반전
+		}
+		else if (spherePositions[i].y > maxBound) {
+			spherePositions[i].y = maxBound;
+			spheredelta[i].y *= -1.0f;  // y 방향 반전
+		}
+		
+		
+	}
+
+	if (opentoggle) {
+		openangle += 0.02f;;
+		if (openangle >= glm::radians(90.0f)) {
+			openangle = glm::radians(90.0f);
+			
 		}
 	}
 
 
-	if (armangle) {
-		t = 25 - (armangle / maxarmangle) * 10;
-	}
-	else {
-		t = 25 - (-armangle / -maxarmangle) * 10;
-	}
+	
+
 
 	glutPostRedisplay();
 	glutTimerFunc(25, TimerFunction, 1);
 }
 
+void rotatetimer(int value) {
+	if (xmouse < 200) {
+		angle -= 0.1f;
+		if (angle <= -pi / 3) angle = -pi / 3;
+		else {
+			// 각 구의 위치를 z축 기준으로 0.1f만큼 회전
+			for (int i = 0; i < 5; ++i) {
+				glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), 0.1f, glm::vec3(0.0f, 0.0f, 1.0f));
+				glm::vec4 rotatedPos = rotationMatrix * glm::vec4(spherePositions[i], 1.0f);
+				spherePositions[i] = glm::vec3(rotatedPos);
+
+				// 범위 제한 적용
+
+
+				if (spherePositions[i].x < minBound) spherePositions[i].x = minBound;
+				if (spherePositions[i].x > maxBound) spherePositions[i].x = maxBound;
+				if (spherePositions[i].y < minBound) spherePositions[i].y = minBound;
+				if (spherePositions[i].y > maxBound) spherePositions[i].y = maxBound;
+				if (spherePositions[i].z < minBound) spherePositions[i].z = minBound;
+				if (spherePositions[i].z > maxBound) spherePositions[i].z = maxBound;
+			}
+		}
+	}
+	else if (xmouse > (width - 200)) {
+		angle += 0.1f;
+		if (angle >= pi / 3) angle = pi / 3;
+		else {
+			// 각 구의 위치를 z축 기준으로 0.1f만큼 회전
+			for (int i = 0; i < 5; ++i) {
+				glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), -0.1f, glm::vec3(0.0f, 0.0f, 1.0f));
+				glm::vec4 rotatedPos = rotationMatrix * glm::vec4(spherePositions[i], 1.0f);
+				spherePositions[i] = glm::vec3(rotatedPos);
+				// 범위 제한 적용
+				if (spherePositions[i].x < minBound) spherePositions[i].x = minBound;
+				if (spherePositions[i].x > maxBound) spherePositions[i].x = maxBound;
+				if (spherePositions[i].y < minBound) spherePositions[i].y = minBound;
+				if (spherePositions[i].y > maxBound) spherePositions[i].y = maxBound;
+				if (spherePositions[i].z < minBound) spherePositions[i].z = minBound;
+				if (spherePositions[i].z > maxBound) spherePositions[i].z = maxBound;
+			}
+		}
+	}
+
+	glutPostRedisplay();
+	glutTimerFunc(25, rotatetimer, 2);
+}
 
 void SpecialKeys(int key, int x, int y) // 특수 키(화살표 키) 콜백 함수
 {
-	
+	switch (key) {
+	case GLUT_KEY_UP: // 위쪽 화살표 - z축 음의 방향으로 이동
+		
+		break;
+	case GLUT_KEY_DOWN: // 아래쪽 화살표 - z축 양의 방향으로 이동
+		
+		break;
+	case GLUT_KEY_LEFT: // 왼쪽 화살표 - angle 감소 및 구 위치 회전
+		angle -= 0.1f;
+		if (angle <= -pi / 3) angle = -pi / 3;
+		else {
+			// 각 구의 위치를 z축 기준으로 0.1f만큼 회전
+			for (int i = 0; i < 5; ++i) {
+				glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), 0.1f, glm::vec3(0.0f, 0.0f, 1.0f));
+				glm::vec4 rotatedPos = rotationMatrix * glm::vec4(spherePositions[i], 1.0f);
+				spherePositions[i] = glm::vec3(rotatedPos);
+				
+				// 범위 제한 적용
+				
+				
+				if (spherePositions[i].x < minBound) spherePositions[i].x = minBound;
+				if (spherePositions[i].x > maxBound) spherePositions[i].x = maxBound;
+				if (spherePositions[i].y < minBound) spherePositions[i].y = minBound;
+				if (spherePositions[i].y > maxBound) spherePositions[i].y = maxBound;
+				if (spherePositions[i].z < minBound) spherePositions[i].z = minBound;
+				if (spherePositions[i].z > maxBound) spherePositions[i].z = maxBound;
+			}
+		}
+		
+		break;
+	case GLUT_KEY_RIGHT: // 오른쪽 화살표 - angle 증가 및 구 위치 회전
+		angle += 0.1f;
+		if (angle >= pi / 3) angle = pi / 3;
+		else {
+			// 각 구의 위치를 z축 기준으로 0.1f만큼 회전
+			for (int i = 0; i < 5; ++i) {
+				glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), -0.1f, glm::vec3(0.0f, 0.0f, 1.0f));
+				glm::vec4 rotatedPos = rotationMatrix * glm::vec4(spherePositions[i], 1.0f);
+				spherePositions[i] = glm::vec3(rotatedPos);
+				
+				// 범위 제한 적용
+
+				if (spherePositions[i].x < minBound) spherePositions[i].x = minBound;
+				if (spherePositions[i].x > maxBound) spherePositions[i].x = maxBound;
+				if (spherePositions[i].y < minBound) spherePositions[i].y = minBound;
+				if (spherePositions[i].y > maxBound) spherePositions[i].y = maxBound;
+				if (spherePositions[i].z < minBound) spherePositions[i].z = minBound;
+				if (spherePositions[i].z > maxBound) spherePositions[i].z = maxBound;
+			}
+		}
+		
+		break;
+	}
 
 	glutPostRedisplay();
 }

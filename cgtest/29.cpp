@@ -205,9 +205,12 @@ std::vector<float> objVertices;
 void InitBuffer() {
     objVertices.clear();
 
+    // ===============================================
+    // 1. 육면체 (Cube) 데이터 (총 36개 정점, Offset 0)
+    // ===============================================
     // 육면체 6면 정의 (x, y, z, r, g, b, s, t)
     float cube[] = {
-        // Front face (z = 0.5)
+        // Front face (z = 0.5) - Face 1 (textures[1])
         -0.5f, -0.5f,  0.5f, 1,0,0, 0.0f, 0.0f,
          0.5f, -0.5f,  0.5f, 1,0,0, 1.0f, 0.0f,
          0.5f,  0.5f,  0.5f, 1,0,0, 1.0f, 1.0f,
@@ -215,7 +218,7 @@ void InitBuffer() {
          0.5f,  0.5f,  0.5f, 1,0,0, 1.0f, 1.0f,
         -0.5f,  0.5f,  0.5f, 1,0,0, 0.0f, 1.0f,
 
-        // Back face (z = -0.5)
+        // Back face (z = -0.5) - Face 2 (textures[2])
         -0.5f, -0.5f, -0.5f, 0,1,0, 1.0f, 0.0f,
         -0.5f,  0.5f, -0.5f, 0,1,0, 1.0f, 1.0f,
          0.5f, -0.5f, -0.5f, 0,1,0, 0.0f, 0.0f,
@@ -223,15 +226,15 @@ void InitBuffer() {
         -0.5f,  0.5f, -0.5f, 0,1,0, 1.0f, 1.0f,
          0.5f,  0.5f, -0.5f, 0,1,0, 0.0f, 1.0f,
 
-         // Top face (y = 0.5)
-         -0.5f,  0.5f, -0.5f, 0,0,1, 0.0f, 0.0f,
-         -0.5f,  0.5f,  0.5f, 0,0,1, 0.0f, 1.0f,
-          0.5f,  0.5f,  0.5f, 0,0,1, 1.0f, 1.0f,
-         -0.5f,  0.5f, -0.5f, 0,0,1, 0.0f, 0.0f,
-          0.5f,  0.5f,  0.5f, 0,0,1, 1.0f, 1.0f,
-          0.5f,  0.5f, -0.5f, 0,0,1, 1.0f, 0.0f,
+         // Top face (y = 0.5) - Face 3 (textures[3])
+         -0.5f,  0.5f, -0.5f, 0,0,1, 0.0f, 1.0f,
+         -0.5f,  0.5f,  0.5f, 0,0,1, 0.0f, 0.0f,
+          0.5f,  0.5f,  0.5f, 0,0,1, 1.0f, 0.0f,
+         -0.5f,  0.5f, -0.5f, 0,0,1, 0.0f, 1.0f,
+          0.5f,  0.5f,  0.5f, 0,0,1, 1.0f, 0.0f,
+          0.5f,  0.5f, -0.5f, 0,0,1, 1.0f, 1.0f,
 
-          // Bottom face (y = -0.5)
+          // Bottom face (y = -0.5) - Face 4 (textures[4])
           -0.5f, -0.5f, -0.5f, 1,1,0, 0.0f, 0.0f,
            0.5f, -0.5f, -0.5f, 1,1,0, 1.0f, 0.0f,
            0.5f, -0.5f,  0.5f, 1,1,0, 1.0f, 1.0f,
@@ -239,7 +242,7 @@ void InitBuffer() {
            0.5f, -0.5f,  0.5f, 1,1,0, 1.0f, 1.0f,
           -0.5f, -0.5f,  0.5f, 1,1,0, 0.0f, 1.0f,
 
-          // Right face (x = 0.5)
+          // Right face (x = 0.5) - Face 5 (textures[5])
            0.5f, -0.5f, -0.5f, 1,0,1, 1.0f, 0.0f,
            0.5f,  0.5f, -0.5f, 1,0,1, 1.0f, 1.0f,
            0.5f,  0.5f,  0.5f, 1,0,1, 0.0f, 1.0f,
@@ -247,7 +250,7 @@ void InitBuffer() {
            0.5f,  0.5f,  0.5f, 1,0,1, 0.0f, 1.0f,
            0.5f, -0.5f,  0.5f, 1,0,1, 0.0f, 0.0f,
 
-           // Left face (x = -0.5)
+           // Left face (x = -0.5) - Face 6 (textures[6])
            -0.5f, -0.5f, -0.5f, 0,1,1, 0.0f, 0.0f,
            -0.5f, -0.5f,  0.5f, 0,1,1, 1.0f, 0.0f,
            -0.5f,  0.5f,  0.5f, 0,1,1, 1.0f, 1.0f,
@@ -258,12 +261,51 @@ void InitBuffer() {
 
     for (int i = 0; i < sizeof(cube) / sizeof(float); i++) objVertices.push_back(cube[i]);
 
+    // ===============================================
+    // 2. 사각뿔 (Pyramid) 데이터 (총 18개 정점, Offset 36)
+    // ===============================================
+    float pyramid[] = {
+        // Base (Bottom, Y = -0.5) - Face 4 (textures[4])
+        // z=-0.5, z=0.5, z=0.5, z=-0.5 순서
+        -0.5f, -0.5f, -0.5f, 1,1,0, 0.0f, 0.0f,
+         0.5f, -0.5f, -0.5f, 1,1,0, 1.0f, 0.0f,
+         0.5f, -0.5f,  0.5f, 1,1,0, 1.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f, 1,1,0, 0.0f, 0.0f,
+         0.5f, -0.5f,  0.5f, 1,1,0, 1.0f, 1.0f,
+        -0.5f, -0.5f,  0.5f, 1,1,0, 0.0f, 1.0f,
+
+        // Front Side (Z = 0.5) - Face 1 (textures[1])
+        -0.5f, -0.5f,  0.5f, 1,0,0, 0.0f, 0.0f,
+         0.5f, -0.5f,  0.5f, 1,0,0, 1.0f, 0.0f,
+         0.0f,  0.5f,  0.0f, 1,0,0, 0.5f, 1.0f,
+
+         // Right Side (X = 0.5) - Face 2 (textures[2])
+          0.5f, -0.5f,  0.5f, 0,1,0, 0.0f, 0.0f,
+          0.5f, -0.5f, -0.5f, 0,1,0, 1.0f, 0.0f,
+          0.0f,  0.5f,  0.0f, 0,1,0, 0.5f, 1.0f,
+
+          // Back Side (Z = -0.5) - Face 4 (textures[4])
+           0.5f, -0.5f, -0.5f, 1,1,0, 0.0f, 0.0f,
+          -0.5f, -0.5f, -0.5f, 1,1,0, 1.0f, 0.0f,
+           0.0f,  0.5f,  0.0f, 1,1,0, 0.5f, 1.0f,
+
+           // Left Side (X = -0.5) - Face 5 (textures[5])
+           -0.5f, -0.5f, -0.5f, 0,1,1, 0.0f, 0.0f,
+           -0.5f, -0.5f,  0.5f, 0,1,1, 1.0f, 0.0f,
+            0.0f,  0.5f,  0.0f, 0,1,1, 0.5f, 1.0f
+    };
+
+    for (int i = 0; i < sizeof(pyramid) / sizeof(float); i++) objVertices.push_back(pyramid[i]);
+
+    // VBO 및 VAO 설정 (이전과 동일)
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
     glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    // 버퍼에 육면체(36) + 사각뿔(18) 데이터 모두 업로드 (총 54 정점)
     glBufferData(GL_ARRAY_BUFFER, objVertices.size() * sizeof(float), &objVertices[0], GL_STATIC_DRAW);
 
+    // ... (Vertex Attribute Pointer 설정 로직은 이전과 동일)
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
@@ -368,35 +410,48 @@ GLvoid drawScene()
     glActiveTexture(GL_TEXTURE0);
 
     // 각 면마다 텍스처를 바인딩하고 그리기
-    // Face 1 (Front) - textures[1]
-    glBindTexture(GL_TEXTURE_2D, textures[1]);
-    glUniform1i(texLoc, 0);
-    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glUniform1i(texLoc, 0); // Sampler0 사용
 
-    // Face 2 (Back) - textures[2]
-    glBindTexture(GL_TEXTURE_2D, textures[2]);
-    glUniform1i(texLoc, 0);
-    glDrawArrays(GL_TRIANGLES, 6, 6);
+    if (drawShape == 0) {
+        // -------------------------
+        // A. 육면체 (Cube) 렌더링 (Offset 0, 총 36개 정점)
+        // -------------------------
 
-    // Face 3 (Top) - textures[3]
-    glBindTexture(GL_TEXTURE_2D, textures[3]);
-    glUniform1i(texLoc, 0);
-    glDrawArrays(GL_TRIANGLES, 12, 6);
+        // 0-5 (Front) -> Face 1
+        glBindTexture(GL_TEXTURE_2D, textures[1]); glDrawArrays(GL_TRIANGLES, 0, 6);
+        // 6-11 (Back) -> Face 2
+        glBindTexture(GL_TEXTURE_2D, textures[2]); glDrawArrays(GL_TRIANGLES, 6, 6);
+        // 12-17 (Top) -> Face 3
+        glBindTexture(GL_TEXTURE_2D, textures[3]); glDrawArrays(GL_TRIANGLES, 12, 6);
+        // 18-23 (Bottom) -> Face 4
+        glBindTexture(GL_TEXTURE_2D, textures[4]); glDrawArrays(GL_TRIANGLES, 18, 6);
+        // 24-29 (Right) -> Face 5
+        glBindTexture(GL_TEXTURE_2D, textures[5]); glDrawArrays(GL_TRIANGLES, 24, 6);
+        // 30-35 (Left) -> Face 6
+        glBindTexture(GL_TEXTURE_2D, textures[6]); glDrawArrays(GL_TRIANGLES, 30, 6);
 
-    // Face 4 (Bottom) - textures[4]
-    glBindTexture(GL_TEXTURE_2D, textures[4]);
-    glUniform1i(texLoc, 0);
-    glDrawArrays(GL_TRIANGLES, 18, 6);
+    }
+    else { // drawShape == 1
+        // -------------------------
+        // B. 사각뿔 (Pyramid) 렌더링 (Offset 36, 총 18개 정점)
+        // -------------------------
+        int offset = 36;
 
-    // Face 5 (Right) - textures[5]
-    glBindTexture(GL_TEXTURE_2D, textures[5]);
-    glUniform1i(texLoc, 0);
-    glDrawArrays(GL_TRIANGLES, 24, 6);
+        // 36-41 (Base) -> Face 4
+        glBindTexture(GL_TEXTURE_2D, textures[6]); glDrawArrays(GL_TRIANGLES, offset + 0, 6);
 
-    // Face 6 (Left) - textures[6]
-    glBindTexture(GL_TEXTURE_2D, textures[6]);
-    glUniform1i(texLoc, 0);
-    glDrawArrays(GL_TRIANGLES, 30, 6);
+        // 42-44 (Front Side) -> Face 1
+        glBindTexture(GL_TEXTURE_2D, textures[1]); glDrawArrays(GL_TRIANGLES, offset + 6, 3);
+
+        // 45-47 (Right Side) -> Face 2
+        glBindTexture(GL_TEXTURE_2D, textures[2]); glDrawArrays(GL_TRIANGLES, offset + 9, 3);
+
+        // 48-50 (Back Side) -> Face 4
+        glBindTexture(GL_TEXTURE_2D, textures[4]); glDrawArrays(GL_TRIANGLES, offset + 12, 3);
+
+        // 51-53 (Left Side) -> Face 5
+        glBindTexture(GL_TEXTURE_2D, textures[5]); glDrawArrays(GL_TRIANGLES, offset + 15, 3);
+    }
 
     glutSwapBuffers();
 }
@@ -405,11 +460,11 @@ void Keyboard(unsigned char key, int x, int y) {
     switch (key) {
     case 'c': // 육면체
         drawShape = 0;
-        // InitBuffer에서 육면체 데이터로 갱신하는 로직 필요
+        printf("Switched to Cube.\n");
         break;
     case 'p': // 사각뿔
         drawShape = 1;
-        // InitBuffer에서 사각뿔 데이터로 갱신하는 로직 필요
+        printf("Switched to Pyramid.\n");
         break;
     case 'x': xangle += 5.0f; break;
     case 'X': xangle -= 5.0f; break;

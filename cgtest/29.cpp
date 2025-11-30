@@ -16,7 +16,7 @@ GLint width = 800, height = 800;
 GLuint shaderProgramID;
 GLuint VAO, VBO; // 객체용
 GLuint bVAO, bVBO; // 배경용
-GLuint textures[3]; // 0: 배경, 1: 육면체 면1, 2: 육면체 면2 (필요시 추가)
+GLuint textures[7]; // 0: 배경, 1~6: 육면체 6개 면
 
 float angle = 0.0f;  // y축 회전
 float xangle = 0.0f; // x축 회전
@@ -144,7 +144,8 @@ void InitTexture() {
 
         if (data != NULL) {
             // 이미지 로드 성공
-            printf("Loaded %s successfully.\n", filenames[i]);
+            printf("Loaded %s successfully. (Texture ID: %d, Size: %dx%d)\n", 
+                   filenames[i], textures[i], info->bmiHeader.biWidth, info->bmiHeader.biHeight);
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, info->bmiHeader.biWidth, info->bmiHeader.biHeight, 0, GL_BGR_EXT, GL_UNSIGNED_BYTE, data);
             free(data);
             free(info);
@@ -163,9 +164,12 @@ void InitTexture() {
             }
 
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1, 1, 0, GL_RGB, GL_UNSIGNED_BYTE, color);
-            printf("Failed to load %s. Using default color texture.\n", filenames[i]);
+            printf("Failed to load %s. Using default color texture (Texture ID: %d).\n", filenames[i], textures[i]);
         }
     }
+    
+    // 텍스처 바인딩 해제
+    glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 //--- 배경을 위한 버퍼 설정 (화면 가득 채우는 사각형)
@@ -220,12 +224,12 @@ void InitBuffer() {
          0.5f,  0.5f, -0.5f, 0,1,0, 0.0f, 1.0f,
 
          // Top face (y = 0.5)
-         -0.5f,  0.5f, -0.5f, 0,0,1, 0.0f, 1.0f,
-         -0.5f,  0.5f,  0.5f, 0,0,1, 0.0f, 0.0f,
-          0.5f,  0.5f,  0.5f, 0,0,1, 1.0f, 0.0f,
-         -0.5f,  0.5f, -0.5f, 0,0,1, 0.0f, 1.0f,
-          0.5f,  0.5f,  0.5f, 0,0,1, 1.0f, 0.0f,
-          0.5f,  0.5f, -0.5f, 0,0,1, 1.0f, 1.0f,
+         -0.5f,  0.5f, -0.5f, 0,0,1, 0.0f, 0.0f,
+         -0.5f,  0.5f,  0.5f, 0,0,1, 0.0f, 1.0f,
+          0.5f,  0.5f,  0.5f, 0,0,1, 1.0f, 1.0f,
+         -0.5f,  0.5f, -0.5f, 0,0,1, 0.0f, 0.0f,
+          0.5f,  0.5f,  0.5f, 0,0,1, 1.0f, 1.0f,
+          0.5f,  0.5f, -0.5f, 0,0,1, 1.0f, 0.0f,
 
           // Bottom face (y = -0.5)
           -0.5f, -0.5f, -0.5f, 1,1,0, 0.0f, 0.0f,
@@ -308,8 +312,6 @@ GLvoid drawScene()
     unsigned int projLoc = glGetUniformLocation(shaderProgramID, "projectionTransform");
     unsigned int texLoc = glGetUniformLocation(shaderProgramID, "outTexture");
 
-    glUniform1i(texLoc, 0); // Sampler0 사용
-
     // --- 1. 배경 그리기 (Depth Test 끄고 맨 뒤에 그리기) ---
     glDisable(GL_DEPTH_TEST);
 
@@ -325,10 +327,12 @@ GLvoid drawScene()
     glBindVertexArray(bVAO);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, textures[0]); // 배경 텍스처
+    glUniform1i(texLoc, 0); // Sampler0 사용
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
     // --- 2. 객체 그리기 (Depth Test 켜기) ---
     glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS); // 깊이 테스트 함수 명시
 
     // 모델 변환 (회전)
     glm::mat4 model = glm::mat4(1.0f);
@@ -362,30 +366,36 @@ GLvoid drawScene()
 
     glBindVertexArray(VAO);
     glActiveTexture(GL_TEXTURE0);
-    glUniform1i(texLoc, 0); // Sampler0 사용
 
-    // 육면체 앞, 뒤, 위 (18개 정점) -> Texture 1 (빨강/face1)
-    glBindTexture(GL_TEXTURE_2D, textures[1]); // Face 1 (Front)
+    // 각 면마다 텍스처를 바인딩하고 그리기
+    // Face 1 (Front) - textures[1]
+    glBindTexture(GL_TEXTURE_2D, textures[1]);
+    glUniform1i(texLoc, 0);
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
-    // 시작 정점: 6, 정점 수: 6, 텍스처 ID: 2
-    glBindTexture(GL_TEXTURE_2D, textures[2]); // Face 2 (Back)
+    // Face 2 (Back) - textures[2]
+    glBindTexture(GL_TEXTURE_2D, textures[2]);
+    glUniform1i(texLoc, 0);
     glDrawArrays(GL_TRIANGLES, 6, 6);
 
-    // 시작 정점: 12, 정점 수: 6, 텍스처 ID: 3
-    glBindTexture(GL_TEXTURE_2D, textures[3]); // Face 3 (Top)
+    // Face 3 (Top) - textures[3]
+    glBindTexture(GL_TEXTURE_2D, textures[3]);
+    glUniform1i(texLoc, 0);
     glDrawArrays(GL_TRIANGLES, 12, 6);
 
-    // 시작 정점: 18, 정점 수: 6, 텍스처 ID: 4
-    glBindTexture(GL_TEXTURE_2D, textures[4]); // Face 4 (Bottom)
+    // Face 4 (Bottom) - textures[4]
+    glBindTexture(GL_TEXTURE_2D, textures[4]);
+    glUniform1i(texLoc, 0);
     glDrawArrays(GL_TRIANGLES, 18, 6);
 
-    // 시작 정점: 24, 정점 수: 6, 텍스처 ID: 5
-    glBindTexture(GL_TEXTURE_2D, textures[5]); // Face 5 (Right)
+    // Face 5 (Right) - textures[5]
+    glBindTexture(GL_TEXTURE_2D, textures[5]);
+    glUniform1i(texLoc, 0);
     glDrawArrays(GL_TRIANGLES, 24, 6);
 
-    // 시작 정점: 30, 정점 수: 6, 텍스처 ID: 6
-    glBindTexture(GL_TEXTURE_2D, textures[6]); // Face 6 (Left)
+    // Face 6 (Left) - textures[6]
+    glBindTexture(GL_TEXTURE_2D, textures[6]);
+    glUniform1i(texLoc, 0);
     glDrawArrays(GL_TRIANGLES, 30, 6);
 
     glutSwapBuffers();
@@ -424,15 +434,39 @@ void make_vertexShaders() {
     vertexShader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertexShader, 1, &vertexSource, NULL);
     glCompileShader(vertexShader);
-    // 에러 체크 생략
+    
+    // 에러 체크 추가
+    GLint result;
+    GLchar errorLog[512];
+    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &result);
+    if (!result) {
+        glGetShaderInfoLog(vertexShader, 512, NULL, errorLog);
+        std::cerr << "ERROR: vertex shader 컴파일 실패\n" << errorLog << std::endl;
+    }
+    else {
+        std::cout << "Vertex shader compiled successfully." << std::endl;
+    }
 }
+
 void make_fragmentShaders() {
     GLchar* fragmentSource = filetobuf("fragment_texture.glsl");
     fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(fragmentShader, 1, &fragmentSource, NULL);
     glCompileShader(fragmentShader);
-    // 에러 체크 생략
+    
+    // 에러 체크 추가
+    GLint result;
+    GLchar errorLog[512];
+    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &result);
+    if (!result) {
+        glGetShaderInfoLog(fragmentShader, 512, NULL, errorLog);
+        std::cerr << "ERROR: fragment shader 컴파일 실패\n" << errorLog << std::endl;
+    }
+    else {
+        std::cout << "Fragment shader compiled successfully." << std::endl;
+    }
 }
+
 GLuint make_shaderProgram() {
     GLuint shaderID = glCreateProgram();
     glAttachShader(shaderID, vertexShader);
@@ -440,6 +474,19 @@ GLuint make_shaderProgram() {
     glLinkProgram(shaderID);
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
+    
+    // 링크 에러 체크 추가
+    GLint result;
+    GLchar errorLog[512];
+    glGetProgramiv(shaderID, GL_LINK_STATUS, &result);
+    if (!result) {
+        glGetProgramInfoLog(shaderID, 512, NULL, errorLog);
+        std::cerr << "ERROR: shader program 링크 실패\n" << errorLog << std::endl;
+    }
+    else {
+        std::cout << "Shader program linked successfully." << std::endl;
+    }
+    
     glUseProgram(shaderID);
     return shaderID;
 }

@@ -118,65 +118,53 @@ GLubyte* LoadDIBitmap(const char* filename, BITMAPINFO** info) {
 
 //--- 텍스처 초기화 [cite: 205-210]
 //--- 텍스처 초기화 함수 (파일이 없으면 하얀색으로 대체)
+// 전역 변수: 배열 크기를 7로 늘립니다.
+// GLuint textures[7]; // 0: 배경, 1~6: 6개 면
+
 void InitTexture() {
     BITMAPINFO* info;
-    glGenTextures(3, textures);
+    glGenTextures(7, textures); // 7개 텍스처 ID 생성 (0 ~ 6)
 
-    // --- 1. 배경 (파일 없으면 어두운 회색) ---
-    glBindTexture(GL_TEXTURE_2D, textures[0]);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    // 파일 이름 배열 생성
+    const char* filenames[7] = {
+        "background.bmp", "face1.bmp", "face2.bmp",
+        "face3.bmp", "face4.bmp", "face5.bmp", "face6.bmp"
+    };
 
-    GLubyte* data = LoadDIBitmap("background.bmp", &info);
-    if (data) {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, info->bmiHeader.biWidth, info->bmiHeader.biHeight, 0, GL_BGR_EXT, GL_UNSIGNED_BYTE, data);
-        free(data); free(info);
-    }
-    else {
-        // 파일 없음: 어두운 회색 (50, 50, 50)
-        unsigned char greyPixel[3] = { 50, 50, 50 };
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1, 1, 0, GL_RGB, GL_UNSIGNED_BYTE, greyPixel);
-        printf("Background image not found. Using GREY.\n");
-    }
+    for (int i = 0; i < 7; i++) {
+        glBindTexture(GL_TEXTURE_2D, textures[i]);
 
-    // --- 2. 육면체 텍스처 1 (파일 없으면 빨간색) ---
-    glBindTexture(GL_TEXTURE_2D, textures[1]);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        // 텍스처 파라미터 설정 (이전과 동일)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // 필터링 Linear로 변경
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); // 필터링 Linear로 변경
 
-    data = LoadDIBitmap("face1.bmp", &info);
-    if (data) {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, info->bmiHeader.biWidth, info->bmiHeader.biHeight, 0, GL_BGR_EXT, GL_UNSIGNED_BYTE, data);
-        free(data); free(info);
-    }
-    else {
-        // 파일 없음: 빨간색 (255, 0, 0)
-        unsigned char redPixel[3] = { 255, 0, 0 };
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1, 1, 0, GL_RGB, GL_UNSIGNED_BYTE, redPixel);
-        printf("Face1 image not found. Using RED.\n");
-    }
+        GLubyte* data = LoadDIBitmap(filenames[i], &info);
 
-    // --- 3. 육면체 텍스처 2 (파일 없으면 파란색) ---
-    glBindTexture(GL_TEXTURE_2D, textures[2]);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        if (data != NULL) {
+            // 이미지 로드 성공
+            printf("Loaded %s successfully.\n", filenames[i]);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, info->bmiHeader.biWidth, info->bmiHeader.biHeight, 0, GL_BGR_EXT, GL_UNSIGNED_BYTE, data);
+            free(data);
+            free(info);
+        }
+        else {
+            // 이미지 로드 실패 시 대체 색상 (디버깅용)
+            unsigned char color[3];
+            if (i == 0) { // 배경: 회색
+                color[0] = 50; color[1] = 50; color[2] = 50;
+            }
+            else if (i <= 3) { // 면 1~3: 빨강 계열
+                color[0] = 255; color[1] = 0; color[2] = 0;
+            }
+            else { // 면 4~6: 파랑 계열
+                color[0] = 0; color[1] = 0; color[2] = 255;
+            }
 
-    data = LoadDIBitmap("face2.bmp", &info);
-    if (data) {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, info->bmiHeader.biWidth, info->bmiHeader.biHeight, 0, GL_BGR_EXT, GL_UNSIGNED_BYTE, data);
-        free(data); free(info);
-    }
-    else {
-        // 파일 없음: 파란색 (0, 0, 255)
-        unsigned char bluePixel[3] = { 0, 0, 255 };
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1, 1, 0, GL_RGB, GL_UNSIGNED_BYTE, bluePixel);
-        printf("Face2 image not found. Using BLUE.\n");
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1, 1, 0, GL_RGB, GL_UNSIGNED_BYTE, color);
+            printf("Failed to load %s. Using default color texture.\n", filenames[i]);
+        }
     }
 }
 
@@ -373,14 +361,32 @@ GLvoid drawScene()
     glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
     glBindVertexArray(VAO);
+    glActiveTexture(GL_TEXTURE0);
+    glUniform1i(texLoc, 0); // Sampler0 사용
 
     // 육면체 앞, 뒤, 위 (18개 정점) -> Texture 1 (빨강/face1)
-    glBindTexture(GL_TEXTURE_2D, textures[1]);
-    glDrawArrays(GL_TRIANGLES, 0, 18);
+    glBindTexture(GL_TEXTURE_2D, textures[1]); // Face 1 (Front)
+    glDrawArrays(GL_TRIANGLES, 0, 6);
 
-    // 육면체 아래, 우, 좌 (나머지 18개 정점) -> Texture 2 (파랑/face2)
-    glBindTexture(GL_TEXTURE_2D, textures[2]);
-    glDrawArrays(GL_TRIANGLES, 18, 18);
+    // 시작 정점: 6, 정점 수: 6, 텍스처 ID: 2
+    glBindTexture(GL_TEXTURE_2D, textures[2]); // Face 2 (Back)
+    glDrawArrays(GL_TRIANGLES, 6, 6);
+
+    // 시작 정점: 12, 정점 수: 6, 텍스처 ID: 3
+    glBindTexture(GL_TEXTURE_2D, textures[3]); // Face 3 (Top)
+    glDrawArrays(GL_TRIANGLES, 12, 6);
+
+    // 시작 정점: 18, 정점 수: 6, 텍스처 ID: 4
+    glBindTexture(GL_TEXTURE_2D, textures[4]); // Face 4 (Bottom)
+    glDrawArrays(GL_TRIANGLES, 18, 6);
+
+    // 시작 정점: 24, 정점 수: 6, 텍스처 ID: 5
+    glBindTexture(GL_TEXTURE_2D, textures[5]); // Face 5 (Right)
+    glDrawArrays(GL_TRIANGLES, 24, 6);
+
+    // 시작 정점: 30, 정점 수: 6, 텍스처 ID: 6
+    glBindTexture(GL_TEXTURE_2D, textures[6]); // Face 6 (Left)
+    glDrawArrays(GL_TRIANGLES, 30, 6);
 
     glutSwapBuffers();
 }

@@ -205,14 +205,19 @@
   <ItemGroup>
     <None Include="fragment_light.glsl" />
     <None Include="fragment_matrix.glsl" />
+    <None Include="fragment_texture.glsl" />
     <None Include="vertex_light.glsl" />
     <None Include="vertex_matrix.glsl" />
     <None Include="vertex_projection.glsl" />
+    <None Include="vertex_texture.glsl" />
     <None Include="vertex_view.glsl" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="29.h" />
     <ClInclude Include="stb_image.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="background.bmp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

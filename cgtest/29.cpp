@@ -438,19 +438,19 @@ GLvoid drawScene()
         int offset = 36;
 
         // 36-41 (Base) -> Face 4
-        glBindTexture(GL_TEXTURE_2D, textures[6]); glDrawArrays(GL_TRIANGLES, offset + 0, 6);
+        glBindTexture(GL_TEXTURE_2D, textures[4]); glDrawArrays(GL_TRIANGLES, offset + 0, 6);
 
         // 42-44 (Front Side) -> Face 1
         glBindTexture(GL_TEXTURE_2D, textures[1]); glDrawArrays(GL_TRIANGLES, offset + 6, 3);
 
         // 45-47 (Right Side) -> Face 2
-        glBindTexture(GL_TEXTURE_2D, textures[2]); glDrawArrays(GL_TRIANGLES, offset + 9, 3);
+        glBindTexture(GL_TEXTURE_2D, textures[5]); glDrawArrays(GL_TRIANGLES, offset + 9, 3);
 
         // 48-50 (Back Side) -> Face 4
-        glBindTexture(GL_TEXTURE_2D, textures[4]); glDrawArrays(GL_TRIANGLES, offset + 12, 3);
+        glBindTexture(GL_TEXTURE_2D, textures[2]); glDrawArrays(GL_TRIANGLES, offset + 12, 3);
 
         // 51-53 (Left Side) -> Face 5
-        glBindTexture(GL_TEXTURE_2D, textures[5]); glDrawArrays(GL_TRIANGLES, offset + 15, 3);
+        glBindTexture(GL_TEXTURE_2D, textures[6]); glDrawArrays(GL_TRIANGLES, offset + 15, 3);
     }
 
     glutSwapBuffers();
